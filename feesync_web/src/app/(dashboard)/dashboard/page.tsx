@@ -68,15 +68,15 @@ export default function DashboardPage() {
 
       <section className="relative mb-8 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <p className="text-[11px] uppercase tracking-[0.4em] text-[#c3c6d7]">Administrator</p>
-          <h1 className="mt-3 text-3xl font-bold text-[#e3e0f4]">Welcome back</h1>
-          <p className="mt-2 text-sm text-[#c3c6d7]">
+          <p className="text-[11px] uppercase tracking-[0.4em] text-primary/80 font-bold">Administrator</p>
+          <h1 className="mt-3 text-3xl font-bold text-white tracking-tight">Welcome back</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
             Here&apos;s the latest snapshot of collections, reminders, and growth.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <div className="hidden items-center gap-2 rounded-full border border-white/5 bg-[#1a1a28] px-4 py-2 text-xs text-[#8d90a0] md:flex">
-            <Search className="h-4 w-4 text-[#c3c6d7]" />
+          <div className="hidden items-center gap-2 rounded-full border border-white/5 bg-surface-low px-4 py-2 text-xs text-muted md:flex">
+            <Search className="h-4 w-4 text-muted" />
             Search students, fees, or payments
           </div>
           <Link href="/payments" className="btn-primary-gradient text-sm">
@@ -86,68 +86,68 @@ export default function DashboardPage() {
       </section>
 
       <section className="relative mb-10 grid gap-4 lg:grid-cols-12">
-        <div className="card-elevated relative overflow-hidden border border-white/5 lg:col-span-5">
-          <div className="absolute -right-12 -top-16 h-40 w-40 rounded-full bg-[#2563eb]/20 blur-2xl" />
+        <div className="card-elevated relative overflow-hidden lg:col-span-5">
+          <div className="absolute -right-12 -top-16 h-40 w-40 rounded-full bg-primary/20 blur-3xl" />
           <div className="relative flex items-start justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-[#c3c6d7]">Total Collected</p>
-              <p className="mt-3 text-3xl font-bold text-[#e3e0f4]">
+              <p className="text-xs uppercase tracking-[0.25em] text-primary/80 font-bold">Total Collected</p>
+              <p className="mt-3 text-4xl font-bold text-white">
                 {currencyFormatter.format(totalCollection.total)}
               </p>
-              <p className="mt-2 text-sm text-[#c3c6d7]">
+              <p className="mt-2 text-sm text-muted">
                 {totalCollection.count} payments received this term
               </p>
             </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#2563eb]/20 text-[#b4c5ff]">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/20 text-primary">
               <DollarSign className="h-6 w-6" />
             </div>
           </div>
-          <div className="mt-8 flex items-center gap-3 text-sm text-[#c3c6d7]">
-            <span className="rounded-full bg-[#2563eb]/15 px-3 py-1 text-xs text-[#b4c5ff]">
+          <div className="mt-8 flex items-center gap-3 text-sm text-muted">
+            <span className="rounded-full bg-primary/15 px-3 py-1 text-xs text-primary font-semibold">
               +12.5% vs last month
             </span>
-            <span className="flex items-center gap-1 text-xs">
+            <span className="flex items-center gap-1 text-xs font-medium">
               Revenue trend
-              <ArrowUpRight className="h-3 w-3 text-[#b4c5ff]" />
+              <ArrowUpRight className="h-3 w-3 text-primary" />
             </span>
           </div>
         </div>
 
-        <div className="card-stitch border border-white/5 lg:col-span-3">
+        <div className="card-stitch lg:col-span-3">
           <div className="flex items-center justify-between">
-            <p className="text-xs uppercase tracking-[0.25em] text-[#c3c6d7]">Active Students</p>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#571bc1]/20 text-[#d0bcff]">
+            <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground font-bold">Active Students</p>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary/20 text-secondary">
               <Users className="h-5 w-5" />
             </div>
           </div>
-          <p className="mt-5 text-3xl font-bold text-[#e3e0f4]">{students.length}</p>
-          <p className="mt-2 text-sm text-[#c3c6d7]">Across all classes</p>
+          <p className="mt-5 text-3xl font-bold text-white">{students.length}</p>
+          <p className="mt-2 text-sm text-muted">Across all classes</p>
         </div>
 
-        <div className="card-stitch border border-white/5 lg:col-span-2">
+        <div className="card-stitch lg:col-span-2">
           <div className="flex items-center justify-between">
-            <p className="text-xs uppercase tracking-[0.25em] text-[#c3c6d7]">Pending Balance</p>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#ffb4ab]/15 text-[#ffb4ab]">
+            <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground font-bold">Pending</p>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-destructive/15 text-destructive">
               <TrendingUp className="h-5 w-5" />
             </div>
           </div>
-          <p className="mt-5 text-2xl font-bold text-[#e3e0f4]">
+          <p className="mt-5 text-2xl font-bold text-white">
             {currencyFormatter.format(pendingBalance)}
           </p>
-          <p className="mt-2 text-xs text-[#c3c6d7]">
+          <p className="mt-2 text-xs text-muted">
             From {pendingReminders.length} students
           </p>
         </div>
 
-        <div className="card-stitch border border-white/5 lg:col-span-2">
+        <div className="card-stitch lg:col-span-2">
           <div className="flex items-center justify-between">
-            <p className="text-xs uppercase tracking-[0.25em] text-[#c3c6d7]">Collection Rate</p>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#b4c5ff]/15 text-[#b4c5ff]">
+            <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground font-bold">Rate</p>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400">
               <TrendingUp className="h-5 w-5" />
             </div>
           </div>
-          <p className="mt-5 text-2xl font-bold text-[#e3e0f4]">{collectionRate}%</p>
-          <p className="mt-2 text-xs text-[#c3c6d7]">Of total students</p>
+          <p className="mt-5 text-2xl font-bold text-white">{collectionRate}%</p>
+          <p className="mt-2 text-xs text-muted">Collection Rate</p>
         </div>
       </section>
 
@@ -155,38 +155,38 @@ export default function DashboardPage() {
         <div className="card-elevated border border-white/5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-[#e3e0f4]">Monthly Revenue Analytics</h2>
-              <p className="text-xs text-[#c3c6d7]">Performance comparison over the last 6 months</p>
+              <h2 className="text-lg font-bold text-white">Monthly Revenue Analytics</h2>
+              <p className="text-xs text-muted">Performance comparison over the last 6 months</p>
             </div>
             <div className="flex items-center gap-2 text-xs">
-              <span className="rounded-full bg-[#1a1a28] px-4 py-2 text-[#c3c6d7]">Weekly</span>
-              <span className="rounded-full bg-[#2563eb] px-4 py-2 text-[#eeefff]">Monthly</span>
+              <span className="rounded-full bg-surface-low px-4 py-2 text-muted font-medium cursor-pointer hover:bg-surface-high transition-colors">Weekly</span>
+              <span className="rounded-full bg-primary px-4 py-2 text-primary-foreground font-bold shadow-lg shadow-primary/20">Monthly</span>
             </div>
           </div>
 
           <div className="mt-8">
-            <div className="relative h-56 w-full rounded-2xl border border-white/5 bg-[#1a1a28]/80 p-6">
+            <div className="relative h-56 w-full rounded-2xl border border-white/[0.03] bg-surface-lowest p-6">
               <div className="absolute inset-6 flex items-end justify-between">
                 {revenueBars.map((bar) => (
                   <div key={bar.label} className="group relative flex h-full w-10 flex-col items-center justify-end">
-                    <div className="absolute -top-7 hidden rounded-md bg-[#1e1e2c] px-2 py-1 text-[10px] text-[#c3c6d7] group-hover:block">
+                    <div className="absolute -top-7 hidden rounded-md bg-surface-high border border-white/10 px-2 py-1 text-[10px] text-white font-bold group-hover:block z-10">
                       {bar.amount}
                     </div>
                     <div
-                      className="w-10 rounded-xl bg-[#292937]"
+                      className="w-10 rounded-t-xl bg-gradient-to-t from-primary/40 to-primary transition-all duration-300 group-hover:brightness-125"
                       style={{ height: `${bar.value}%` }}
                     />
                   </div>
                 ))}
               </div>
-              <div className="absolute inset-0 flex flex-col justify-between px-6 py-6 opacity-40">
-                <span className="border-t border-[#343342]" />
-                <span className="border-t border-[#343342]" />
-                <span className="border-t border-[#343342]" />
-                <span className="border-t border-[#343342]" />
+              <div className="absolute inset-0 flex flex-col justify-between px-6 py-6 opacity-20 pointer-events-none">
+                <span className="border-t border-muted-foreground/30" />
+                <span className="border-t border-muted-foreground/30" />
+                <span className="border-t border-muted-foreground/30" />
+                <span className="border-t border-muted-foreground/30" />
               </div>
             </div>
-            <div className="mt-4 flex justify-between px-6 text-[10px] uppercase tracking-[0.3em] text-[#8d90a0]">
+            <div className="mt-4 flex justify-between px-6 text-[10px] uppercase tracking-[0.2em] text-muted font-bold">
               {revenueBars.map((bar) => (
                 <span key={`${bar.label}-label`}>{bar.label}</span>
               ))}
@@ -196,35 +196,35 @@ export default function DashboardPage() {
       </section>
 
       <section className="relative grid gap-4 xl:grid-cols-2">
-        <div className="card-stitch border border-white/5">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-[#e3e0f4]">Recent Transactions</h3>
-            <Link href="/payments" className="text-xs text-[#b4c5ff] hover:text-[#dbe1ff]">
+        <div className="card-stitch">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-bold text-white">Recent Transactions</h3>
+            <Link href="/payments" className="text-xs text-primary font-bold hover:text-primary/80 transition-colors">
               View all
             </Link>
           </div>
-          <div className="mt-6 space-y-4">
+          <div className="space-y-3">
             {recentPayments.length === 0 ? (
-              <p className="text-sm text-[#c3c6d7]">No payments recorded yet.</p>
+              <p className="text-sm text-muted">No payments recorded yet.</p>
             ) : (
               recentPayments.map((payment) => (
                 <div
                   key={payment.id}
-                  className="flex items-center justify-between rounded-xl border border-white/5 bg-[#1a1a28] px-4 py-3"
+                  className="flex items-center justify-between rounded-xl border border-white/[0.03] bg-surface-low px-4 py-3 hover:bg-surface-high transition-colors"
                 >
                   <div>
-                    <p className="text-sm font-semibold text-[#e3e0f4]">
+                    <p className="text-sm font-bold text-white">
                       {payment.students?.first_name} {payment.students?.last_name}
                     </p>
-                    <p className="text-xs text-[#c3c6d7]">
-                      {payment.students?.class} • {payment.payment_method}
+                    <p className="text-xs text-muted">
+                      {payment.students?.class} • <span className="capitalize">{payment.payment_method?.replace('_', ' ')}</span>
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-semibold text-[#e3e0f4]">
+                    <p className="text-sm font-bold text-emerald-400">
                       {currencyFormatter.format(Number(payment.amount))}
                     </p>
-                    <p className="text-[10px] text-[#8d90a0]">
+                    <p className="text-[10px] text-muted-foreground font-medium">
                       {new Date(payment.payment_date).toLocaleDateString()}
                     </p>
                   </div>
@@ -234,34 +234,34 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="card-stitch border border-white/5">
-          <div className="flex items-center justify-between">
+        <div className="card-stitch">
+          <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              <Bell className="h-4 w-4 text-[#b4c5ff]" />
-              <h3 className="text-lg font-semibold text-[#e3e0f4]">Pending Reminders</h3>
+              <Bell className="h-4 w-4 text-primary" />
+              <h3 className="text-lg font-bold text-white">Pending Reminders</h3>
             </div>
-            <span className="rounded-full bg-[#571bc1]/20 px-3 py-1 text-[11px] text-[#d0bcff]">
+            <span className="rounded-full bg-secondary/20 px-3 py-1 text-[11px] text-secondary font-bold">
               {pendingReminders.length} open
             </span>
           </div>
-          <div className="mt-6 space-y-4">
+          <div className="space-y-3">
             {pendingReminders.length === 0 ? (
-              <p className="text-sm text-[#c3c6d7]">No pending reminders.</p>
+              <p className="text-sm text-muted">No pending reminders.</p>
             ) : (
               pendingReminders.slice(0, 5).map((reminder) => (
                 <div
                   key={reminder.id}
-                  className="flex items-center justify-between rounded-xl border border-white/5 bg-[#1a1a28] px-4 py-3"
+                  className="flex items-center justify-between rounded-xl border border-white/[0.03] bg-surface-low px-4 py-3 hover:bg-surface-high transition-colors"
                 >
                   <div>
-                    <p className="text-sm font-semibold text-[#e3e0f4]">
+                    <p className="text-sm font-bold text-white">
                       {reminder.student_first_name} {reminder.student_last_name}
                     </p>
-                    <p className="text-xs text-[#c3c6d7]">
-                      {reminder.class} • {reminder.type.replace('_', ' ')}
+                    <p className="text-xs text-muted">
+                      {reminder.class} • <span className="capitalize">{reminder.type.replace('_', ' ')}</span>
                     </p>
                   </div>
-                  <span className="status-warning">
+                  <span className="status-warning bg-amber-500/10 text-amber-400 px-2 py-1 rounded-lg text-xs font-bold border border-amber-500/20">
                     {currencyFormatter.format(reminder.balance)}
                   </span>
                 </div>

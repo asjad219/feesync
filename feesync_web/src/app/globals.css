@@ -23,48 +23,59 @@
 }
 
 :root {
-  --background: #12121f;
-  --foreground: #e3e0f4;
-  --primary: #b4c5ff;
-  --primary-foreground: #002a78;
-  --secondary: #d0bcff;
-  --secondary-foreground: #3c0091;
-  --muted: #c3c6d7;
-  --muted-foreground: #343342;
-  --accent: #2563eb;
-  --accent-foreground: #eeefff;
-  --destructive: #ffb4ab;
-  --border: #434655;
-  --input: #1e1e2c;
-  --ring: #2563eb;
-  --chart-1: #2563eb;
-  --chart-2: #571bc1;
-  --chart-3: #d0bcff;
-  --chart-4: #ffb596;
-  --chart-5: #8d90a0;
-  --radius: 1.5rem;
+  /* Deep Midnight Base */
+  --background: #08080f;
+  --foreground: #f0f1f7;
+
+  /* Primary: Vibrant Indigo-Blue (Higher Contrast) */
+  --primary: #4e80ff;
+  --primary-foreground: #ffffff;
+
+  /* Secondary: Soft Lavender */
+  --secondary: #b19dff;
+  --secondary-foreground: #1a004a;
+
+  /* Muted: Higher contrast for readability */
+  --muted: #a1a4b5;
+  --muted-foreground: #20202e;
+
+  /* Accent: Clean Blue */
+  --accent: #3b82f6;
+  --accent-foreground: #ffffff;
+
+  /* Destructive: Soft Red */
+  --destructive: #ff8a80;
+
+  /* Borders & Inputs: Subtle but visible */
+  --border: #2a2c3a;
+  --input: #151624;
+  --ring: #4e80ff;
+
+  /* Charts */
+  --chart-1: #4e80ff;
+  --chart-2: #8b5cf6;
+  --chart-3: #d946ef;
+  --chart-4: #f97316;
+  --chart-5: #64748b;
+
+  --radius: 1rem;
 }
 
 .dark {
-  --background: #12121f;
-  --foreground: #e3e0f4;
-  --primary: #b4c5ff;
-  --primary-foreground: #002a78;
-  --secondary: #d0bcff;
-  --secondary-foreground: #3c0091;
-  --muted: #c3c6d7;
-  --muted-foreground: #1a1a28;
-  --accent: #2563eb;
-  --accent-foreground: #eeefff;
-  --destructive: #ffb4ab;
-  --border: #434655;
-  --input: #1e1e2c;
-  --ring: #2563eb;
-  --chart-1: #2563eb;
-  --chart-2: #571bc1;
-  --chart-3: #d0bcff;
-  --chart-4: #ffb596;
-  --chart-5: #8d90a0;
+  --background: #08080f;
+  --foreground: #f0f1f7;
+  --primary: #4e80ff;
+  --primary-foreground: #ffffff;
+  --secondary: #b19dff;
+  --secondary-foreground: #1a004a;
+  --muted: #a1a4b5;
+  --muted-foreground: #151624;
+  --accent: #3b82f6;
+  --accent-foreground: #ffffff;
+  --destructive: #ff8a80;
+  --border: #2a2c3a;
+  --input: #151624;
+  --ring: #4e80ff;
 }
 
 @layer base {
@@ -72,89 +83,91 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground font-sans antialiased;
+    letter-spacing: -0.01em;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Manrope', system-ui, sans-serif;
+    @apply tracking-tight;
   }
 }
 
 @layer components {
-  /* Stitch Design: Container Layers */
+  /* Surface Layers */
   .surface-lowest {
-    @apply bg-[#0d0d1a];
+    @apply bg-[#05050a];
   }
-  
+
   .surface-low {
-    @apply bg-[#1a1a28];
+    @apply bg-[#0f0f1a];
   }
-  
+
   .surface-container {
-    @apply bg-[#1e1e2c];
+    @apply bg-[#151624];
   }
-  
+
   .surface-high {
-    @apply bg-[#292937];
+    @apply bg-[#1e1f31];
   }
 
-  /* Stitch Design: Cards with no borders */
+  /* Cards */
   .card-stitch {
-    @apply bg-[#1e1e2c] rounded-xl p-6 shadow-lg;
+    @apply bg-[#151624] rounded-2xl p-6 shadow-sm border border-white/[0.03];
   }
-  
+
   .card-elevated {
-    @apply bg-[#292937] rounded-xl p-6 shadow-lg backdrop-blur-[16px];
+    @apply bg-[#1e1f31] rounded-2xl p-6 shadow-xl border border-white/[0.05] backdrop-blur-[20px];
   }
 
-  /* Stitch Design: Primary CTA (Blue to Purple Gradient) */
+  /* Buttons */
   .btn-primary-gradient {
-    @apply bg-gradient-to-br from-[#2563eb] to-[#571bc1] text-[#e3e0f4] hover:shadow-lg transition-all px-6 py-3 rounded-xl font-semibold;
+    @apply bg-gradient-to-br from-[#4e80ff] to-[#7c3aed] text-white hover:brightness-110 active:scale-[0.98] transition-all px-6 py-2.5 rounded-xl font-semibold shadow-md shadow-blue-500/10;
   }
 
-  /* Stitch Design: Input Fields */
+  /* Inputs */
   .input-stitch {
-    @apply bg-[#1e1e2c] border-b-2 border-[#2563eb] text-[#e3e0f4] placeholder-[#c3c6d7] focus:outline-none transition-colors;
+    @apply bg-[#0f0f1a] border border-white/[0.08] rounded-xl px-4 py-2 text-[#f0f1f7] placeholder-[#71748a] focus:outline-none focus:border-[#4e80ff] focus:ring-1 focus:ring-[#4e80ff]/50 transition-all;
   }
 
-  /* Stitch Design: Text with hierarchy */
+  /* Text Hierarchy */
   .display-lg {
-    @apply text-5xl font-bold text-[#e3e0f4];
+    @apply text-5xl font-extrabold text-white;
   }
 
   .headline-md {
-    @apply text-2xl font-semibold text-[#e3e0f4];
+    @apply text-2xl font-bold text-white;
   }
 
   .title-lg {
-    @apply text-xl font-medium text-[#e3e0f4];
+    @apply text-xl font-semibold text-[#f0f1f7];
   }
 
   .body-lg {
-    @apply text-base font-normal text-[#e3e0f4];
+    @apply text-base font-normal text-[#e1e3f0] leading-relaxed;
   }
 
   .label-md {
-    @apply text-sm font-medium text-[#c3c6d7];
+    @apply text-sm font-medium text-[#a1a4b5];
   }
 
-  /* Stitch Design: Status Pills */
+  /* Status Pills */
   .status-pill {
-    @apply px-3 py-1 rounded-full text-xs font-semibold;
+    @apply px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider;
   }
 
   .status-success {
-    @apply px-3 py-1 rounded-full text-xs font-semibold bg-green-900/20 text-green-300;
+    @apply px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20;
   }
 
   .status-error {
-    @apply px-3 py-1 rounded-full text-xs font-semibold bg-red-900/20 text-red-300;
+    @apply px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-rose-500/10 text-rose-400 border border-rose-500/20;
   }
 
   .status-warning {
-    @apply px-3 py-1 rounded-full text-xs font-semibold bg-yellow-900/20 text-yellow-300;
+    @apply px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20;
   }
 
   .status-info {
-    @apply px-3 py-1 rounded-full text-xs font-semibold bg-blue-900/20 text-blue-300;
+    @apply px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-sky-500/10 text-sky-400 border border-sky-500/20;
   }
 }
