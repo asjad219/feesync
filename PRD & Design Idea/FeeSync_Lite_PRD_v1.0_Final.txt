@@ -1,0 +1,905 @@
+
+
+FeeSync Lite  •  PRD v1.0  •  ConfidentialSingle-Admin Edition  •  April 2026
+Page 1
+FeeSync Lite
+Complete Fee Management for Solo Coaching Operators
+PRODUCTFeeSync Lite — Single-Admin Edition
+VERSIONPRD v1.0  •  April 2026
+AUTHORAs  •  Solo Founder
+STATUSProduction-Ready Specification
+Single AdminFlutter + WebAll 6 Fee PlansWhatsApp Native9 AI Features
+8 M+
+Individual tutors
+across India
+n 0
+Free tier up
+to 50 students
+< 3 min
+Onboarding to
+first payment
+Flutter + Web
+Both platforms
+ship together
+9
+AI features
+built in
+TABLE OF CONTENTS
+1Executive Summary & Vision
+Why FeeSync Lite, who it serves
+2Market Context & Target Users
+Personas, pain points
+3Product Architecture
+Stack, deployment, database schema
+4Authentication & Onboarding
+Login, session, setup flow
+5Dashboard & Analytics
+KPI cards, charts, quick actions
+6Student Management
+Profiles, batches, documents, lifecycle
+7Fee Management Core
+6 plan types, dues engine, receipts
+8Payment Integration
+Razorpay, UPI QR, reconciliation
+9Notifications & Communication
+WhatsApp, SMS, in-app, email
+10Reports & Exports
+14 reports, PDF / Excel / CSV / WhatsApp
+11Attendance Module
+Daily marking, parent alerts, register PDF
+12Batch & Schedule Management
+Timetable, capacity, clash detection
+13Expense Tracker & P&L;
+Expense module, profit & loss statement
+14Parent Portal — Flutter App
+com.feesync.lite — Android + iOS
+15AI-Powered Features
+Smart reminders, OCR, predictions
+16Settings & Configuration
+Center profile, fees, notifications, security
+17Subscription & Billing
+Pricing tiers, paywalls, business rules
+18Security & Compliance
+DPDP Act, RLS, 2FA, data protection
+19Non-Functional Requirements
+Performance, scale, offline, accessibility
+
+FeeSync Lite  •  PRD v1.0  •  ConfidentialSingle-Admin Edition  •  April 2026
+Page 2
+20Release Roadmap
+MVP → v1 → v2 → v3 milestones
+21Success Metrics & KPIs
+North star, product, business metrics
+
+FeeSync Lite  •  PRD v1.0  •  ConfidentialSingle-Admin Edition  •  April 2026
+Page 3
+1
+EXECUTIVE SUMMARY & VISION
+Why FeeSync Lite Exists
+The  Indian  private  coaching  market  spans  1.5  million  centers  —  but  the  vast  majority  are  operated  by  a  single
+individual who teaches, collects fees, manages parents, and tracks attendance all by themselves. FeeSync Lite is
+a  cloud-native,  mobile-first  fee  management  platform  purpose-built  for  these  solo  operators:  home  tutors,  yoga
+instructors,  music  teachers,  dance  coaches,  and  single-room  coaching  owners.  It  digitises  every  financial  and
+operational touchpoint — from student enrollment and batch assignment through fee collection, WhatsApp receipt
+dispatch, attendance tracking, and real-time P&L; visibility — with zero accounting knowledge required.
+Value PropositionDescription
+Zero Paper100% digital fee records. Searchable by name, phone, or batch instantly.
+WhatsApp-FirstInstant receipt and reminder delivery via WhatsApp — the channel every Indian parent uses.
+Offline-TolerantFlutter app caches data locally and syncs automatically when connectivity returns.
+Full Fee EngineAll 6 fee plan types: monthly, quarterly, half-yearly, annual, custom installment, per-session.
+Razorpay NativeUPI QR codes, payment links, online checkout, and auto-reconciliation built in.
+AI-Powered9 AI features: overdue predictor, expense OCR, anomaly detection, churn risk, smart summaries.
+Zero Accounting SkillsWizard-driven workflows. Any tutor can operate it from day one — no training needed.
+Truly Affordablen0 free tier for up to 50 students. n199/month entry price for paid tier.
+2
+MARKET CONTEXT & TARGET USERS
+Personas & Pain Points
+Primary Personas
+PersonaProfileStudent CountPrimary Need
+Solo Coaching OwnerRuns one center alone. Teaches 2–4 subjects. No accountant.40–150Real-time revenue and overdue visibility
+Home TutorTeaches from home. Class 8–12. Multiple subjects.15–60Fast cash/UPI recording and WhatsApp receipts
+Yoga / Fitness InstructorMorning and evening batches. Monthly membership model.20–80Batch-wise monthly fee tracking
+Music / Dance TeacherPer-session or monthly. Attendance-linked billing.10–50Per-class payment recording and absence alerts
+Spoken English / IELTSShort 1–3 month intensive courses. Fixed course fee.15–40Course fee installment tracking
+Art / Skill CoachWeekend workshops. One-time or monthly fees.8–30One-time receipt and renewal reminder
+Single-Subject CoachingPhysics / Maths / Chemistry specialist. One room.50–150Bulk overdue reminder and monthly P&L clarity
+Pain Points Solved
+Pain PointImpactFeeSync Lite Solution
+Fee register or diary lostAll payment history gone permanentlyCloud-synced records — permanent, searchable, recoverable
+No real-time overdue viewOwner only discovers defaults at month-endLive dashboard — overdue count and amounts always visible
+
+FeeSync Lite  •  PRD v1.0  •  ConfidentialSingle-Admin Edition  •  April 2026
+Page 4
+Pain PointImpactFeeSync Lite Solution
+Manual receipt writingTime-consuming, error-prone, leads to disputesAuto-PDF receipt generated on payment, sent to WhatsApp in seconds
+No bulk reminder toolAdmin calls each parent individually — awkwardOne-tap bulk WhatsApp reminder to all overdue parents
+Cash and UPI confusionCannot reconcile at month-endPayment mode tracking with daily and monthly reconciliation report
+No monthly P&L viewOwner never knows true profitabilityAutomated P&L: revenue minus expenses per month, exportable PDF
+Student data lost on exitNo history if student leaves or disputes ariseSoft-delete — all history preserved permanently
+Multiple fee arrangementsDifferent deals per student, impossible to trackPer-student fee assignment with discount and waiver support
+No attendance alertsParents unaware when child misses classAuto WhatsApp absent alert sent to parent the same day
+
+FeeSync Lite  •  PRD v1.0  •  ConfidentialSingle-Admin Edition  •  April 2026
+Page 5
+3
+PRODUCT ARCHITECTURE
+Stack, Deployment, Database Schema
+Technology Stack
+LayerTechnologyPurpose / Notes
+Frontend (Web)React 18 + Vite + TypeScriptFast development with HMR, type safety, Vercel edge deployment
+StylingTailwind CSS + shadcn/uiConsistent, accessible, mobile-first UI components
+State ManagementZustand + React QueryLightweight global state and server-state synchronisation
+Backend / DBSupabase — PostgreSQL + Auth + RealtimeFully managed backend with Row-Level Security and instant APIs
+File StorageSupabase StorageReceipts, student documents, expense photos, logos
+Deployment (Web)Vercel (edge functions)Zero-config CI/CD, global CDN, environment-based builds
+Mobile AppFlutter 3 + DartSingle codebase for Android and iOS — com.feesync.lite
+PaymentsRazorpay Payment GatewayUPI, cards, netbanking, QR codes, webhook reconciliation
+WhatsAppMeta Cloud API / Interakt / WATIPre-approved HSM templates — receipts and all 14 notification types
+SMS FallbackFast2SMS / MSG91Automatic fallback when WhatsApp delivery fails
+EmailResend.comTransactional emails — receipts, reports, password reset
+PDF GenerationReact-PDF (client) + Puppeteer (edge)Receipts generated on device; reports generated server-side
+AI FeaturesGemini API / OpenAI GPT-4Powers all 9 AI features — overdue predictor, OCR, NLQ, summaries
+Error MonitoringSentryProduction error tracking and alerting
+AnalyticsSupabase PostgREST + custom viewsInternal dashboards and KPI computation — no extra cost
+Database Schema — Core Tables
+Architecture: FeeSync Lite uses a single-admin model. Each coaching center has one center_profile record and one
+owner_user account. All tables are scoped to owner_id via Row-Level Security — the owner can only ever see their
+own data. There are no branch-level scopes, no role hierarchies, and no cross-tenant queries possible.
+TablePurposeKey Fields
+center_profileSingle center record. One row per owner.owner_id, center_name, logo_url, address, gstin, receipt_prefix, default_due_day
+studentsStudent profiles. Linked to center and batch.owner_id, name, parent_phone, whatsapp_no, batch_id, status, admission_no
+batchesSubject or batch configuration.owner_id, name, subject, teacher_name, capacity, fee_amount, schedule_json
+fee_plansStructured fee plans of all 6 types.owner_id, type, amount, due_day, late_fine, grace_days, gst_percent
+fee_assignmentsStudent ↔ fee plan mapping with discount.student_id, fee_plan_id, start_date, discount_amount, waiver_reason
+paymentsEvery payment transaction.student_id, amount, mode, receipt_no, utr_ref, created_at
+duesAuto-computed outstanding per student per period.Materialised view — student_id, period, assigned, paid, outstanding
+
+FeeSync Lite  •  PRD v1.0  •  ConfidentialSingle-Admin Edition  •  April 2026
+Page 6
+TablePurposeKey Fields
+expensesCenter expense entries.owner_id, category, amount, vendor, payment_mode, receipt_url, date
+attendanceDaily attendance record per student per batch.student_id, batch_id, date, status (present/absent/late)
+notifications_logDelivery log for all sent WhatsApp, SMS, email messages.student_id, type, channel, status, sent_at
+subscriptionsSaaS plan and billing state for the center.owner_id, plan_tier, valid_until, max_students, razorpay_sub_id
+
+FeeSync Lite  •  PRD v1.0  •  ConfidentialSingle-Admin Edition  •  April 2026
+Page 7
+4
+AUTHENTICATION & ONBOARDING
+Login, Session, Setup Flow
+FeeSync  Lite  uses  a  single-admin  model.  There  is  exactly  one  account  per  center.  The  owner  is  the  only  user.
+There  are  no  staff  invites,  no  permission  tables,  and  no  role-based  access  control.  Authentication  is  handled  by
+Supabase Auth. The onboarding flow is designed to reach the first useful action — adding a student and recording
+a payment — in under three minutes.
+Onboarding Flow
+StepScreenRequired InputTime Target
+1Landing → RegisterEmail and password, or Google OAuth sign-in30 s
+2Center SetupCenter name, what you teach (e.g. Maths, Yoga), default monthly fee60 s
+3Profile (optional)Logo, address, GSTIN — all skippable, editable later in Settings0–45 s
+4Dashboard (empty state)'Add your first student' CTA displayed prominently with progress strip—
+5Add First StudentStudent name, parent phone number, batch, fee plan45 s
+6First Payment (guided)Optional walkthrough: record a payment and preview the WhatsApp receipt60 s
+Authentication Specifications
+Auth AspectSpecification
+Login MethodEmail + password or Google OAuth. Phone OTP login planned for v2.
+SessionShort-lived JWT plus refresh token. Auto-expire after 30 days of inactivity.
+Two-Factor AuthTOTP-based 2FA — prompted at first login, skippable once. Mandatory for account security.
+Password ResetEmail reset link via Supabase Auth. Standard secure flow.
+Account DeletionOwner can self-delete the account. All data erased within 30 days per DPDP Act 2023.
+5
+DASHBOARD & ANALYTICS
+Owner Control Centre
+The dashboard is the owner's primary control centre. It answers three questions at a glance: how much did I collect
+this month, who has not paid, and what do I need to do right now. It combines live KPI cards, trend charts, and a
+quick action bar — all on a single screen.
+Dashboard KPI Cards — Always Visible
+KPI CardData LogicPriority
+Total Collection TodaySum of all payments recorded today
+CORE
+This Month RevenueSum of all payments in the current calendar month
+CORE
+Total Overdue AmountSum of all outstanding dues across every active student
+CORE
+Overdue Students CountCount of students with any outstanding due amount
+CORE
+
+FeeSync Lite  •  PRD v1.0  •  ConfidentialSingle-Admin Edition  •  April 2026
+Page 8
+KPI CardData LogicPriority
+Active StudentsCount of students with status = active
+CORE
+New Admissions This MonthCount of students enrolled in the current month
+HIGH
+Attendance Today %Present count divided by total enrolled across all batches
+HIGH
+Upcoming Renewals (7 days)Students with fee due in the next 7 days
+HIGH
+Dashboard Charts
+•Monthly Revenue Bar Chart — last 12 months, colour-coded by payment mode (cash, UPI, cheque)
+•Collection vs Due Line Chart — daily totals for the current month, highlights the overdue gap
+•Student Growth Line — enrollment count trend by month
+•Batch Strength Donut — students per batch with capacity utilisation percentage
+•Payment Mode Pie — cash vs UPI vs cheque share for the current month
+•Top Defaulters Widget — top 10 overdue students with amount owed and days overdue
+•Today's Collection Activity Feed — live stream of payments recorded today
+•Upcoming Due Dates Timeline — 14-day calendar strip with amounts due each day
+Quick Action Bar
+•+ Record Payment
+•+ Add Student
+•Send Bulk Reminders
+•Download Monthly Report
+•Mark Attendance (Today)
+•View Overdue List
+
+FeeSync Lite  •  PRD v1.0  •  ConfidentialSingle-Admin Edition  •  April 2026
+Page 9
+6
+STUDENT MANAGEMENT
+Profiles, Batches, Documents, Lifecycle
+Student Profile Fields
+Personal Information
+Full Name (required)
+Date of Birth
+Gender
+Photo (optional)
+Primary Phone (student)
+Parent / Guardian Name
+Parent Phone (required — WhatsApp)
+WhatsApp Number
+Email (optional)
+Address
+Academic Information
+Class / Standard
+School or College Name
+Aadhaar Number (optional, stored masked)
+Enrollment Date (auto-filled)
+Admission Number (auto-generated)
+Batch / Subject (multi-batch supported)
+Status: Active / Inactive / Alumni
+Notes / Remarks
+Discount or Waiver flag
+—
+Student Actions
+ActionDescriptionPriority
+Enroll in BatchAdd student to one or more batches. Each enrollment triggers a fee assignment.
+CORE
+Record PaymentQuick payment from student profile. Pre-fills student and fee plan details.
+CORE
+View Fee HistoryFull payment timeline with receipt links. Filter by month or year.
+CORE
+View DuesOutstanding summary — per-plan breakdown with days overdue.
+CORE
+Send WhatsAppManual WhatsApp message to parent. Pre-built templates available.
+CORE
+Upload DocumentAadhaar, birth certificate, or photo ID. Stored in Supabase Storage.
+HIGH
+Apply Discount / WaiverOne-time or recurring discount. Reason required and logged.
+HIGH
+Deactivate / GraduateSoft-delete. Student becomes alumni — all history permanently preserved.
+CORE
+Merge DuplicateMerge two accidentally created duplicate records. Payments auto-merged.
+HIGH
+Print ID CardOne-click ID card PDF with photo, name, batch, and admission number.
+MEDIUM
+Bulk Import via CSVImport hundreds of students from Excel or CSV with column mapping.
+HIGH
+Add NoteFree-text internal note on any student — visible only to the admin.
+HIGH
+Student List Features
+•Global search by name, phone number, parent phone, or admission number
+•Filter by batch, status (active/inactive/alumni), overdue flag, and enrollment month
+
+FeeSync Lite  •  PRD v1.0  •  ConfidentialSingle-Admin Edition  •  April 2026
+Page 10
+•Sort by name, dues amount, or last payment date — overdue-first sort available
+•Bulk select rows: send WhatsApp, export selected, or change status in bulk
+•Colour-coded rows: red = overdue more than 30 days, orange = due this week, green = paid up
+
+FeeSync Lite  •  PRD v1.0  •  ConfidentialSingle-Admin Edition  •  April 2026
+Page 11
+7
+FEE MANAGEMENT CORE
+Plans, Collection, Receipts, Dues Engine
+Fee Plan Types
+Plan TypeDescriptionPriority
+Monthly FixedFixed amount per month. Auto-generates a due record on a configurable day each month.
+CORE
+Quarterly3-month bundle. Pro-rated automatically if student enrolls mid-quarter.
+CORE
+Half-Yearly6-month plan with full pro-rata support for mid-cycle enrollments.
+HIGH
+Annual / One-TimeSingle fixed amount for the full year or a one-time enrollment fee.
+CORE
+Custom / InstallmentAny amount on any date. Example: n5,000 on 15th January, n5,000 on 15th February.
+HIGH
+Per-Class / SessionAmount charged per class attended. Linked directly to attendance records.
+CORE
+Fee Plan Configuration
+•Base amount (required)
+•Late fine per day after due date (optional) with configurable grace period in days
+•Tax rate: GST percentage — 0%, 5%, 12%, or 18% — for registered centers
+•Auto-generate monthly due records: toggle on or off per plan
+•Discount categories: sibling discount, merit discount, staff-child discount
+•Plan name, description, and applicable batches
+Payment Recording — 7-Step Flow
+StepActionDetails
+1Search studentType name or phone number — instant autocomplete from all active students.
+2Select fee periodSystem shows all pending dues. Select which period or periods to pay.
+3Enter amountPre-filled with the due amount. Partial payment supported — tracked separately.
+4Select payment modeCash / UPI / Cheque / Bank Transfer / Card / Scholarship.
+5Enter referenceUPI UTR number, cheque number, or transaction ID — required for non-cash modes.
+6Add discount / waiverOptional. Reason required and saved to history.
+7Confirm and receiptReceipt number auto-assigned. PDF generated instantly. WhatsApp receipt sent.
+Receipt Design
+•Center logo, name, address, and GSTIN
+•Auto-assigned receipt number in configurable format (e.g. FS-2024-0001)
+•Student name, admission number, and batch name
+•Fee period description (e.g. 'December 2024 — Physics Batch A')
+•Amount paid, payment mode, and reference number
+
+FeeSync Lite  •  PRD v1.0  •  ConfidentialSingle-Admin Edition  •  April 2026
+Page 12
+•Outstanding balance remaining after this payment
+•Optional digital signature field
+•QR code linking to the online receipt verification page
+•Printable A5 format and WhatsApp-optimised A6 format
+•DUPLICATE watermark applied automatically on reprints
+Dues Engine
+The dues engine auto-generates pending fee records at the start of each billing period. A Supabase Edge Function
+runs as a CRON job daily at midnight IST. It re-computes all pending dues, accounts for enrollment date pro-rating,
+applies discounts and late fines that accumulate daily after the grace period, handles partial payment tracking, and
+processes mid-cycle plan changes. Newly overdue students are flagged automatically and queued for WhatsApp
+reminder dispatch.
+
+FeeSync Lite  •  PRD v1.0  •  ConfidentialSingle-Admin Edition  •  April 2026
+Page 13
+8
+PAYMENT INTEGRATION
+Razorpay, UPI QR, Reconciliation
+Supported Payment Modes
+ModeDescriptionPriority
+CashRecorded manually by admin. No payment gateway required. Most common mode.
+CORE
+UPI (manual entry)Admin enters the UTR number from the parent's UPI transfer. Manual verification.
+CORE
+Razorpay Payment LinkAdmin generates a payment link and sends to parent via WhatsApp. Parent pays online.
+HIGH
+Razorpay UPI QRStatic QR code per center and dynamic QR code per invoice. Parent scans and pays.
+HIGH
+Razorpay SubscriptionAuto-debit monthly with parent consent. Managed via Razorpay subscription API.
+MEDIUM
+ChequeCheque number, bank name, and date recorded. Status: received / cleared / bounced.
+CORE
+Bank Transfer / NEFTReference number logged. Manual verification by admin.
+CORE
+Scholarship / WaiverZero-amount transaction. Reason required and stored in history.
+CORE
+Online Payment Flow (Razorpay)
+•Admin generates a payment link from the student's pending due record
+•Link is sent to the parent via WhatsApp, SMS, or email
+•Parent opens link and completes payment through Razorpay checkout (UPI, card, or netbanking)
+•Razorpay webhook fires to the Vercel Edge Function
+•Edge Function verifies the webhook signature and records the payment in Supabase
+•PDF receipt is generated automatically and WhatsApp receipt is sent to the parent
+•Dashboard KPI cards update in real time via Supabase Realtime subscription
+Cheque Lifecycle
+Cheques move through a defined lifecycle: Received → Deposited → Cleared or Bounced. On a bounce event, the
+payment is automatically reversed, the student's outstanding due is restored, a configurable bounce charge is
+added, and an alert is sent to the admin. A clearance reminder is triggered three days after the deposit date if the
+status remains Deposited.
+Reconciliation Report
+The daily and monthly reconciliation view shows total collected by payment mode, Razorpay settlement amounts
+versus manually recorded entries, pending cheque clearances, and any discrepancies flagged in red. Exportable
+as Excel.
+9
+NOTIFICATIONS & COMMUNICATION
+WhatsApp, SMS, In-App, Email
+Notification Triggers
+
+FeeSync Lite  •  PRD v1.0  •  ConfidentialSingle-Admin Edition  •  April 2026
+Page 14
+NotificationTriggerChannelPriority
+Fee ReceiptImmediately on payment recordWhatsApp + Email
+CORE
+Due Reminder — 3 days beforeAutomated CRONWhatsApp
+CORE
+Due Reminder — On due dateAutomated CRONWhatsApp + SMS
+CORE
+Overdue Alert — 7 daysAutomated CRONWhatsApp
+CORE
+Overdue Alert — 15 and 30 daysAutomated CRONWhatsApp + SMS
+HIGH
+Payment LinkManual by adminWhatsApp
+HIGH
+Admission ConfirmationOn student creationWhatsApp + Email
+CORE
+Batch Schedule ChangeManual by adminWhatsApp
+HIGH
+Holiday / ClosureManual broadcastWhatsApp
+HIGH
+Fee Plan ChangeOn plan updateWhatsApp
+HIGH
+Attendance Absent AlertDaily, if enabled per batchWhatsApp to parent
+HIGH
+Exam / Test ReminderManual by adminWhatsApp
+MEDIUM
+Center-level BroadcastManual by adminWhatsApp + SMS + In-app
+HIGH
+Subscription Renewal ReminderAuto, 7 days before expiryEmail + In-app
+CORE
+WhatsApp Template Management
+•All outgoing messages use pre-approved Meta HSM (Highly Structured Message) templates
+•Template variables: {{student_name}}, {{amount}}, {{due_date}}, {{center_name}}, {{receipt_no}}
+•Admin can customise the template body text within the variable constraint boundaries
+•Language options: English, Hindi, Bengali, Assamese, Tamil, Telugu — selectable per center
+•Parent opt-out management: if a parent opts out, the system respects it automatically
+•Delivery status tracked per message: sent / delivered / read / failed
+•Failed WhatsApp messages automatically fall back to SMS via the configured SMS provider
+
+FeeSync Lite  •  PRD v1.0  •  ConfidentialSingle-Admin Edition  •  April 2026
+Page 15
+10
+REPORTS & EXPORTS
+14 Report Types — Full Power
+ReportDescriptionExportPriority
+Daily Collection ReportAll payments today. Grouped by payment mode.PDF / Excel / CSV
+CORE
+Monthly Revenue ReportTotal collected, total due, total outstanding. Month-over-month comparison.PDF / Excel
+CORE
+Overdue / Due ReportAll students with outstanding dues. Sortable by amount or days overdue.PDF / WhatsApp
+CORE
+Fee Plan ReportRevenue per fee plan — enrolled count, collected, outstanding.PDF / Excel
+HIGH
+Student LedgerComplete financial history for one student. Printable A4. Shareable.PDF / WhatsApp
+CORE
+P&L StatementRevenue minus expenses. Monthly and annual view. Accrual and cash basis.PDF / Excel
+HIGH
+Expense ReportAll expenses by category, vendor, and date range.PDF / Excel
+HIGH
+Attendance ReportStudent-wise attendance percentage for any date range.PDF / Excel
+HIGH
+Defaulter ListStudents overdue beyond a configurable number of days.PDF / WhatsApp
+CORE
+Collection EfficiencyTarget versus actual collection percentage per month.PDF
+HIGH
+New Admissions ReportNew enrollments per month and batch.PDF
+MEDIUM
+Alumni / Dropout ReportStudents who left, reason for leaving, and revenue lost.PDF
+MEDIUM
+GST SummaryGST collected by tax slab. Formatted for accountant or CA.PDF / Excel
+HIGH
+Payment Mode AnalysisCash, UPI, and cheque trends and share over time.PDF
+MEDIUM
+Export Formats
+•PDF — print-ready, branded with center logo and name
+•Excel (.xlsx) — all calculated columns preserved, suitable for an accountant
+•CSV — raw data dump for use in external tools or custom analysis
+•WhatsApp — share any report as a PDF link directly via WhatsApp
+11
+ATTENDANCE MODULE
+Daily Marking, Reports, Parent Alerts
+FeatureDescriptionPriority
+Batch-wise daily attendanceAdmin selects a batch and date. Sees the full roster. Marks Present, Absent, or Late.
+CORE
+Bulk present (default all present)One-click to mark everyone present, then individually flag absences. Faster for large batches.
+CORE
+Attendance backdatingMark attendance for up to 7 days in the past. Reason required. Action is logged.
+HIGH
+Absent parent alertWhatsApp alert sent to parent automatically when child is marked absent. Configurable toggle.
+HIGH
+Attendance % on student profileRunning attendance percentage. Alert displayed when student falls below 75%.
+HIGH
+Attendance register PDFMonthly attendance register for a batch. Printable A4 landscape format.
+HIGH
+Holiday managementMark center holidays. Attendance is automatically excluded for those dates.
+HIGH
+
+FeeSync Lite  •  PRD v1.0  •  ConfidentialSingle-Admin Edition  •  April 2026
+Page 16
+FeatureDescriptionPriority
+Per-session fee billing linkAttendance records drive the billing amount for per-session fee plans.
+CORE
+Leave request (v2)Student submits a leave request via the parent portal. Admin reviews and approves.
+MEDIUM
+
+FeeSync Lite  •  PRD v1.0  •  ConfidentialSingle-Admin Edition  •  April 2026
+Page 17
+12
+BATCH & SCHEDULE MANAGEMENT
+Timetable, Capacity, Clash Detection
+Batch Configuration
+•Batch name (e.g. 'Class 10 Science Morning')
+•Subject or course name
+•Teacher name — free text field, useful for logging freelance teacher names
+•Room or location (optional)
+•Capacity — maximum number of students, with 80% and 100% utilisation alerts
+•Schedule — days of week plus time slots (supports multiple slots per day)
+•Fee amount linked to a specific fee plan
+•Start date and end date for the academic session
+•Status: active, completed, or upcoming
+Batch Operations
+OperationDescriptionPriority
+Transfer students between batchesMove students with or without a fee plan change.
+CORE
+Clone batch for new sessionCopy schedule, fee plan, and teacher name — starts with an empty enrollment list.
+HIGH
+Capacity alertsWarning when batch exceeds 80% capacity. New enrollment blocked at 100%.
+HIGH
+Batch-wise WhatsApp broadcastSend a WhatsApp message to all parents of a specific batch at once.
+HIGH
+Weekly timetable grid viewVisual timetable grid. Clash detection: blocks two batches sharing the same time slot.
+HIGH
+Printable timetable PDFFormatted timetable PDF for display at the center.
+MEDIUM
+Archive completed batchFreezes all records. Students move to alumni status or transfer to a new batch.
+CORE
+13
+EXPENSE TRACKER & P&L
+Center Costs, Profit & Loss Statement
+Expense Categories
+Rent
+Salaries and Freelance Fees
+Electricity and Utilities
+Internet and Phone
+Stationery and Printing
+Marketing and Advertising
+Teaching Material
+Equipment Purchase
+Cleaning and Maintenance
+Software and Subscriptions
+Transport
+Miscellaneous
+Expense Entry Fields
+•Date, category (from dropdown — customisable), amount
+
+FeeSync Lite  •  PRD v1.0  •  ConfidentialSingle-Admin Edition  •  April 2026
+Page 18
+•Vendor or payee name
+•Payment mode: cash, UPI, or bank transfer
+•Reference number (for digital payments)
+•Receipt photo upload — stored in Supabase Storage
+•Notes field for additional context
+•Recurring flag — for monthly expenses like rent that repeat automatically
+P&L; Statement
+The  Profit  &  Loss  statement  is  generated  automatically  from  fee  collection  data  and  expense  entries.  Revenue
+equals total fee payments received. Expenses are drawn from all expense entries in the selected period. Net Profit
+equals  Revenue  minus  Expenses.  The  statement  is  displayed  as  a  monthly  bar  chart  and  a  detailed  table.  Both
+accrual basis and cash basis views are available. Annual view is supported. Exportable as a PDF formatted for a
+CA or accountant.
+
+FeeSync Lite  •  PRD v1.0  •  ConfidentialSingle-Admin Edition  •  April 2026
+Page 19
+14
+PARENT PORTAL — FLUTTER APP
+com.feesync.lite — Android + iOS
+The Flutter parent app ships alongside the web app — it is not a future milestone. Package ID: com.feesync.lite. The
+web admin panel is also a fully responsive Progressive Web App installable on Android via 'Add to Home Screen'.
+Parent App Screens
+ScreenDescriptionPriority
+LoginPhone number OTP login. Linked automatically to the parent phone in the student record.
+CORE
+HomeChild's name, current month fee status (paid, due, or overdue), and next due date.
+CORE
+Fee HistoryComplete payment history. Tap any record to view or download the receipt PDF.
+CORE
+Current DuesOutstanding dues per period. 'Pay Now' button initiates Razorpay checkout.
+CORE
+AttendanceChild's running attendance percentage and a daily calendar (present/absent).
+HIGH
+TimetableChild's batch schedule for the current week.
+HIGH
+NotificationsIn-app notification feed — receipts, due reminders, and center announcements.
+CORE
+Contact CenterPhone, WhatsApp, and email buttons to reach the admin directly.
+HIGH
+Multiple ChildrenSwitch between children if more than one child is enrolled at the same center.
+HIGH
+Dark ModeFull dark mode support throughout the app.
+MEDIUM
+Offline SupportLast-known data is cached locally. App remains usable without internet connectivity.
+HIGH
+Flutter Technical Requirements
+AspectSpecification
+FrameworkFlutter 3.x with Dart null-safety enforced throughout
+BackendSupabase Flutter SDK for authentication and data access
+State ManagementRiverpod for scalable and testable state management
+Local CacheHive for offline data storage and sync queue
+PaymentsRazorpay Flutter plugin for in-app checkout
+Push Notificationsfirebase_messaging for remote push notifications
+In-App Alertsflutter_local_notifications for local notification display
+Receipt Viewerpdf and printing packages for in-app PDF view and download
+Package IDcom.feesync.lite
+Android SupportMin SDK: 21 (Android 5.0) — Target SDK: 34 (Android 14)
+SecurityProGuard / R8 obfuscation enabled in release builds
+
+FeeSync Lite  •  PRD v1.0  •  ConfidentialSingle-Admin Edition  •  April 2026
+Page 20
+AspectSpecification
+DistributionSigned release APK and App Bundle for Google Play Store submission
+15
+AI-POWERED FEATURES
+9 Smart Features — Built In
+FeeSync  Lite  ships  with  nine  AI-powered  features  designed  to  reduce  manual  work,  surface  actionable  insights,
+and help the admin stay ahead of collection and student retention problems — without requiring any AI expertise to
+use.
+AI FeatureDescriptionPriority
+Smart Overdue PredictorMachine learning model trained on payment history. Flags students likely to default before the due date, enabling proactive outreach.
+HIGH
+Natural Language Fee QueryAdmin types a question like 'Who has not paid this month?' and receives an instant answer. Powered by Gemini or GPT-4.
+MEDIUM
+AI Receipt OCRUpload a photo of a manual or paper receipt. AI auto-extracts the amount, date, and payment mode. Useful for migrating from paper records.
+HIGH
+Auto-categorise ExpensesUpload a photo of an expense bill. AI extracts the amount and vendor and suggests the appropriate expense category.
+MEDIUM
+WhatsApp Tone OptimizerAI suggests more effective and polite fee reminder phrasing based on the parent's payment history and response patterns.
+LOW
+Enrollment Growth ForecastAnalyses seasonal enrollment trends and predicts expected new admissions for the following month.
+MEDIUM
+Payment Anomaly DetectionFlags unusual payment patterns — large unexplained cash amounts, same-day cancel-and-re-record actions, and atypical discounts.
+HIGH
+Smart Daily Summary ReportAI-generated daily summary: 'Today you collected nX from Y students. 3 students are 30+ days overdue.'
+MEDIUM
+Student Churn Risk ScoreStudents with declining attendance and unpaid dues receive a high churn risk score. Admin is alerted proactively.
+MEDIUM
+
+FeeSync Lite  •  PRD v1.0  •  ConfidentialSingle-Admin Edition  •  April 2026
+Page 21
+16
+SETTINGS & CONFIGURATION
+Center Profile, Fees, Notifications, Security
+Settings are organised into six sections. All fields are optional at setup and can be updated at any time. The admin
+accesses Settings from the bottom navigation bar.
+Center Profile
+•Center name, logo, and tagline
+•Address, phone number, email, and website
+•GSTIN and PAN number (for invoices and receipts)
+•Academic session start and end dates (e.g. April 2024 – March 2025)
+•UPI ID — printed on receipts for parent reference
+Fee Settings
+•Receipt number format: configurable prefix and starting number
+•Default due day of month (default: 1st)
+•Late fine per day and grace period in days
+•GST rate: 0%, 5%, 12%, or 18%
+•Enable or disable online payments via Razorpay
+•Discount categories and maximum percentage allowed per category
+Notifications
+•Enable or disable each notification type individually
+•WhatsApp provider selection: Interakt, WATI, or Meta Direct API
+•SMS provider selection: Fast2SMS or MSG91
+•Reminder timing: number of days before due date (configurable)
+•Absent alert toggle and delay in minutes after class time
+Integrations
+•Razorpay API key and secret
+•WhatsApp Business API credentials
+•Google Calendar sync for batch schedules
+•Webhook URL for custom integrations (v2)
+Appearance
+•Primary brand colour via hex colour picker
+•Dark or light mode default
+•Receipt logo position and size
+•Dashboard layout preference
+Security
+•TOTP 2FA — mandatory at first login, skippable once
+
+FeeSync Lite  •  PRD v1.0  •  ConfidentialSingle-Admin Edition  •  April 2026
+Page 22
+•Session timeout duration
+•On-demand full data export (CSV and JSON)
+•Delete center account with full data erasure within 30 days (DPDP / GDPR)
+17
+SUBSCRIPTION & BILLING
+Right-Sized Pricing for Solo Operators
+Pricing is calibrated so that a tutor with 50 students pays less per month than what they earn from a single student
+session. The free tier is genuinely useful — not a crippled demo. The paid tier unlocks full power at an accessible
+price.
+FeatureFreeStarter n199/moGrowth n499/mo
+Max Active Students50200Unlimited
+All 6 Fee Plan Types333
+WhatsApp Receipts200 / monthUnlimitedUnlimited
+WhatsApp Auto-Reminders50 / monthUnlimitedUnlimited
+SMS Fallback—100 / month500 / month
+Razorpay Online Payments—33
+Razorpay Auto-Debit——3
+Reports5 basicAll 14All 14 + scheduled email
+AI Features—3 featuresAll 9 features
+Flutter Parent App333
+Expense Tracker & P&LBasicFullFull
+Attendance Module333
+CSV Data Export—33
+WhatsApp Support——3
+Paywall & Business Rules
+•Plan limits are enforced at the API level via Supabase RPC — they cannot be bypassed through the UI
+•When the student limit is reached: a friendly upgrade card appears on the dashboard — not a blocking modal
+•Expired subscription: read-only mode for 7 days, then restricted to the dashboard view only
+•Annual plan: 2 months free — displayed as a rupee saving amount, not as a percentage
+•All new signups receive 30 days of full Growth tier features — no credit card required
+•Referral program: n100 off the first month for both the referrer and the new signup
+
+FeeSync Lite  •  PRD v1.0  •  ConfidentialSingle-Admin Edition  •  April 2026
+Page 23
+18
+SECURITY & COMPLIANCE
+DPDP Act, RLS, 2FA, Data Protection
+ControlDescriptionPriority
+Row-Level Security (RLS)Every table is scoped to owner_id. No cross-account data access is architecturally possible.
+CORE
+HTTPS / TLS 1.3Vercel enforces TLS everywhere. No unencrypted HTTP connections permitted.
+CORE
+Supabase Auth (JWT)Short-lived JWT tokens with refresh. Sessions are revoked immediately on account deletion.
+CORE
+Input SanitisationAll user input is sanitised. Parameterised queries throughout. No raw SQL from the UI.
+CORE
+File Upload ValidationMIME type and size validation on every upload. JPEG and PDF only. Private storage bucket.
+CORE
+TOTP Two-Factor AuthTOTP-based 2FA mandatory prompt at first login. Admin may skip once but is reminded.
+HIGH
+Rate LimitingVercel Edge rate limiting on all authentication endpoints. Anti-brute-force protection.
+HIGH
+PII MaskingAadhaar numbers are stored as a hashed value. Displayed as XXXX-XXXX-1234 only.
+HIGH
+Data ResidencySupabase region: ap-south-1 (Mumbai). All data remains within India at all times.
+HIGH
+Soft DeletesRecords are never hard-deleted. A deleted_at timestamp is set. Data is fully recoverable.
+CORE
+DPDP Act 2023 ComplianceWhatsApp consent collected at enrollment. Data erasure within 30 days. Full data export on request.
+HIGH
+19
+NON-FUNCTIONAL REQUIREMENTS
+Performance, Scale, Offline, Accessibility
+RequirementTargetHow Achieved
+Page Load (web, LCP)< 1.5 s on 4GVercel Edge CDN, Vite code splitting, lazy component loading
+API Response (p95)< 300 msSupabase connection pooler, indexed queries, materialised views
+Mobile App Startup< 2 s cold startFlutter AOT compilation, optimised splash screen
+Offline Mode (Flutter)Full read + partial writeHive local cache with sync queue on reconnect
+Offline Mode (Web)Full read + draft paymentWorkbox Service Worker with IndexedDB persistence
+Uptime SLA99.9%Vercel and Supabase managed infrastructure with PITR
+PDF Receipt Generation< 3 sReact-PDF client-side rendering, Puppeteer edge fallback
+WhatsApp Delivery< 10 s from payment recordAsync queue via Supabase Edge Function
+Database Scale1M+ rows per tablePostgreSQL with owner_id-indexed queries throughout
+Mobile Screen Support360 px – 480 px optimisedTailwind mobile-first breakpoints applied throughout
+File Upload LimitMax 10 MB per fileSupabase storage policy enforced and client-side validation
+BackupDaily automatedSupabase PITR (point-in-time recovery)
+Browser SupportChrome 90+, Firefox 88+, Safari 14+Modern CSS and JS, no IE support
+AccessibilityWCAG 2.1 AASemantic HTML, ARIA labels, 4.5:1 minimum contrast ratio
+
+FeeSync Lite  •  PRD v1.0  •  ConfidentialSingle-Admin Edition  •  April 2026
+Page 24
+RequirementTargetHow Achieved
+InternationalisationEnglish now. Hindi in v2. Bengali and Assamese in v3.i18n-ready string extraction from MVP
+
+FeeSync Lite  •  PRD v1.0  •  ConfidentialSingle-Admin Edition  •  April 2026
+Page 25
+20
+RELEASE ROADMAP
+MVP → v1 → v2 → v3
+0
+MVP — MONTH 1–2
+• Student management: add, edit, deactivate, bulk CSV import
+CORE
+• Fee plans: Monthly Fixed, One-Time, and Custom Installment
+CORE
+• Payment recording: Cash, UPI, Cheque
+CORE
+• PDF receipt generation — client-side via React-PDF
+CORE
+• Auto WhatsApp receipt on every payment record
+CORE
+• Dues engine CRON — Supabase Edge Function, daily at midnight IST
+CORE
+• Dashboard: 6 KPI cards, overdue widget, collection activity feed
+CORE
+• Basic daily collection report and monthly revenue report
+CORE
+• Email + password auth and Google OAuth — single admin login
+CORE
+• Subscription billing: Free tier (50 students) + Starter n199/mo
+CORE
+• Flutter parent app MVP: Login, Home, Fee History, Current Dues
+CORE
+0
+V1.0 — MONTH 3–4  ·  FULL FEATURE PARITY
+• Per-session, quarterly, and half-yearly fee plans
+CORE
+• Automated WhatsApp reminders: 3 days before, due date, 7 days overdue, 15 and 30 days
+CORE
+• Bulk 'Remind All Overdue' — one tap sends to all overdue parents
+CORE
+• Attendance module: daily marking, parent absent alert, attendance register PDF
+CORE
+• Expense tracker and automated P&L; statement
+HIGH
+• Razorpay payment link and UPI QR code integration
+HIGH
+• All 14 report types with PDF, Excel, and CSV export
+HIGH
+• Batch and timetable management with time-slot clash detection
+HIGH
+• Full TOTP 2FA implementation
+HIGH
+• Flutter parent app: Attendance, Timetable, Notifications, Razorpay Pay Now
+HIGH
+• Growth tier n499/mo with AI features toggle
+HIGH
+• WhatsApp template management and language selector
+HIGH
+• Student ID card PDF generator
+MEDIUM
+0
+V2.0 — MONTH 5–7  ·  AI + SCALE
+• Smart Overdue Predictor — ML on payment patterns
+HIGH
+• AI Receipt OCR — migrate paper records by photo
+HIGH
+• Payment Anomaly Detection — unusual pattern flagging
+HIGH
+• Student Churn Risk Score — dashboard widget
+MEDIUM
+• Daily AI Smart Summary Report
+MEDIUM
+• Auto-categorise expenses from receipt photo
+MEDIUM
+• Natural Language Fee Query via Gemini integration
+MEDIUM
+
+FeeSync Lite  •  PRD v1.0  •  ConfidentialSingle-Admin Edition  •  April 2026
+Page 26
+• Hindi UI language toggle throughout the web app
+HIGH
+• Bengali and Assamese WhatsApp template language support
+HIGH
+• Razorpay subscription auto-debit for Growth tier
+MEDIUM
+• Scheduled report emails: weekly and monthly to admin
+HIGH
+• iOS Flutter parent app — App Store submission
+MEDIUM
+• Duplicate student merge tool
+HIGH
+0
+V3.0 — MONTH 8–12  ·  POWER FEATURES
+• Advanced analytics: cohort retention, LTV, churn curve charts
+HIGH
+• Offline-first web app: full PWA with background sync
+HIGH
+• Exam and test scheduling module
+MEDIUM
+• Course completion certificate generator
+MEDIUM
+• Enrollment Growth Forecast — seasonal AI prediction
+MEDIUM
+• Tally export format for accountants and CAs
+MEDIUM
+• WhatsApp Message Tone Optimizer AI
+LOW
+• REST API and webhooks for power users and integrations
+LOW
+21
+SUCCESS METRICS & KPIS
+North Star, Product, Business
+Product Health Metrics
+MetricTarget / DefinitionType
+Daily Active Operators (DAO)70% of paid users log in every dayNORTH STAR
+Payments Recorded / DayAverage 8 or more payments per paid operator per dayCORE
+WhatsApp Receipt Delivery RateMore than 95% delivered within 30 seconds of paymentQUALITY
+Overdue Detection TimeAdmin sees newly overdue student within 24 hours of due dateQUALITY
+PDF Receipt Generation TimeUnder 3 seconds at p95PERFORMANCE
+Parent App DAU/MAUAbove 40% — sticky daily parent engagementENGAGEMENT
+AI Feature AdoptionMore than 30% of Growth tier users use Smart Summary weeklyADOPTION
+Onboarding CompletionMore than 75% of signups add first student and first paymentACQUISITION
+Support Ticket RateFewer than 2 tickets per 100 active users per monthQUALITY
+Business Metrics
+MetricTarget
+MRR Growth20% month-over-month for the first 12 months
+Free → Paid ConversionMore than 20% of free tier users convert to paid within 30 days
+
+FeeSync Lite  •  PRD v1.0  •  ConfidentialSingle-Admin Edition  •  April 2026
+Page 27
+MetricTarget
+Monthly Churn (paid)Below 4% — solo operators are highly sticky once routine is established
+ARPUn350 per month blended average by Month 6
+NPSAbove 50 by 6 months post-launch
+CACBelow n500 per paid operator via organic WhatsApp referral and Play Store SEO
+LTV:CAC RatioAbove 7x by end of Year 1
+Referral RateMore than 25% of new signups arrive through an existing user referral
+FeeSync Lite • PRD v1.0 • Confidential • As (Solo Founder) • April 2026
+Full power. Single admin. Zero compromise.

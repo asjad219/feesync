@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed-variant": "#003ea8",
+                        "surface-container-high": "#292937",
+                        "error-container": "#93000a",
+                        "inverse-primary": "#0053db",
+                        "secondary": "#d0bcff",
+                        "on-error-container": "#ffdad6",
+                        "on-tertiary-container": "#ffede6",
+                        "inverse-on-surface": "#2f2f3d",
+                        "error": "#ffb4ab",
+                        "background": "#12121f",
+                        "surface-container": "#1e1e2c",
+                        "on-secondary-fixed-variant": "#5516be",
+                        "on-secondary": "#3c0091",
+                        "on-background": "#e3e0f4",
+                        "on-surface-variant": "#c3c6d7",
+                        "on-primary-container": "#eeefff",
+                        "secondary-fixed": "#e9ddff",
+                        "surface-bright": "#383847",
+                        "on-secondary-fixed": "#23005c",
+                        "on-primary-fixed": "#00174b",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "surface-container-lowest": "#0d0d1a",
+                        "surface-variant": "#343342",
+                        "surface-tint": "#b4c5ff",
+                        "outline-variant": "#434655",
+                        "tertiary-container": "#bc4800",
+                        "surface": "#12121f",
+                        "on-surface": "#e3e0f4",
+                        "on-secondary-container": "#c4abff",
+                        "surface-dim": "#12121f",
+                        "tertiary": "#ffb596",
+                        "on-tertiary-fixed": "#360f00",
+                        "on-tertiary": "#581e00",
+                        "surface-container-highest": "#343342",
+                        "on-primary": "#002a78",
+                        "inverse-surface": "#e3e0f4",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "primary-container": "#2563eb",
+                        "surface-container-low": "#1a1a28",
+                        "on-error": "#690005",
+                        "secondary-fixed-dim": "#d0bcff",
+                        "outline": "#8d90a0",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "primary": "#b4c5ff",
+                        "tertiary-fixed": "#ffdbcd",
+                        "secondary-container": "#571bc1",
+                        "primary-fixed": "#dbe1ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(30, 30, 44, 0.8);
+            backdrop-filter: blur(16px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-container-lowest text-on-surface font-body min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#1e1e2c]/80 backdrop-blur-lg shadow-[0px_4px_24px_0px_rgba(37,99,235,0.08)] flex justify-between items-center px-6 py-4">
+<div class="flex items-center gap-3">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 active:scale-95 duration-200">
+<span class="material-symbols-outlined text-on-surface">arrow_back</span>
+</button>
+<h1 class="text-xl font-bold tracking-tight text-[#e3e0f4] font-headline">Student Details</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 active:scale-95 duration-200">
+<span class="material-symbols-outlined text-on-surface">edit</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 text-error active:scale-95 duration-200">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</header>
+<main class="pt-24 px-4 max-w-5xl mx-auto space-y-6">
+<!-- Profile Header -->
+<section class="relative overflow-hidden rounded-2xl bg-surface-container p-8 flex flex-col md:flex-row items-center gap-8 shadow-2xl">
+<!-- Decorative Glow -->
+<div class="absolute -top-24 -right-24 w-64 h-64 bg-primary-container/20 blur-[80px] rounded-full"></div>
+<div class="relative">
+<div class="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-surface-container-high overflow-hidden shadow-xl">
+<img alt="Student profile" class="w-full h-full object-cover" data-alt="Close-up portrait of a professional young student in business attire with a confident expression, neutral studio background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA99xo7DskTWbS4yoJAKt1uBVNKG4OcJiOE5qvoVbKtvBlpdQc7fKEkHJbeO4PYyGC-UIGZC7CYh1JWZ8j6a4oDRsGphgubR4fktLNysH2N0HpDhG8vE_o6ifLMFxVzp5OLKfLK_a-hCF_T_soZ_OptfsSnc5q4HMIqz8YOFEMm7zXmozIxiwZ5e_FQok82JDSnoz3_Huun2Kg5wMVXccKk28Kd6Y49hlRx9DXJNsthx5xuDeN5dt6NNC8yGqs07ezzTaCyE39SeSnm"/>
+</div>
+<div class="absolute bottom-2 right-2 px-3 py-1 bg-gradient-to-br from-green-500 to-emerald-700 text-white text-[10px] font-bold rounded-full border-2 border-surface-container">
+                    ACTIVE
+                </div>
+</div>
+<div class="text-center md:text-left flex-1">
+<h2 class="text-3xl font-extrabold font-headline tracking-tight text-on-surface mb-2">Julian Vercetti</h2>
+<p class="text-on-surface-variant font-medium mb-4">Master of Financial Engineering • ID: #FS-99281</p>
+<div class="flex flex-wrap justify-center md:justify-start gap-3">
+<span class="px-4 py-1.5 bg-surface-container-high rounded-full text-xs font-semibold text-primary border border-outline-variant/20">Cohort 2024</span>
+<span class="px-4 py-1.5 bg-surface-container-high rounded-full text-xs font-semibold text-secondary border border-outline-variant/20">Scholarship Tier 1</span>
+</div>
+</div>
+</section>
+<!-- Key Metrics Bento Grid -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div class="bg-surface-container p-6 rounded-2xl border border-outline-variant/10">
+<p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">Total Fee</p>
+<div class="flex items-end gap-2">
+<span class="text-3xl font-bold font-headline text-on-surface">$24,000</span>
+<span class="text-xs text-on-surface-variant mb-1">USD</span>
+</div>
+<div class="mt-4 h-1 w-full bg-surface-container-low rounded-full overflow-hidden">
+<div class="h-full bg-primary w-full"></div>
+</div>
+</div>
+<div class="bg-surface-container p-6 rounded-2xl border border-outline-variant/10">
+<p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">Paid to Date</p>
+<div class="flex items-end gap-2 text-primary">
+<span class="text-3xl font-bold font-headline">$18,200</span>
+<span class="text-xs mb-1">75.8%</span>
+</div>
+<div class="mt-4 h-1 w-full bg-surface-container-low rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[75.8%]"></div>
+</div>
+</div>
+<div class="bg-surface-container p-6 rounded-2xl border border-outline-variant/10">
+<p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">Outstanding</p>
+<div class="flex items-end gap-2 text-secondary">
+<span class="text-3xl font-bold font-headline">$5,800</span>
+<span class="text-xs mb-1">Due Oct 12</span>
+</div>
+<div class="mt-4 h-1 w-full bg-surface-container-low rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[24.2%]"></div>
+</div>
+</div>
+</section>
+<!-- Tabs Navigation -->
+<nav class="flex gap-8 border-b border-outline-variant/20 px-2 overflow-x-auto">
+<button class="pb-4 text-sm font-semibold border-b-2 border-primary text-primary transition-all whitespace-nowrap">Overview</button>
+<button class="pb-4 text-sm font-semibold border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-all whitespace-nowrap">Payment History</button>
+<button class="pb-4 text-sm font-semibold border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-all whitespace-nowrap">Documents</button>
+<button class="pb-4 text-sm font-semibold border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-all whitespace-nowrap">Academic Record</button>
+</nav>
+<!-- Content Area: Recent Payments -->
+<section class="space-y-4">
+<div class="flex justify-between items-center px-2">
+<h3 class="text-lg font-bold font-headline text-on-surface">Recent Payments</h3>
+<button class="text-primary text-sm font-semibold hover:underline">View All</button>
+</div>
+<!-- Payment List -->
+<div class="space-y-3">
+<!-- Payment Item 1 -->
+<div class="bg-surface-container hover:bg-surface-container-high transition-colors p-4 rounded-2xl flex items-center justify-between group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-primary-container/10 rounded-xl flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">account_balance</span>
+</div>
+<div>
+<p class="font-bold text-on-surface">Quarterly Tuition Fee</p>
+<p class="text-xs text-on-surface-variant">Bank Transfer • Sep 14, 2023</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold text-on-surface">$6,000.00</p>
+<span class="text-[10px] px-2 py-0.5 bg-green-500/10 text-green-400 rounded-full font-bold">COMPLETED</span>
+</div>
+</div>
+<!-- Payment Item 2 -->
+<div class="bg-surface-container hover:bg-surface-container-high transition-colors p-4 rounded-2xl flex items-center justify-between group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-secondary-container/10 rounded-xl flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">credit_card</span>
+</div>
+<div>
+<p class="font-bold text-on-surface">Library &amp; Resource Access</p>
+<p class="text-xs text-on-surface-variant">Credit Card • Aug 22, 2023</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold text-on-surface">$1,200.00</p>
+<span class="text-[10px] px-2 py-0.5 bg-green-500/10 text-green-400 rounded-full font-bold">COMPLETED</span>
+</div>
+</div>
+<!-- Payment Item 3 -->
+<div class="bg-surface-container hover:bg-surface-container-high transition-colors p-4 rounded-2xl flex items-center justify-between group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-high rounded-xl flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">receipt_long</span>
+</div>
+<div>
+<p class="font-bold text-on-surface">Housing Deposit</p>
+<p class="text-xs text-on-surface-variant">Online Payment • Jul 10, 2023</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold text-on-surface">$2,500.00</p>
+<span class="text-[10px] px-2 py-0.5 bg-green-500/10 text-green-400 rounded-full font-bold">COMPLETED</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Secondary Info Section -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="bg-surface-container p-6 rounded-2xl border border-outline-variant/10">
+<h4 class="font-bold font-headline mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">info</span>
+                    Contact Information
+                </h4>
+<div class="space-y-4">
+<div class="flex justify-between items-center">
+<span class="text-sm text-on-surface-variant">Email Address</span>
+<span class="text-sm font-medium">julian.v@university.edu</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-sm text-on-surface-variant">Phone Number</span>
+<span class="text-sm font-medium">+1 (555) 012-3456</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-sm text-on-surface-variant">Residential Address</span>
+<span class="text-sm font-medium text-right max-w-[180px]">42 Wallaby Way, Sydney NSW 2000</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container p-6 rounded-2xl border border-outline-variant/10 flex flex-col justify-between">
+<div>
+<h4 class="font-bold font-headline mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-sm">notifications_active</span>
+                        Upcoming Milestones
+                    </h4>
+<div class="space-y-3">
+<div class="flex items-start gap-3">
+<div class="mt-1 w-2 h-2 rounded-full bg-secondary"></div>
+<div>
+<p class="text-sm font-bold">Final Semester Payment</p>
+<p class="text-xs text-on-surface-variant">Due in 24 days • $5,800.00</p>
+</div>
+</div>
+<div class="flex items-start gap-3 opacity-50">
+<div class="mt-1 w-2 h-2 rounded-full bg-outline"></div>
+<div>
+<p class="text-sm font-bold">Graduation Fee</p>
+<p class="text-xs text-on-surface-variant">Due in 114 days • $450.00</p>
+</div>
+</div>
+</div>
+</div>
+<button class="mt-6 w-full py-3 bg-gradient-to-br from-primary-container to-secondary-container text-on-primary-container rounded-xl font-bold text-sm shadow-lg shadow-primary-container/20 active:scale-[0.98] transition-transform">
+                    Send Payment Reminder
+                </button>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-[#1e1e2c]/80 backdrop-blur-lg rounded-t-[1.5rem] shadow-[0px_-8px_32px_0px_rgba(0,0,0,0.5)]">
+<div class="flex flex-col items-center justify-center text-[#c3c6d7] px-4 py-2 hover:text-blue-400 transition-all active:scale-90 duration-150 cursor-pointer">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-['Inter'] font-medium text-[10px]">Dashboard</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-gradient-to-br from-blue-600 to-purple-700 text-white rounded-2xl px-4 py-2 active:scale-90 duration-150 cursor-pointer">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">group</span>
+<span class="font-['Inter'] font-medium text-[10px]">Students</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#c3c6d7] px-4 py-2 hover:text-blue-400 transition-all active:scale-90 duration-150 cursor-pointer">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-['Inter'] font-medium text-[10px]">Payments</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#c3c6d7] px-4 py-2 hover:text-blue-400 transition-all active:scale-90 duration-150 cursor-pointer">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-['Inter'] font-medium text-[10px]">Reports</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#c3c6d7] px-4 py-2 hover:text-blue-400 transition-all active:scale-90 duration-150 cursor-pointer">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-['Inter'] font-medium text-[10px]">Settings</span>
+</div>
+</nav>
+</body></html>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&amp;family=Manrope:wght@600;700;800&amp;family=Poppins:wght@700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-fixed-variant": "#003ea8",
+                    "surface-container-high": "#292937",
+                    "error-container": "#93000a",
+                    "inverse-primary": "#0053db",
+                    "secondary": "#d0bcff",
+                    "on-error-container": "#ffdad6",
+                    "on-tertiary-container": "#ffede6",
+                    "inverse-on-surface": "#2f2f3d",
+                    "error": "#ffb4ab",
+                    "background": "#12121f",
+                    "surface-container": "#1e1e2c",
+                    "on-secondary-fixed-variant": "#5516be",
+                    "on-secondary": "#3c0091",
+                    "on-background": "#e3e0f4",
+                    "on-surface-variant": "#c3c6d7",
+                    "on-primary-container": "#eeefff",
+                    "secondary-fixed": "#e9ddff",
+                    "surface-bright": "#383847",
+                    "on-secondary-fixed": "#23005c",
+                    "on-primary-fixed": "#00174b",
+                    "tertiary-fixed-dim": "#ffb596",
+                    "surface-container-lowest": "#0d0d1a",
+                    "surface-variant": "#343342",
+                    "surface-tint": "#b4c5ff",
+                    "outline-variant": "#434655",
+                    "tertiary-container": "#bc4800",
+                    "surface": "#12121f",
+                    "on-surface": "#e3e0f4",
+                    "on-secondary-container": "#c4abff",
+                    "surface-dim": "#12121f",
+                    "tertiary": "#ffb596",
+                    "on-tertiary-fixed": "#360f00",
+                    "on-tertiary": "#581e00",
+                    "surface-container-highest": "#343342",
+                    "on-primary": "#002a78",
+                    "inverse-surface": "#e3e0f4",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "primary-container": "#2563eb",
+                    "surface-container-low": "#1a1a28",
+                    "on-error": "#690005",
+                    "secondary-fixed-dim": "#d0bcff",
+                    "outline": "#8d90a0",
+                    "on-tertiary-fixed-variant": "#7d2d00",
+                    "primary": "#b4c5ff",
+                    "tertiary-fixed": "#ffdbcd",
+                    "secondary-container": "#571bc1",
+                    "primary-fixed": "#dbe1ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"],
+                    "brand": ["Poppins"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .loading-shimmer {
+            background: linear-gradient(90deg, transparent 0%, rgba(37, 99, 235, 0.2) 50%, transparent 100%);
+            background-size: 200% 100%;
+        }
+        .glass-glow {
+            background: radial-gradient(circle at center, rgba(37, 99, 235, 0.15) 0%, transparent 70%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-container-lowest text-on-surface font-body overflow-hidden">
+<!-- Splash Screen Container -->
+<main class="relative flex flex-col items-center justify-center min-h-screen w-full px-6">
+<!-- Ambient Background Glow -->
+<div class="absolute inset-0 overflow-hidden pointer-events-none">
+<div class="glass-glow absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] opacity-40"></div>
+</div>
+<!-- Central Content Wrapper -->
+<div class="relative z-10 flex flex-col items-center gap-6">
+<!-- Minimalist Logo -->
+<div class="relative group">
+<!-- Outer Ring Layer -->
+<div class="absolute -inset-4 bg-gradient-to-br from-primary-container to-secondary-container rounded-full blur-2xl opacity-20 group-hover:opacity-40 transition-opacity duration-1000"></div>
+<!-- Main Logo Body -->
+<div class="relative w-24 h-24 bg-surface-container-low rounded-[2rem] flex items-center justify-center shadow-2xl border border-outline-variant/10">
+<div class="w-12 h-12 bg-gradient-to-br from-primary-container to-secondary-container rounded-xl flex items-center justify-center transform rotate-12">
+<span class="material-symbols-outlined text-white text-3xl" style="font-variation-settings: 'FILL' 1;">
+                            sync_alt
+                        </span>
+</div>
+</div>
+</div>
+<!-- App Identity -->
+<div class="flex flex-col items-center text-center">
+<h1 class="font-brand text-4xl md:text-5xl font-bold tracking-tight text-on-surface">
+                    Fee<span class="text-primary-container">Sync</span>
+</h1>
+<p class="mt-2 font-body text-sm font-medium tracking-[0.2em] uppercase text-on-surface-variant opacity-60">
+                    Precision Finance
+                </p>
+</div>
+</div>
+<!-- Subtle Loading Indicator -->
+<div class="absolute bottom-16 w-48 h-1 bg-surface-container rounded-full overflow-hidden">
+<div class="loading-shimmer h-full w-1/2 bg-primary-container rounded-full shadow-[0_0_12px_rgba(37,99,235,0.6)]"></div>
+</div>
+<!-- Secondary Branding -->
+<div class="absolute bottom-8 text-on-surface-variant/30 font-label text-[10px] tracking-widest uppercase">
+            Secured by Luminary Architecture
+        </div>
+</main>
+<!-- Decorative Corner Accents -->
+<div class="fixed top-0 right-0 w-64 h-64 bg-secondary-container/5 blur-[120px] rounded-full -mr-32 -mt-32"></div>
+<div class="fixed bottom-0 left-0 w-80 h-80 bg-primary-container/5 blur-[120px] rounded-full -ml-40 -mb-40"></div>
+</body></html>

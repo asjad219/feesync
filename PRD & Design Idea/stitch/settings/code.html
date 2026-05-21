@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FeeSync Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-fixed-variant": "#003ea8",
+                    "surface-container-high": "#292937",
+                    "error-container": "#93000a",
+                    "inverse-primary": "#0053db",
+                    "secondary": "#d0bcff",
+                    "on-error-container": "#ffdad6",
+                    "on-tertiary-container": "#ffede6",
+                    "inverse-on-surface": "#2f2f3d",
+                    "error": "#ffb4ab",
+                    "background": "#12121f",
+                    "surface-container": "#1e1e2c",
+                    "on-secondary-fixed-variant": "#5516be",
+                    "on-secondary": "#3c0091",
+                    "on-background": "#e3e0f4",
+                    "on-surface-variant": "#c3c6d7",
+                    "on-primary-container": "#eeefff",
+                    "secondary-fixed": "#e9ddff",
+                    "surface-bright": "#383847",
+                    "on-secondary-fixed": "#23005c",
+                    "on-primary-fixed": "#00174b",
+                    "tertiary-fixed-dim": "#ffb596",
+                    "surface-container-lowest": "#0d0d1a",
+                    "surface-variant": "#343342",
+                    "surface-tint": "#b4c5ff",
+                    "outline-variant": "#434655",
+                    "tertiary-container": "#bc4800",
+                    "surface": "#12121f",
+                    "on-surface": "#e3e0f4",
+                    "on-secondary-container": "#c4abff",
+                    "surface-dim": "#12121f",
+                    "tertiary": "#ffb596",
+                    "on-tertiary-fixed": "#360f00",
+                    "on-tertiary": "#581e00",
+                    "surface-container-highest": "#343342",
+                    "on-primary": "#002a78",
+                    "inverse-surface": "#e3e0f4",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "primary-container": "#2563eb",
+                    "surface-container-low": "#1a1a28",
+                    "on-error": "#690005",
+                    "secondary-fixed-dim": "#d0bcff",
+                    "outline": "#8d90a0",
+                    "on-tertiary-fixed-variant": "#7d2d00",
+                    "primary": "#b4c5ff",
+                    "tertiary-fixed": "#ffdbcd",
+                    "secondary-container": "#571bc1",
+                    "primary-fixed": "#dbe1ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "1.5rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-headline { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(30, 30, 44, 0.8);
+            backdrop-filter: blur(16px);
+        }
+        .primary-gradient {
+            background: linear-gradient(135deg, #2563eb 0%, #571bc1 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-container-lowest text-on-surface min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#1e1e2c]/80 backdrop-blur-lg shadow-[0px_4px_24px_0px_rgba(37,99,235,0.08)] flex justify-between items-center px-6 py-4 w-full">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden bg-surface-container-highest border border-outline-variant/20">
+<img class="w-full h-full object-cover" data-alt="Professional headshot of a financier in a navy suit with soft studio lighting and a neutral grey background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhpxjh8GOheWXcAlsPp_xdEwxSM_Crm-JOdKAy0b92wb_ZvP8JCwBa3sccRxAUd81uooz0e2cv0ZCEvr3aHOeBd5hPtYTY6_pX_MFpV6TgKKSsU0vieyxKUBKWnDO1kPGSWyv2OJFZUDuomXX2rXNpkr-vyqjdx2uSQXgSwVCCNWZBhRGUltzOZWGaIDGDN01vUmvpODkjAgNpCZChth4AINXY4oPkIt-b5TPaEy2TRDatXbIr82-_jxYG6WUae1OMhUgXmJuhC91I"/>
+</div>
+<h1 class="text-xl font-bold tracking-tight text-[#e3e0f4] font-headline">FeeSync</h1>
+</div>
+<button class="material-symbols-outlined text-blue-600 dark:text-blue-500 hover:bg-white/10 transition-colors p-2 rounded-full active:scale-95 duration-200" data-icon="notifications">
+            notifications
+        </button>
+</header>
+<main class="pt-24 px-6 max-w-2xl mx-auto">
+<!-- Profile Hero Section -->
+<section class="mb-10 text-center">
+<div class="relative inline-block mb-4">
+<div class="w-24 h-24 rounded-3xl overflow-hidden ring-4 ring-primary-container/20 mx-auto shadow-2xl">
+<img class="w-full h-full object-cover" data-alt="Close-up portrait of a mid-career professional male with a confident smile, high-end editorial lighting style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDy6ooOELXKV6Nbsri6GqNvqqRLl2uYueqpfvlaQ37Yz_dtNy_fh9q0NDK1nuDDhqTXXilel8xfrsHuUF9lmnm30xBQ1QQ_LybKm8-NA9qTvpufrizNb38_BQTfm2z7JhRq6MMmKdtkH_8D9xQW_bO7BFh7Z4qsKOHkUWMQR-9V2G1DjUPII3Vi6YqWzncoEA71TduWxikoH3I5-v6MCt2dK8UlDxmgC84fPCxs-X1OUC9vka0VGjrE2qMKoZShG130PKWDqsIMrov_"/>
+</div>
+<div class="absolute -bottom-2 -right-2 bg-primary-container p-2 rounded-xl shadow-lg border border-surface-container-lowest">
+<span class="material-symbols-outlined text-white text-sm" data-icon="edit">edit</span>
+</div>
+</div>
+<h2 class="text-2xl font-bold font-headline text-on-surface">Alexander Vance</h2>
+<p class="text-on-surface-variant font-medium">Head of Finance • Premium Tier</p>
+</section>
+<!-- Bento Settings Grid -->
+<div class="grid grid-cols-1 gap-4">
+<!-- Preferences Section -->
+<div class="bg-surface-container p-6 rounded-xl border border-outline-variant/10">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-secondary" data-icon="tune">tune</span>
+<h3 class="text-lg font-semibold font-headline">Preferences</h3>
+</div>
+<div class="space-y-4">
+<div class="flex items-center justify-between p-4 bg-surface-container-low rounded-xl hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="dark_mode">dark_mode</span>
+<div>
+<p class="font-medium text-on-surface">Theme</p>
+<p class="text-xs text-on-surface-variant">System Default (Dark)</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="chevron_right">chevron_right</span>
+</div>
+<div class="flex items-center justify-between p-4 bg-surface-container-low rounded-xl hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="language">language</span>
+<div>
+<p class="font-medium text-on-surface">Language</p>
+<p class="text-xs text-on-surface-variant">English (United States)</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+</div>
+<!-- Security Section -->
+<div class="bg-surface-container p-6 rounded-xl border border-outline-variant/10">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-primary" data-icon="shield_lock">shield_lock</span>
+<h3 class="text-lg font-semibold font-headline">Security</h3>
+</div>
+<div class="space-y-4">
+<div class="flex items-center justify-between p-4 bg-surface-container-low rounded-xl hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="two_factor_authentication">authenticator</span>
+<div>
+<p class="font-medium text-on-surface">Two-Factor Authentication</p>
+<p class="text-xs text-secondary">Enabled</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="chevron_right">chevron_right</span>
+</div>
+<div class="flex items-center justify-between p-4 bg-surface-container-low rounded-xl hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="key">key</span>
+<div>
+<p class="font-medium text-on-surface">Change Password</p>
+<p class="text-xs text-on-surface-variant">Last changed 3 months ago</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+</div>
+<!-- Data Section -->
+<div class="bg-surface-container p-6 rounded-xl border border-outline-variant/10">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-tertiary" data-icon="data_usage">data_usage</span>
+<h3 class="text-lg font-semibold font-headline">Data &amp; Privacy</h3>
+</div>
+<div class="space-y-4">
+<div class="flex items-center justify-between p-4 bg-surface-container-low rounded-xl hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="visibility_off">visibility_off</span>
+<div>
+<p class="font-medium text-on-surface">Privacy Settings</p>
+<p class="text-xs text-on-surface-variant">Control visibility of your flows</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="chevron_right">chevron_right</span>
+</div>
+<div class="flex items-center justify-between p-4 bg-surface-container-low rounded-xl hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="download">download</span>
+<div>
+<p class="font-medium text-on-surface">Export Financial Data</p>
+<p class="text-xs text-on-surface-variant">Request a CSV of all transitions</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+</div>
+<!-- About Section -->
+<div class="bg-surface-container p-6 rounded-xl border border-outline-variant/10">
+<div class="flex items-center gap-3 mb-4">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="info">info</span>
+<h3 class="text-lg font-semibold font-headline">About</h3>
+</div>
+<div class="flex items-center justify-between py-2">
+<span class="text-on-surface-variant">App Version</span>
+<span class="font-mono text-xs bg-surface-container-highest px-2 py-1 rounded">v4.2.0-beta</span>
+</div>
+<div class="flex items-center justify-between py-2 border-t border-outline-variant/5">
+<span class="text-on-surface-variant">Terms of Service</span>
+<span class="material-symbols-outlined text-on-surface-variant text-sm" data-icon="open_in_new">open_in_new</span>
+</div>
+</div>
+<!-- Logout Button -->
+<button class="mt-8 mb-12 w-full py-5 rounded-xl font-headline font-bold text-on-error bg-error-container/20 border border-error-container/30 flex items-center justify-center gap-2 hover:bg-error-container/40 transition-all active:scale-[0.98]">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+                Logout from FeeSync
+            </button>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-[#1e1e2c]/80 backdrop-blur-lg shadow-[0px_-8px_32px_0px_rgba(0,0,0,0.5)] rounded-t-[1.5rem]">
+<div class="flex flex-col items-center justify-center text-[#c3c6d7] px-4 py-2 hover:text-blue-400 transition-all active:scale-90 duration-150 cursor-pointer">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-['Inter'] font-medium text-[10px]">Dashboard</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#c3c6d7] px-4 py-2 hover:text-blue-400 transition-all active:scale-90 duration-150 cursor-pointer">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-['Inter'] font-medium text-[10px]">Students</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#c3c6d7] px-4 py-2 hover:text-blue-400 transition-all active:scale-90 duration-150 cursor-pointer">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-['Inter'] font-medium text-[10px]">Payments</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#c3c6d7] px-4 py-2 hover:text-blue-400 transition-all active:scale-90 duration-150 cursor-pointer">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-['Inter'] font-medium text-[10px]">Reports</span>
+</div>
+<!-- Active Tab: Settings -->
+<div class="flex flex-col items-center justify-center bg-gradient-to-br from-blue-600 to-purple-700 text-white rounded-2xl px-4 py-2 active:scale-90 duration-150 cursor-pointer shadow-lg shadow-blue-600/20">
+<span class="material-symbols-outlined" data-icon="settings" style="font-variation-settings: 'FILL' 1;">settings</span>
+<span class="font-['Inter'] font-medium text-[10px]">Settings</span>
+</div>
+</nav>
+</body></html>

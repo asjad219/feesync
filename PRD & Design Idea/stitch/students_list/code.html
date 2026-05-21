@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-primary-fixed-variant": "#003ea8",
+            "surface-container-high": "#292937",
+            "error-container": "#93000a",
+            "inverse-primary": "#0053db",
+            "secondary": "#d0bcff",
+            "on-error-container": "#ffdad6",
+            "on-tertiary-container": "#ffede6",
+            "inverse-on-surface": "#2f2f3d",
+            "error": "#ffb4ab",
+            "background": "#12121f",
+            "surface-container": "#1e1e2c",
+            "on-secondary-fixed-variant": "#5516be",
+            "on-secondary": "#3c0091",
+            "on-background": "#e3e0f4",
+            "on-surface-variant": "#c3c6d7",
+            "on-primary-container": "#eeefff",
+            "secondary-fixed": "#e9ddff",
+            "surface-bright": "#383847",
+            "on-secondary-fixed": "#23005c",
+            "on-primary-fixed": "#00174b",
+            "tertiary-fixed-dim": "#ffb596",
+            "surface-container-lowest": "#0d0d1a",
+            "surface-variant": "#343342",
+            "surface-tint": "#b4c5ff",
+            "outline-variant": "#434655",
+            "tertiary-container": "#bc4800",
+            "surface": "#12121f",
+            "on-surface": "#e3e0f4",
+            "on-secondary-container": "#c4abff",
+            "surface-dim": "#12121f",
+            "tertiary": "#ffb596",
+            "on-tertiary-fixed": "#360f00",
+            "on-tertiary": "#581e00",
+            "surface-container-highest": "#343342",
+            "on-primary": "#002a78",
+            "inverse-surface": "#e3e0f4",
+            "primary-fixed-dim": "#b4c5ff",
+            "primary-container": "#2563eb",
+            "surface-container-low": "#1a1a28",
+            "on-error": "#690005",
+            "secondary-fixed-dim": "#d0bcff",
+            "outline": "#8d90a0",
+            "on-tertiary-fixed-variant": "#7d2d00",
+            "primary": "#b4c5ff",
+            "tertiary-fixed": "#ffdbcd",
+            "secondary-container": "#571bc1",
+            "primary-fixed": "#dbe1ff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "1.5rem",
+            "full": "9999px"
+          },
+          "fontFamily": {
+            "headline": ["Manrope"],
+            "body": ["Inter"],
+            "label": ["Inter"]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .glass-effect {
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    body {
+      background-color: #0d0d1a;
+      font-family: 'Inter', sans-serif;
+    }
+    h1, h2, h3 {
+      font-family: 'Manrope', sans-serif;
+    }
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-container-lowest text-on-surface min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#1e1e2c]/80 backdrop-blur-lg flex justify-between items-center px-6 py-4 w-full shadow-[0px_4px_24px_0px_rgba(37,99,235,0.08)]">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant/30">
+<img alt="User Profile Avatar" class="w-full h-full object-cover" data-alt="close-up portrait of a professional administrator in a modern office with soft cinematic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDgM1wRmCfsJyc010-7dpFQGsqu0SH3QOh5vYthm9Y9bEjO85Nu1f_n7EyfkqNfxrpJm5sxsyIMTcU7vzWfC-jyt8kQ1QU-_Xzor-B8Ay0UktsQ6w6qwXYanOuvi-qcszIvaMxTFwm83h_DbmVYVCp8pxMaTXJyAqxnzdLQhFHxYzf8qlpUzWMm_kh5wfCfB3KHk8QRz3U8UK0nEB_AFdPAMvRARJInfY93t1beVa0V-6IPuwX0k_B1rlsC4o4Jh__uwYW-ZPiZwf5y"/>
+</div>
+<span class="text-xl font-bold tracking-tight text-[#e3e0f4]">FeeSync</span>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined text-[#e3e0f4]" data-icon="notifications">notifications</span>
+</button>
+</header>
+<main class="pt-24 px-6 max-w-2xl mx-auto">
+<!-- Header Section -->
+<div class="mb-8">
+<h1 class="text-3xl font-bold text-on-surface tracking-tight mb-2">Students</h1>
+<p class="text-on-surface-variant text-sm">Manage student records and payment statuses.</p>
+</div>
+<!-- Search Bar -->
+<div class="relative mb-6">
+<div class="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline" data-icon="search">search</span>
+</div>
+<input class="w-full bg-surface-container border-none focus:ring-2 focus:ring-primary/30 rounded-xl py-4 pl-12 pr-4 text-on-surface placeholder-outline-variant glass-effect" placeholder="Search by name or ID..." type="text"/>
+</div>
+<!-- Filter Chips -->
+<div class="flex gap-3 mb-8 overflow-x-auto hide-scrollbar">
+<button class="px-6 py-2 rounded-full bg-gradient-to-br from-primary-container to-secondary-container text-white font-medium text-sm transition-transform active:scale-95">All</button>
+<button class="px-6 py-2 rounded-full bg-surface-container text-on-surface-variant font-medium text-sm hover:bg-surface-container-high transition-colors">Active</button>
+<button class="px-6 py-2 rounded-full bg-surface-container text-on-surface-variant font-medium text-sm hover:bg-surface-container-high transition-colors">Inactive</button>
+</div>
+<!-- Student List -->
+<div class="space-y-4">
+<!-- Student Card 1: Overdue -->
+<div class="relative group">
+<!-- Swipe Action Background (Right side) -->
+<div class="absolute inset-0 bg-error-container rounded-xl flex items-center justify-end px-6 space-x-4 opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-on-error-container" data-icon="delete">delete</span>
+<span class="material-symbols-outlined text-on-error-container" data-icon="edit">edit</span>
+</div>
+<!-- Main Card Surface -->
+<div class="relative bg-surface-container p-4 rounded-xl flex items-center gap-4 shadow-sm border border-outline-variant/10 hover:translate-x-[-10px] transition-transform duration-300 cursor-pointer">
+<div class="w-14 h-14 rounded-full bg-surface-container-high flex-shrink-0 overflow-hidden">
+<img alt="Student Portrait" class="w-full h-full object-cover" data-alt="portrait of a young elementary student smiling warmly, professional studio lighting, clean solid background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuANC1gBoYNGp91gwfjdOvQzEXEycJ7BCiw-ucyf8-wVp_2h9NafxDDq98aVZslrjDj_gmTd_hx66T3PtEi-Uy6iyIkpcB317HCYarlPk1j1D8GW6F93EGxdKxAkitjpyOraGdeLyhUAbYMv6KbMKfFLEzYaTH7v5DqLdJjmlNht8vFa7G2q_STuScRfb_zMj9AEw_sulqD6uzw5RheID5Fpm9NJFc6IK0xXurn06_nlasvJtrxI04keLJ4qL05drYmQiUVCeJhL_wwq"/>
+</div>
+<div class="flex-grow">
+<h3 class="font-semibold text-on-surface text-lg">Julian Smith</h3>
+<p class="text-on-surface-variant text-xs font-medium">Grade 10 • Section A</p>
+</div>
+<div class="flex flex-col items-end gap-2">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-error/10 text-error border border-error/20">Overdue</span>
+<span class="text-xs text-on-surface-variant">$450.00</span>
+</div>
+</div>
+</div>
+<!-- Student Card 2: Paid -->
+<div class="relative group">
+<div class="absolute inset-0 bg-primary-container rounded-xl flex items-center justify-end px-6 space-x-4 opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-white" data-icon="delete">delete</span>
+<span class="material-symbols-outlined text-white" data-icon="edit">edit</span>
+</div>
+<div class="relative bg-surface-container p-4 rounded-xl flex items-center gap-4 shadow-sm border border-outline-variant/10 hover:translate-x-[-10px] transition-transform duration-300 cursor-pointer">
+<div class="w-14 h-14 rounded-full bg-surface-container-high flex-shrink-0 overflow-hidden">
+<img alt="Student Portrait" class="w-full h-full object-cover" data-alt="close up of a teenage girl with glasses smiling, school setting background, natural sunlight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzj5PE4SDn_8_xYqG0gTZmiMf71Jmr1shLR_NvEciBNOY4dZ3kvNbQwszXvYvPMJKimrMT09B3_XhC_lmLhnI8_RdnN7wdBdr0dGKVz3d7L_UIvFQvKfJWoftiy0surTAjjVdsv06CQMyMo-V_IO-ar5JASRAv02WAyV8t2yG66WsjMMmgw4GvcZ_A8T7nAIJjQtu4FVCXv2sNu4gf2pFulkH9uhet3Zb8qgOeoxEB133h00LCA-FVnlQ_vN00S-m6pUOG6iwDT8dz"/>
+</div>
+<div class="flex-grow">
+<h3 class="font-semibold text-on-surface text-lg">Alisha Mayer</h3>
+<p class="text-on-surface-variant text-xs font-medium">Grade 11 • Section B</p>
+</div>
+<div class="flex flex-col items-end gap-2">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">Paid</span>
+<span class="text-xs text-on-surface-variant">$0.00</span>
+</div>
+</div>
+</div>
+<!-- Student Card 3: Overdue -->
+<div class="relative group">
+<div class="absolute inset-0 bg-error-container rounded-xl flex items-center justify-end px-6 space-x-4 opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-on-error-container" data-icon="delete">delete</span>
+<span class="material-symbols-outlined text-on-error-container" data-icon="edit">edit</span>
+</div>
+<div class="relative bg-surface-container p-4 rounded-xl flex items-center gap-4 shadow-sm border border-outline-variant/10 hover:translate-x-[-10px] transition-transform duration-300 cursor-pointer">
+<div class="w-14 h-14 rounded-full bg-surface-container-high flex-shrink-0 overflow-hidden">
+<img alt="Student Portrait" class="w-full h-full object-cover" data-alt="young boy student wearing a school uniform, high-end photography, soft bokeh background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC6Sp3kXQT-45Y1kOR6TnQNg8NP0OQWelE87w6nnKeNxchD-tsX-Tm1TK9H777w4CgWvpu7APdWiElUAbCgoSyOR8IYJ9elCuOc4_YwdpQ--WGwdGwpohyOjcUFlV93rs-Y34HuKDGNNWlpAWuDNPYW3Sb1Zlw2BQubMTWXT34Ux9C1KtrLuWHNwGrg7rOy8TL2tJXAKAI44YDs3fqnpNZ_7_rJs7OfaUY7nqLCrlKbpnlmFiSpBvPT3mE-rg5YNoCaRswN3HracMzl"/>
+</div>
+<div class="flex-grow">
+<h3 class="font-semibold text-on-surface text-lg">Ryan Karter</h3>
+<p class="text-on-surface-variant text-xs font-medium">Grade 09 • Section C</p>
+</div>
+<div class="flex flex-col items-end gap-2">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-error/10 text-error border border-error/20">Overdue</span>
+<span class="text-xs text-on-surface-variant">$1,200.00</span>
+</div>
+</div>
+</div>
+<!-- Student Card 4: Paid -->
+<div class="relative group">
+<div class="absolute inset-0 bg-primary-container rounded-xl flex items-center justify-end px-6 space-x-4 opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-white" data-icon="delete">delete</span>
+<span class="material-symbols-outlined text-white" data-icon="edit">edit</span>
+</div>
+<div class="relative bg-surface-container p-4 rounded-xl flex items-center gap-4 shadow-sm border border-outline-variant/10 hover:translate-x-[-10px] transition-transform duration-300 cursor-pointer">
+<div class="w-14 h-14 rounded-full bg-surface-container-high flex-shrink-0 overflow-hidden">
+<img alt="Student Portrait" class="w-full h-full object-cover" data-alt="portrait of a confident high school girl, artistic lighting, deep shadows, premium aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBSRABb-FCtHF9JN_QmJwKMxYgkh7eZmGKXNIzg8Ns8eGRATKB-8_bbXEUtEp6asfB_B93yZn9ToVJbbjfwrTRf0styH7BRWqLtrijKusvWp6lQeHi0JzEn5TbQX-3DtUH2IOX0HOf1_dpA6MEuupLLZbLNG-DcqxF9x6qAenyYled7oCNnhFyrhZ1sCYIb6jNZEs6rmfLQBjDCa7t_AaA82-7QrFZDFqJuI11FINfJiD0_7u-xBXqpEBmfW5p61yHXqxoK0W3sC-Tf"/>
+</div>
+<div class="flex-grow">
+<h3 class="font-semibold text-on-surface text-lg">Sophia Tuan</h3>
+<p class="text-on-surface-variant text-xs font-medium">Grade 12 • Section A</p>
+</div>
+<div class="flex flex-col items-end gap-2">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">Paid</span>
+<span class="text-xs text-on-surface-variant">$0.00</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- FAB for Add Student -->
+<button class="fixed bottom-28 right-6 w-14 h-14 bg-gradient-to-br from-primary-container to-secondary-container rounded-2xl shadow-lg flex items-center justify-center text-white active:scale-90 transition-all z-40 group">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+<!-- Tooltip hint -->
+<span class="absolute right-full mr-4 bg-surface-container-high text-white text-xs px-3 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Add Student</span>
+</button>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-[#1e1e2c]/80 backdrop-blur-lg rounded-t-[1.5rem] shadow-[0px_-8px_32px_0px_rgba(0,0,0,0.5)]">
+<!-- Dashboard -->
+<div class="flex flex-col items-center justify-center text-[#c3c6d7] px-4 py-2 hover:text-blue-400 transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined mb-1" data-icon="dashboard">dashboard</span>
+<span class="font-['Inter'] font-medium text-[10px]">Dashboard</span>
+</div>
+<!-- Students (Active) -->
+<div class="flex flex-col items-center justify-center bg-gradient-to-br from-blue-600 to-purple-700 text-white rounded-2xl px-4 py-2 active:scale-90 duration-150">
+<span class="material-symbols-outlined mb-1" data-icon="group" style="font-variation-settings: 'FILL' 1;">group</span>
+<span class="font-['Inter'] font-medium text-[10px]">Students</span>
+</div>
+<!-- Payments -->
+<div class="flex flex-col items-center justify-center text-[#c3c6d7] px-4 py-2 hover:text-blue-400 transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined mb-1" data-icon="payments">payments</span>
+<span class="font-['Inter'] font-medium text-[10px]">Payments</span>
+</div>
+<!-- Reports -->
+<div class="flex flex-col items-center justify-center text-[#c3c6d7] px-4 py-2 hover:text-blue-400 transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined mb-1" data-icon="analytics">analytics</span>
+<span class="font-['Inter'] font-medium text-[10px]">Reports</span>
+</div>
+<!-- Settings -->
+<div class="flex flex-col items-center justify-center text-[#c3c6d7] px-4 py-2 hover:text-blue-400 transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined mb-1" data-icon="settings">settings</span>
+<span class="font-['Inter'] font-medium text-[10px]">Settings</span>
+</div>
+</nav>
+</body></html>

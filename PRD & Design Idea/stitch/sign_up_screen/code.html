@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-fixed-variant": "#003ea8",
+                    "surface-container-high": "#292937",
+                    "error-container": "#93000a",
+                    "inverse-primary": "#0053db",
+                    "secondary": "#d0bcff",
+                    "on-error-container": "#ffdad6",
+                    "on-tertiary-container": "#ffede6",
+                    "inverse-on-surface": "#2f2f3d",
+                    "error": "#ffb4ab",
+                    "background": "#12121f",
+                    "surface-container": "#1e1e2c",
+                    "on-secondary-fixed-variant": "#5516be",
+                    "on-secondary": "#3c0091",
+                    "on-background": "#e3e0f4",
+                    "on-surface-variant": "#c3c6d7",
+                    "on-primary-container": "#eeefff",
+                    "secondary-fixed": "#e9ddff",
+                    "surface-bright": "#383847",
+                    "on-secondary-fixed": "#23005c",
+                    "on-primary-fixed": "#00174b",
+                    "tertiary-fixed-dim": "#ffb596",
+                    "surface-container-lowest": "#0d0d1a",
+                    "surface-variant": "#343342",
+                    "surface-tint": "#b4c5ff",
+                    "outline-variant": "#434655",
+                    "tertiary-container": "#bc4800",
+                    "surface": "#12121f",
+                    "on-surface": "#e3e0f4",
+                    "on-secondary-container": "#c4abff",
+                    "surface-dim": "#12121f",
+                    "tertiary": "#ffb596",
+                    "on-tertiary-fixed": "#360f00",
+                    "on-tertiary": "#581e00",
+                    "surface-container-highest": "#343342",
+                    "on-primary": "#002a78",
+                    "inverse-surface": "#e3e0f4",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "primary-container": "#2563eb",
+                    "surface-container-low": "#1a1a28",
+                    "on-error": "#690005",
+                    "secondary-fixed-dim": "#d0bcff",
+                    "outline": "#8d90a0",
+                    "on-tertiary-fixed-variant": "#7d2d00",
+                    "primary": "#b4c5ff",
+                    "tertiary-fixed": "#ffdbcd",
+                    "secondary-container": "#571bc1",
+                    "primary-fixed": "#dbe1ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "1.5rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(30, 30, 44, 0.8);
+            backdrop-filter: blur(16px);
+        }
+        .gradient-button {
+            background: linear-gradient(135deg, #2563eb 0%, #571bc1 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-container-lowest text-on-surface font-body min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
+<!-- Ambient Background Decorations -->
+<div class="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary-container/10 rounded-full blur-[120px] pointer-events-none"></div>
+<div class="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-secondary-container/10 rounded-full blur-[120px] pointer-events-none"></div>
+<div class="w-full max-w-md px-6 py-12 relative z-10">
+<!-- Brand Header -->
+<div class="flex flex-col items-center mb-10">
+<div class="w-16 h-16 rounded-xl gradient-button flex items-center justify-center mb-6 shadow-lg shadow-primary-container/20">
+<span class="material-symbols-outlined text-white text-3xl" style="font-variation-settings: 'FILL' 1;">sync_alt</span>
+</div>
+<h1 class="font-headline text-3xl font-extrabold tracking-tight text-on-surface">FeeSync</h1>
+<p class="text-on-surface-variant text-sm mt-2">The Financial Luminary for Modern Institutions</p>
+</div>
+<!-- Registration Card -->
+<div class="surface-container glass-panel rounded-xl p-8 shadow-2xl border border-outline-variant/10">
+<h2 class="font-headline text-xl font-bold mb-8 text-on-surface">Create Account</h2>
+<form class="space-y-6">
+<!-- Full Name Field -->
+<div class="space-y-2">
+<label class="font-label text-xs font-medium text-on-surface-variant uppercase tracking-wider ml-1">Full Name</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">person</span>
+<input class="w-full bg-surface-container-highest/50 border-none rounded-lg py-4 pl-12 pr-4 text-on-surface placeholder:text-outline focus:ring-1 focus:ring-primary-container transition-all outline-none" placeholder="Enter your full name" type="text"/>
+</div>
+</div>
+<!-- Email Field -->
+<div class="space-y-2">
+<label class="font-label text-xs font-medium text-on-surface-variant uppercase tracking-wider ml-1">Email Address</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">mail</span>
+<input class="w-full bg-surface-container-highest/50 border-none rounded-lg py-4 pl-12 pr-4 text-on-surface placeholder:text-outline focus:ring-1 focus:ring-primary-container transition-all outline-none" placeholder="name@institution.com" type="email"/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="space-y-2">
+<label class="font-label text-xs font-medium text-on-surface-variant uppercase tracking-wider ml-1">Password</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">lock</span>
+<input class="w-full bg-surface-container-highest/50 border-none rounded-lg py-4 pl-12 pr-12 text-on-surface placeholder:text-outline focus:ring-1 focus:ring-primary-container transition-all outline-none" placeholder="••••••••" type="password"/>
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl cursor-pointer">visibility_off</span>
+</div>
+</div>
+<!-- Role Selection -->
+<div class="space-y-3">
+<label class="font-label text-xs font-medium text-on-surface-variant uppercase tracking-wider ml-1">Select Role</label>
+<div class="grid grid-cols-2 gap-4">
+<label class="cursor-pointer group">
+<input checked="" class="hidden peer" name="role" type="radio" value="admin"/>
+<div class="bg-surface-container-highest/30 border border-transparent peer-checked:border-primary-container peer-checked:bg-primary-container/10 rounded-lg p-4 text-center transition-all group-hover:bg-white/5">
+<span class="material-symbols-outlined block text-2xl mb-1 text-primary" style="font-variation-settings: 'FILL' 1;">admin_panel_settings</span>
+<span class="text-sm font-medium text-on-surface">Admin</span>
+</div>
+</label>
+<label class="cursor-pointer group">
+<input class="hidden peer" name="role" type="radio" value="staff"/>
+<div class="bg-surface-container-highest/30 border border-transparent peer-checked:border-primary-container peer-checked:bg-primary-container/10 rounded-lg p-4 text-center transition-all group-hover:bg-white/5">
+<span class="material-symbols-outlined block text-2xl mb-1 text-on-surface-variant group-hover:text-primary transition-colors">badge</span>
+<span class="text-sm font-medium text-on-surface">Staff</span>
+</div>
+</label>
+</div>
+</div>
+<!-- Terms and Conditions -->
+<label class="flex items-start gap-3 cursor-pointer group mt-4">
+<div class="relative flex items-center justify-center mt-1">
+<input class="peer h-5 w-5 rounded border-outline-variant bg-surface-container-highest/50 text-primary-container focus:ring-primary-container focus:ring-offset-0 transition-all" type="checkbox"/>
+</div>
+<span class="text-xs text-on-surface-variant leading-relaxed">
+                        I agree to the <span class="text-primary-container hover:underline">Terms of Service</span> and <span class="text-primary-container hover:underline">Privacy Policy</span> regarding fee management and data sync protocols.
+                    </span>
+</label>
+<!-- Primary Action -->
+<button class="w-full gradient-button text-white font-headline font-bold py-4 rounded-xl shadow-lg shadow-primary-container/30 hover:shadow-primary-container/50 active:scale-[0.98] transition-all mt-4" type="button">
+                    Sign Up
+                </button>
+</form>
+</div>
+<!-- Footer Link -->
+<p class="text-center mt-8 text-on-surface-variant text-sm">
+            Already have an account? 
+            <a class="text-primary-container font-semibold hover:text-primary transition-colors" href="#">Log In</a>
+</p>
+</div>
+<!-- Background Image Component (Decorative) -->
+<div class="hidden lg:block absolute right-12 top-1/2 -translate-y-1/2 w-96 h-[600px] rounded-xl overflow-hidden shadow-2xl opacity-40">
+<img class="w-full h-full object-cover" data-alt="Abstract 3D digital visualization of complex flowing blue and purple currency lines and financial data nodes in a dark void" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOmznyquAQdz91d4EGLpNufaTD3aA0zBc5ghAdHxBeoSOyB1XRYeiH1HEW1tGErrWiZ9pKokb6m2JzkVFjRXjS352GAbr640qEWsQfDSJqViW2834kor1RJk4Rq4ULY-ZWr9-DVHhV69fW1B08bBJbI_fOBAG9Epo3T5fjVOdA0GQAQT9d_ooJwwtIgRtkjYHocCW_xpqk5_iKJO_BFHWnmERVNauGsoI5TCIsUn1BpPTA9xPN2r4d6ESgP9EVaKSTpGkjeOzpkVLO"/>
+<div class="absolute inset-0 bg-gradient-to-l from-surface-container-lowest via-transparent to-transparent"></div>
+</div>
+</body></html>

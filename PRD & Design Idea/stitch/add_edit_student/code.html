@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FeeSync | Edit Student</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-fixed-variant": "#003ea8",
+                    "surface-container-high": "#292937",
+                    "error-container": "#93000a",
+                    "inverse-primary": "#0053db",
+                    "secondary": "#d0bcff",
+                    "on-error-container": "#ffdad6",
+                    "on-tertiary-container": "#ffede6",
+                    "inverse-on-surface": "#2f2f3d",
+                    "error": "#ffb4ab",
+                    "background": "#12121f",
+                    "surface-container": "#1e1e2c",
+                    "on-secondary-fixed-variant": "#5516be",
+                    "on-secondary": "#3c0091",
+                    "on-background": "#e3e0f4",
+                    "on-surface-variant": "#c3c6d7",
+                    "on-primary-container": "#eeefff",
+                    "secondary-fixed": "#e9ddff",
+                    "surface-bright": "#383847",
+                    "on-secondary-fixed": "#23005c",
+                    "on-primary-fixed": "#00174b",
+                    "tertiary-fixed-dim": "#ffb596",
+                    "surface-container-lowest": "#0d0d1a",
+                    "surface-variant": "#343342",
+                    "surface-tint": "#b4c5ff",
+                    "outline-variant": "#434655",
+                    "tertiary-container": "#bc4800",
+                    "surface": "#12121f",
+                    "on-surface": "#e3e0f4",
+                    "on-secondary-container": "#c4abff",
+                    "surface-dim": "#12121f",
+                    "tertiary": "#ffb596",
+                    "on-tertiary-fixed": "#360f00",
+                    "on-tertiary": "#581e00",
+                    "surface-container-highest": "#343342",
+                    "on-primary": "#002a78",
+                    "inverse-surface": "#e3e0f4",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "primary-container": "#2563eb",
+                    "surface-container-low": "#1a1a28",
+                    "on-error": "#690005",
+                    "secondary-fixed-dim": "#d0bcff",
+                    "outline": "#8d90a0",
+                    "on-tertiary-fixed-variant": "#7d2d00",
+                    "primary": "#b4c5ff",
+                    "tertiary-fixed": "#ffdbcd",
+                    "secondary-container": "#571bc1",
+                    "primary-fixed": "#dbe1ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "1.5rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(30, 30, 44, 0.8);
+            backdrop-filter: blur(16px);
+        }
+        .input-gradient-focus:focus-within {
+            border-bottom: 2px solid #2563eb;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-container-lowest text-on-surface font-body selection:bg-primary-container selection:text-white pb-32">
+<!-- Top App Bar -->
+<header class="fixed top-0 w-full z-50 bg-[#1e1e2c]/80 backdrop-blur-lg shadow-[0px_4px_24px_0px_rgba(37,99,235,0.08)]">
+<div class="flex justify-between items-center px-6 py-4 w-full">
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-[#e3e0f4] hover:bg-white/10 p-2 rounded-full transition-colors active:scale-95 duration-200">arrow_back</button>
+<h1 class="text-xl font-bold tracking-tight text-[#e3e0f4] font-headline">FeeSync</h1>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant/30">
+<img alt="User Profile Avatar" class="w-full h-full object-cover" data-alt="professional headshot of a school administrator in a modern office setting with soft cinematic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCosKDlpIjl82HWqbp8e3g6slYvQn1YBYJslf39jwU89OYWbaQJBiL2Tm3nt6Qv8h0sawSG-vbO4UQXujPEDeY7biE5HI-uqQzcWZJveUopv3PpOV8LIJJyKtkWFLHzi15m0ICieSsotUpv6dsnIh7dQwS86Hzudu7Rv7Yw0RjO4klJrlgEKoescIyTZULzOqZf5NYP2e54tnHrYjHlqjI3KkACPx99BhjSfl8hn_f37jjgWwuiI00Buk_vESaWAmOOt6P4Rbhj-hu7"/>
+</div>
+</div>
+</div>
+</header>
+<main class="pt-24 px-6 max-w-4xl mx-auto">
+<!-- Editorial Header Section -->
+<section class="mb-12">
+<span class="text-primary-container font-semibold tracking-widest text-[10px] uppercase block mb-2">Student Registry</span>
+<h2 class="text-4xl md:text-5xl font-headline font-bold text-on-surface mb-4 leading-tight">Student Profile <br/><span class="text-outline">Configuration</span></h2>
+<p class="text-on-surface-variant max-w-xl text-lg leading-relaxed">Update administrative records and financial obligations for the upcoming academic semester.</p>
+</section>
+<!-- Form Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<!-- Identity Section -->
+<div class="md:col-span-8 glass-panel p-8 rounded-xl shadow-[0px_8px_32px_0px_rgba(0,0,0,0.2)]">
+<div class="flex items-center gap-3 mb-8">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">badge</span>
+<h3 class="font-headline text-xl font-semibold">Personal Identity</h3>
+</div>
+<div class="space-y-8">
+<!-- Name Field -->
+<div class="relative group">
+<label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mb-2 block">Full Name</label>
+<div class="flex items-center bg-surface-container-high/50 rounded-lg p-1 transition-all focus-within:bg-surface-container-highest">
+<span class="material-symbols-outlined px-3 text-outline">person</span>
+<input class="w-full bg-transparent border-none focus:ring-0 py-3 text-on-surface placeholder:text-outline/50 font-medium" placeholder="Enter student name" type="text" value="Alexander Thompson"/>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Email Field -->
+<div class="relative group">
+<label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mb-2 block">Official Email</label>
+<div class="flex items-center bg-surface-container-high/50 rounded-lg p-1 transition-all focus-within:bg-surface-container-highest">
+<span class="material-symbols-outlined px-3 text-outline">mail</span>
+<input class="w-full bg-transparent border-none focus:ring-0 py-3 text-on-surface placeholder:text-outline/50 font-medium" placeholder="student@email.com" type="email" value="a.thompson@academy.edu"/>
+</div>
+</div>
+<!-- Phone Field -->
+<div class="relative group">
+<label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mb-2 block">Contact Phone</label>
+<div class="flex items-center bg-surface-container-high/50 rounded-lg p-1 transition-all focus-within:bg-surface-container-highest">
+<span class="material-symbols-outlined px-3 text-outline">call</span>
+<input class="w-full bg-transparent border-none focus:ring-0 py-3 text-on-surface placeholder:text-outline/50 font-medium" placeholder="+0 000 000 000" type="tel" value="+1 (555) 012-3456"/>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Enrollment Status Card -->
+<div class="md:col-span-4 bg-surface-container-high p-8 rounded-xl flex flex-col justify-between border border-white/5 relative overflow-hidden">
+<div class="absolute -top-12 -right-12 w-32 h-32 bg-primary-container/20 rounded-full blur-3xl"></div>
+<div>
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-primary-container" style="font-variation-settings: 'FILL' 1;">school</span>
+<h3 class="font-headline text-lg font-semibold text-on-surface">Academic Class</h3>
+</div>
+<select class="w-full bg-surface-container-highest/50 border-none rounded-lg text-on-surface py-3 px-4 focus:ring-2 focus:ring-primary-container font-medium mb-8 appearance-none">
+<option>Senior Year - Alpha</option>
+<option selected="">Junior Year - Beta</option>
+<option>Sophomore Year - Gamma</option>
+<option>Freshman Year - Delta</option>
+</select>
+</div>
+<div class="mt-auto">
+<label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mb-2 block">Enrollment Date</label>
+<div class="flex items-center bg-surface-container-highest/50 rounded-lg p-3 group cursor-pointer hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-primary-container mr-3">calendar_today</span>
+<span class="text-on-surface font-medium">Sept 14, 2023</span>
+<span class="material-symbols-outlined ml-auto text-outline text-sm">edit</span>
+</div>
+</div>
+</div>
+<!-- Financial Obligations (Wide) -->
+<div class="md:col-span-12 glass-panel p-8 rounded-xl border border-white/5 relative group">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-container to-secondary-container flex items-center justify-center shadow-lg">
+<span class="material-symbols-outlined text-white text-3xl">payments</span>
+</div>
+<div>
+<h3 class="font-headline text-xl font-bold">Total Fee Structure</h3>
+<p class="text-on-surface-variant text-sm">Define the complete semester liability</p>
+</div>
+</div>
+<div class="flex items-end gap-2 bg-surface-container-high/30 p-6 rounded-2xl border border-white/5">
+<span class="text-3xl font-headline font-bold text-primary-container self-center">$</span>
+<input class="bg-transparent border-none p-0 text-5xl font-headline font-extrabold text-on-surface focus:ring-0 w-48 placeholder:text-outline/20" type="text" value="12,450.00"/>
+<span class="text-outline mb-2 font-medium">USD</span>
+</div>
+</div>
+<div class="mt-8 pt-8 border-t border-white/5 grid grid-cols-2 md:grid-cols-4 gap-4">
+<div class="p-4 rounded-xl bg-surface-container-low/50">
+<span class="text-[10px] uppercase text-outline block mb-1">Tuition</span>
+<span class="font-bold text-on-surface">$8,500</span>
+</div>
+<div class="p-4 rounded-xl bg-surface-container-low/50">
+<span class="text-[10px] uppercase text-outline block mb-1">Amenities</span>
+<span class="font-bold text-on-surface">$1,200</span>
+</div>
+<div class="p-4 rounded-xl bg-surface-container-low/50">
+<span class="text-[10px] uppercase text-outline block mb-1">Technology</span>
+<span class="font-bold text-on-surface">$750</span>
+</div>
+<div class="p-4 rounded-xl border border-dashed border-outline-variant flex items-center justify-center cursor-pointer hover:bg-white/5 transition-all">
+<span class="material-symbols-outlined text-primary-container mr-2">add_circle</span>
+<span class="text-xs font-bold text-primary-container">Add Charge</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Action Footer -->
+<div class="mt-12 flex flex-col sm:flex-row items-center justify-end gap-4">
+<button class="w-full sm:w-auto px-10 py-4 rounded-xl font-headline font-bold text-on-surface hover:bg-white/5 transition-all active:scale-95 border border-outline-variant/30">
+                Cancel
+            </button>
+<button class="w-full sm:w-auto px-12 py-4 rounded-xl font-headline font-bold text-white bg-gradient-to-br from-blue-600 to-purple-700 shadow-[0px_8px_32px_0px_rgba(37,99,235,0.3)] hover:shadow-primary-container/40 transition-all active:scale-95">
+                Save Profile
+            </button>
+</div>
+</main>
+<!-- Bottom Navigation Shell -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-[#1e1e2c]/80 backdrop-blur-lg rounded-t-[1.5rem] shadow-[0px_-8px_32px_0px_rgba(0,0,0,0.5)]">
+<div class="flex flex-col items-center justify-center text-[#c3c6d7] px-4 py-2 hover:text-blue-400 transition-all cursor-pointer active:scale-90 duration-150">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-['Inter'] font-medium text-[10px] mt-1">Dashboard</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-gradient-to-br from-blue-600 to-purple-700 text-white rounded-2xl px-4 py-2 cursor-pointer active:scale-90 duration-150 shadow-lg">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">group</span>
+<span class="font-['Inter'] font-medium text-[10px] mt-1">Students</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#c3c6d7] px-4 py-2 hover:text-blue-400 transition-all cursor-pointer active:scale-90 duration-150">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-['Inter'] font-medium text-[10px] mt-1">Payments</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#c3c6d7] px-4 py-2 hover:text-blue-400 transition-all cursor-pointer active:scale-90 duration-150">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-['Inter'] font-medium text-[10px] mt-1">Reports</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#c3c6d7] px-4 py-2 hover:text-blue-400 transition-all cursor-pointer active:scale-90 duration-150">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-['Inter'] font-medium text-[10px] mt-1">Settings</span>
+</div>
+</nav>
+<!-- Floating Background Decor -->
+<div class="fixed top-0 right-0 -z-10 w-[50vw] h-[50vw] bg-primary-container/5 rounded-full blur-[120px] pointer-events-none"></div>
+<div class="fixed bottom-0 left-0 -z-10 w-[40vw] h-[40vw] bg-secondary-container/5 rounded-full blur-[100px] pointer-events-none"></div>
+</body></html>

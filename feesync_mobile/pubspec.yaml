@@ -1,0 +1,38 @@
+name: feesync_mobile
+description: "FeeSync - School Fee Management Mobile App"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # State Management
+  flutter_riverpod: ^2.6.1
+
+  # Backend
+  supabase_flutter: ^2.8.1
+
+  # Navigation
+  go_router: ^14.8.1
+
+  # UI Components
+  flutter_slidable: ^3.1.2
+  fl_chart: ^0.64.0
+
+  # Utilities
+  intl: ^0.20.2
+  url_launcher: ^6.3.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true

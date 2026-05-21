@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mv feesync-app/* .)",
+      "Bash(mv feesync-app/.* .)",
+      "Bash(rmdir feesync-app *)"
+    ]
+  }
+}

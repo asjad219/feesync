@@ -1,0 +1,161 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+}
+
+:root {
+  --background: #12121f;
+  --foreground: #e3e0f4;
+  --primary: #b4c5ff;
+  --primary-foreground: #002a78;
+  --secondary: #d0bcff;
+  --secondary-foreground: #3c0091;
+  --muted: #c3c6d7;
+  --muted-foreground: #343342;
+  --accent: #2563eb;
+  --accent-foreground: #eeefff;
+  --destructive: #ffb4ab;
+  --border: #434655;
+  --input: #1e1e2c;
+  --ring: #2563eb;
+  --chart-1: #2563eb;
+  --chart-2: #571bc1;
+  --chart-3: #d0bcff;
+  --chart-4: #ffb596;
+  --chart-5: #8d90a0;
+  --radius: 1.5rem;
+}
+
+.dark {
+  --background: #12121f;
+  --foreground: #e3e0f4;
+  --primary: #b4c5ff;
+  --primary-foreground: #002a78;
+  --secondary: #d0bcff;
+  --secondary-foreground: #3c0091;
+  --muted: #c3c6d7;
+  --muted-foreground: #1a1a28;
+  --accent: #2563eb;
+  --accent-foreground: #eeefff;
+  --destructive: #ffb4ab;
+  --border: #434655;
+  --input: #1e1e2c;
+  --ring: #2563eb;
+  --chart-1: #2563eb;
+  --chart-2: #571bc1;
+  --chart-3: #d0bcff;
+  --chart-4: #ffb596;
+  --chart-5: #8d90a0;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Manrope', system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  /* Stitch Design: Container Layers */
+  .surface-lowest {
+    @apply bg-[#0d0d1a];
+  }
+  
+  .surface-low {
+    @apply bg-[#1a1a28];
+  }
+  
+  .surface-container {
+    @apply bg-[#1e1e2c];
+  }
+  
+  .surface-high {
+    @apply bg-[#292937];
+  }
+
+  /* Stitch Design: Cards with no borders */
+  .card-stitch {
+    @apply bg-[#1e1e2c] rounded-xl p-6 shadow-lg;
+  }
+  
+  .card-elevated {
+    @apply bg-[#292937] rounded-xl p-6 shadow-lg backdrop-blur-[16px];
+  }
+
+  /* Stitch Design: Primary CTA (Blue to Purple Gradient) */
+  .btn-primary-gradient {
+    @apply bg-gradient-to-br from-[#2563eb] to-[#571bc1] text-[#e3e0f4] hover:shadow-lg transition-all px-6 py-3 rounded-xl font-semibold;
+  }
+
+  /* Stitch Design: Input Fields */
+  .input-stitch {
+    @apply bg-[#1e1e2c] border-b-2 border-[#2563eb] text-[#e3e0f4] placeholder-[#c3c6d7] focus:outline-none transition-colors;
+  }
+
+  /* Stitch Design: Text with hierarchy */
+  .display-lg {
+    @apply text-5xl font-bold text-[#e3e0f4];
+  }
+
+  .headline-md {
+    @apply text-2xl font-semibold text-[#e3e0f4];
+  }
+
+  .title-lg {
+    @apply text-xl font-medium text-[#e3e0f4];
+  }
+
+  .body-lg {
+    @apply text-base font-normal text-[#e3e0f4];
+  }
+
+  .label-md {
+    @apply text-sm font-medium text-[#c3c6d7];
+  }
+
+  /* Stitch Design: Status Pills */
+  .status-pill {
+    @apply px-3 py-1 rounded-full text-xs font-semibold;
+  }
+
+  .status-success {
+    @apply px-3 py-1 rounded-full text-xs font-semibold bg-green-900/20 text-green-300;
+  }
+
+  .status-error {
+    @apply px-3 py-1 rounded-full text-xs font-semibold bg-red-900/20 text-red-300;
+  }
+
+  .status-warning {
+    @apply px-3 py-1 rounded-full text-xs font-semibold bg-yellow-900/20 text-yellow-300;
+  }
+
+  .status-info {
+    @apply px-3 py-1 rounded-full text-xs font-semibold bg-blue-900/20 text-blue-300;
+  }
+}

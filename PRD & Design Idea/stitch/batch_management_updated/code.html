@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FeeSync - Batch Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-surface": "#e3e0f4",
+                        "surface-container-low": "#1a1a28",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "surface-tint": "#b4c5ff",
+                        "surface-bright": "#383847",
+                        "surface-container": "#1e1e2c",
+                        "on-surface": "#e3e0f4",
+                        "on-primary-container": "#eeefff",
+                        "secondary": "#d0bcff",
+                        "secondary-fixed": "#e9ddff",
+                        "inverse-on-surface": "#2f2f3d",
+                        "tertiary-container": "#bc4800",
+                        "surface-container-high": "#292937",
+                        "on-error-container": "#ffdad6",
+                        "on-tertiary": "#581e00",
+                        "error": "#ffb4ab",
+                        "primary-fixed": "#dbe1ff",
+                        "primary-container": "#2563eb",
+                        "secondary-fixed-dim": "#d0bcff",
+                        "surface-container-lowest": "#0d0d1a",
+                        "tertiary": "#ffb596",
+                        "on-secondary": "#3c0091",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "outline-variant": "#434655",
+                        "surface-container-highest": "#343342",
+                        "primary": "#b4c5ff",
+                        "surface-dim": "#12121f",
+                        "on-secondary-fixed": "#23005c",
+                        "background": "#12121f",
+                        "on-secondary-fixed-variant": "#5516be",
+                        "inverse-primary": "#0053db",
+                        "tertiary-fixed": "#ffdbcd",
+                        "on-tertiary-fixed": "#360f00",
+                        "outline": "#8d90a0",
+                        "surface": "#12121f",
+                        "error-container": "#93000a",
+                        "on-primary-fixed": "#00174b",
+                        "on-surface-variant": "#c3c6d7",
+                        "on-primary": "#002a78",
+                        "surface-variant": "#343342",
+                        "on-secondary-container": "#c4abff",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-error": "#690005",
+                        "on-tertiary-container": "#ffede6",
+                        "on-background": "#e3e0f4",
+                        "secondary-container": "#571bc1"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(30, 30, 44, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-surface-container-lowest text-on-surface font-body selection:bg-primary-container/30">
+<!-- Top App Bar -->
+<header class="fixed top-0 w-full z-50 bg-[#1e1e2c]/80 backdrop-blur-lg shadow-[0_8px_32px_0_rgba(13,13,26,0.5)] flex items-center justify-between px-6 py-4">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant">menu</span>
+<h1 class="text-2xl font-bold tracking-tight text-[#e3e0f4] font-headline">FeeSync</h1>
+</div>
+<div class="w-10 h-10 rounded-full bg-surface-container-high border border-outline-variant/20 overflow-hidden">
+<img alt="User profile" data-alt="Close-up portrait of a professional man in a dark studio setting with soft rim lighting and a modern aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD-JQ364y3ll8XoMW2Urvga-uU5Ti5BvZ_mrOsT3Bx7nvv-UHiMHhgo1FiFBes685dQGXyoZectuH7SAG-GO7KxMsWTZP7ZBN3HWn1UefdVU0VO3gzDNvSy1y6UIQHEL18HVQc94LEzFJC7edyRL9T6qrp7ZNHV9fw8_Kt7LQOSbK9m15H_CzZ6_MObbNv_fyWUpsi-lK8_T1Bs__Pwux5Z7Wefq1AnsPFft9lpY5Y3OdSCCpgyVU6Fp1U5Tl41TfvFm6VN9She5tKO"/>
+</div>
+</header>
+<main class="pt-24 pb-32 px-4 space-y-8 max-w-2xl mx-auto">
+<!-- Search and Filter Section -->
+<section class="space-y-4">
+<div class="flex flex-col gap-1">
+<h2 class="text-[1.75rem] font-semibold font-headline text-on-surface">Batch Management</h2>
+<p class="text-on-surface-variant text-sm">Manage academic batches and fee structures</p>
+</div>
+<div class="flex gap-2">
+<div class="relative flex-grow">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full bg-surface-container border-none rounded-xl py-4 pl-12 pr-4 text-on-surface focus:ring-1 focus:ring-primary-container placeholder:text-outline" placeholder="Search batches..." type="text"/>
+</div>
+<button class="bg-surface-container-high p-4 rounded-xl text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+<button class="bg-surface-container-high p-4 rounded-xl text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">sort</span>
+</button>
+</div>
+</section>
+<!-- Batch List -->
+<section class="space-y-6">
+<!-- Active Batch Card -->
+<div class="glass-card rounded-xl p-6 shadow-xl border border-outline-variant/10 relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary-container"></div>
+<div class="flex justify-between items-start mb-4">
+<div>
+<div class="flex items-center gap-3 mb-1">
+<h3 class="text-xl font-semibold text-on-surface">Junior Year – Beta</h3>
+<span class="px-3 py-1 bg-green-500/15 text-green-400 text-[10px] font-bold uppercase tracking-wider rounded-full border border-green-500/20">Active</span>
+</div>
+<p class="text-on-surface-variant text-sm font-medium">Grade 10 • 2025–2026</p>
+</div>
+<div class="flex gap-1">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined text-xl">edit</span></button>
+<button class="p-2 text-on-surface-variant hover:text-error transition-colors"><span class="material-symbols-outlined text-xl">delete</span></button>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div class="bg-surface-container-low/50 p-4 rounded-xl">
+<p class="text-[10px] text-outline uppercase font-bold tracking-widest mb-1">Total Enrollment</p>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-lg">groups</span>
+<span class="text-lg font-bold">45 Students</span>
+</div>
+</div>
+<div class="bg-surface-container-low/50 p-4 rounded-xl">
+<p class="text-[10px] text-outline uppercase font-bold tracking-widest mb-1">Start Date</p>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-lg">calendar_today</span>
+<span class="text-lg font-bold">Sept 14, 2025</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between border-t border-outline-variant/10 pt-4">
+<span class="text-on-surface-variant text-sm">Total Batch Fee</span>
+<span class="text-2xl font-bold font-headline bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">$12,450</span>
+</div>
+</div>
+<!-- Detailed Section / Overlay Visualized In-flow -->
+<div class="bg-surface-container-high rounded-xl p-6 shadow-2xl border border-primary-container/20 space-y-6">
+<div class="flex items-center justify-between border-b border-outline-variant/10 pb-4">
+<h3 class="text-xl font-bold font-headline">Batch Configuration</h3>
+<span class="material-symbols-outlined text-primary-container">settings_suggest</span>
+</div>
+<div class="space-y-4">
+<div class="grid grid-cols-1 gap-4">
+<div class="space-y-2">
+<label class="text-xs font-bold text-outline uppercase tracking-wider">Academic Class</label>
+<div class="relative">
+<select class="w-full bg-surface-container border-none rounded-xl py-3 px-4 text-on-surface focus:ring-1 focus:ring-primary-container appearance-none">
+<option>Grade 10</option>
+<option>Grade 11</option>
+<option>Grade 12</option>
+</select>
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-outline">expand_more</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-2">
+<label class="text-xs font-bold text-outline uppercase tracking-wider">Academic Year</label>
+<div class="relative">
+<select class="w-full bg-surface-container border-none rounded-xl py-3 px-4 text-on-surface focus:ring-1 focus:ring-primary-container appearance-none">
+<option>2025–2026</option>
+<option>2026–2027</option>
+</select>
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-outline">calendar_month</span>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-xs font-bold text-outline uppercase tracking-wider">Enrollment Date</label>
+<div class="relative">
+<input class="w-full bg-surface-container border-none rounded-xl py-3 px-4 text-on-surface focus:ring-1 focus:ring-primary-container" type="text" value="2025-09-14"/>
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-outline">event</span>
+</div>
+</div>
+</div>
+</div>
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<h4 class="text-sm font-bold text-outline uppercase tracking-wider">Fee Breakdown</h4>
+<button class="text-primary text-xs font-bold flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-sm">add_circle</span> Add Charge
+                        </button>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between p-3 bg-surface-container/50 rounded-lg">
+<span class="text-on-surface">Tuition Fee</span>
+<span class="font-bold">$10,000</span>
+</div>
+<div class="flex justify-between p-3 bg-surface-container/50 rounded-lg">
+<span class="text-on-surface">Amenities</span>
+<span class="font-bold">$1,200</span>
+</div>
+<div class="flex justify-between p-3 bg-surface-container/50 rounded-lg">
+<span class="text-on-surface">Tech &amp; Infrastructure</span>
+<span class="font-bold">$800</span>
+</div>
+<div class="flex justify-between p-3 bg-surface-container/50 rounded-lg">
+<span class="text-on-surface">Transport</span>
+<span class="font-bold">$450</span>
+</div>
+</div>
+</div>
+<div class="bg-gradient-to-br from-primary-container to-secondary-container p-6 rounded-xl shadow-lg">
+<div class="flex justify-between items-center text-white">
+<div>
+<p class="text-xs opacity-80 uppercase font-bold tracking-widest mb-1">Total Structure Value</p>
+<p class="text-3xl font-bold font-headline">$12,450</p>
+</div>
+<span class="material-symbols-outlined text-4xl opacity-30">account_balance_wallet</span>
+</div>
+</div>
+<div class="flex gap-4 pt-4">
+<button class="flex-1 bg-surface-container-highest py-4 rounded-xl font-bold text-on-surface transition-all active:scale-95">Cancel</button>
+<button class="flex-1 bg-primary-container py-4 rounded-xl font-bold text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] transition-all active:scale-95">Save Changes</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Floating Action Button -->
+<button class="fixed bottom-28 right-6 bg-[#2563EB] text-white flex items-center gap-3 pl-4 pr-6 py-4 rounded-[1.125rem] shadow-[0_4px_12px_rgba(0,0,0,0.4)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.4)] hover:scale-105 transition-all active:scale-95 z-40">
+<span class="material-symbols-outlined text-2xl">add</span>
+<span class="font-semibold tracking-wide text-sm">Add Batch</span>
+</button>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full bg-[#1e1e2c]/80 backdrop-blur-xl flex justify-around items-center px-4 pb-6 pt-2 z-50 rounded-t-[1.5rem] shadow-[0_-8px_32px_0_rgba(13,13,26,0.8)]">
+<a class="flex flex-col items-center justify-center text-[#c3c6d7] p-3 hover:text-[#2563eb] transition-all active:scale-90" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-inter font-medium text-[10px]">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-gradient-to-br from-[#2563eb] to-[#571bc1] text-white rounded-2xl p-3 shadow-[0_0_15px_rgba(37,99,235,0.4)] active:scale-90" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">groups</span>
+<span class="font-inter font-medium text-[10px]">Batches</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#c3c6d7] p-3 hover:text-[#2563eb] transition-all active:scale-90" href="#">
+<span class="material-symbols-outlined">person_search</span>
+<span class="font-inter font-medium text-[10px]">Students</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#c3c6d7] p-3 hover:text-[#2563eb] transition-all active:scale-90" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-inter font-medium text-[10px]">Revenue</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#c3c6d7] p-3 hover:text-[#2563eb] transition-all active:scale-90" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-inter font-medium text-[10px]">Settings</span>
+</a>
+</nav>
+</body></html>

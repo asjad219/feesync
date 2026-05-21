@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FeeSync - Add New Batch</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-primary": "#0053db",
+                        "tertiary": "#ffb596",
+                        "primary-fixed": "#dbe1ff",
+                        "on-tertiary": "#581e00",
+                        "on-tertiary-fixed": "#360f00",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-secondary-container": "#c4abff",
+                        "on-error": "#690005",
+                        "surface-variant": "#343342",
+                        "secondary-fixed": "#e9ddff",
+                        "on-secondary-fixed-variant": "#5516be",
+                        "secondary-fixed-dim": "#d0bcff",
+                        "on-error-container": "#ffdad6",
+                        "on-surface-variant": "#c3c6d7",
+                        "tertiary-container": "#bc4800",
+                        "surface-container-high": "#292937",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "primary-container": "#2563eb",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "tertiary-fixed": "#ffdbcd",
+                        "on-secondary-fixed": "#23005c",
+                        "on-primary-container": "#eeefff",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "background": "#12121f",
+                        "surface-container-highest": "#343342",
+                        "outline-variant": "#434655",
+                        "inverse-surface": "#e3e0f4",
+                        "surface-tint": "#b4c5ff",
+                        "on-primary": "#002a78",
+                        "secondary-container": "#571bc1",
+                        "error": "#ffb4ab",
+                        "on-surface": "#e3e0f4",
+                        "outline": "#8d90a0",
+                        "surface": "#12121f",
+                        "surface-container": "#1e1e2c",
+                        "error-container": "#93000a",
+                        "on-secondary": "#3c0091",
+                        "on-background": "#e3e0f4",
+                        "surface-dim": "#12121f",
+                        "surface-container-low": "#1a1a28",
+                        "primary": "#b4c5ff",
+                        "inverse-on-surface": "#2f2f3d",
+                        "on-tertiary-container": "#ffede6",
+                        "on-primary-fixed": "#00174b",
+                        "surface-container-lowest": "#0d0d1a",
+                        "secondary": "#d0bcff",
+                        "surface-bright": "#383847"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .font-headline { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(30, 30, 44, 0.8);
+            backdrop-filter: blur(16px);
+        }
+        .luxury-gradient {
+            background: linear-gradient(135deg, #2563eb 0%, #571bc1 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-container-lowest text-on-surface min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#1e1e2c]/80 backdrop-blur-lg shadow-[0_24px_32px_-12px_rgba(37,99,235,0.08)]">
+<div class="flex items-center justify-between px-6 h-16 w-full max-w-none">
+<button class="flex items-center justify-center p-2 rounded-full hover:bg-white/5 transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined text-on-surface">close</span>
+</button>
+<h1 class="text-xl font-bold text-[#e3e0f4] font-headline">Add New Batch</h1>
+<button class="text-blue-600 dark:text-blue-500 font-headline font-semibold px-4 py-2 hover:bg-white/5 rounded-lg transition-colors active:scale-95 duration-200">
+                Save
+            </button>
+</div>
+</header>
+<main class="pt-24 px-6 max-w-3xl mx-auto space-y-10">
+<!-- Hero Section -->
+<div class="space-y-2">
+<span class="text-primary tracking-widest text-[10px] font-bold uppercase">Administration</span>
+<h2 class="text-3xl font-bold font-headline tracking-tight">Create New Batch</h2>
+<p class="text-on-surface-variant text-sm">Define the academic parameters and fee structure for the upcoming cycle.</p>
+</div>
+<!-- Form Section: Basic Information -->
+<section class="space-y-6">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">dataset</span>
+<h3 class="text-lg font-semibold font-headline">Batch Information</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Batch Name -->
+<div class="bg-surface-container rounded-xl p-4 transition-all focus-within:ring-1 focus-within:ring-primary/30">
+<label class="block text-xs font-medium text-on-surface-variant mb-1">Batch Name</label>
+<input class="w-full bg-transparent border-none p-0 text-on-surface placeholder:text-outline/50 focus:ring-0 text-base" placeholder="e.g., Senior Year - Gamma" type="text"/>
+</div>
+<!-- Academic Class -->
+<div class="bg-surface-container rounded-xl p-4 transition-all focus-within:ring-1 focus-within:ring-primary/30">
+<label class="block text-xs font-medium text-on-surface-variant mb-1">Academic Class</label>
+<select class="w-full bg-transparent border-none p-0 text-on-surface focus:ring-0 text-base appearance-none">
+<option class="bg-surface-container">Select Grade</option>
+<option class="bg-surface-container">Grade 10</option>
+<option class="bg-surface-container">Grade 11</option>
+<option class="bg-surface-container" selected="">Grade 12</option>
+</select>
+</div>
+<!-- Academic Year -->
+<div class="bg-surface-container rounded-xl p-4 transition-all focus-within:ring-1 focus-within:ring-primary/30">
+<label class="block text-xs font-medium text-on-surface-variant mb-1">Academic Year</label>
+<input class="w-full bg-transparent border-none p-0 text-on-surface placeholder:text-outline/50 focus:ring-0 text-base" placeholder="2025-2026" type="text"/>
+</div>
+<!-- Enrollment Date -->
+<div class="bg-surface-container rounded-xl p-4 transition-all focus-within:ring-1 focus-within:ring-primary/30">
+<label class="block text-xs font-medium text-on-surface-variant mb-1">Enrollment Date</label>
+<input class="w-full bg-transparent border-none p-0 text-on-surface focus:ring-0 text-base [color-scheme:dark]" type="date"/>
+</div>
+</div>
+</section>
+<!-- Fee Structure Section -->
+<section class="space-y-6">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">payments</span>
+<h3 class="text-lg font-semibold font-headline">Fee Structure</h3>
+</div>
+<button class="text-xs font-semibold text-primary flex items-center gap-1 hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-sm">add</span>
+                    Add Custom Charge
+                </button>
+</div>
+<!-- Grouped Fee Inputs -->
+<div class="glass-panel rounded-xl overflow-hidden shadow-2xl">
+<div class="divide-y divide-outline-variant/10">
+<!-- Tuition Fee -->
+<div class="p-5 flex items-center justify-between hover:bg-white/[0.02] transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-xl">school</span>
+</div>
+<div>
+<p class="text-sm font-medium text-on-surface">Tuition Fee</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-wider">Mandatory</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-on-surface-variant font-medium">$</span>
+<input class="w-24 bg-surface-container-high/50 border-none rounded-lg text-right py-1 px-2 focus:ring-1 focus:ring-primary text-on-surface font-semibold" type="number" value="12000"/>
+</div>
+</div>
+<!-- Amenities -->
+<div class="p-5 flex items-center justify-between hover:bg-white/[0.02] transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary text-xl">apartment</span>
+</div>
+<div>
+<p class="text-sm font-medium text-on-surface">Amenities</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-wider">Infrastructure</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-on-surface-variant font-medium">$</span>
+<input class="w-24 bg-surface-container-high/50 border-none rounded-lg text-right py-1 px-2 focus:ring-1 focus:ring-primary text-on-surface font-semibold" type="number" value="1500"/>
+</div>
+</div>
+<!-- Technology -->
+<div class="p-5 flex items-center justify-between hover:bg-white/[0.02] transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-tertiary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary text-xl">devices</span>
+</div>
+<div>
+<p class="text-sm font-medium text-on-surface">Technology</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-wider">Digital Access</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-on-surface-variant font-medium">$</span>
+<input class="w-24 bg-surface-container-high/50 border-none rounded-lg text-right py-1 px-2 focus:ring-1 focus:ring-primary text-on-surface font-semibold" type="number" value="850"/>
+</div>
+</div>
+<!-- Transport -->
+<div class="p-5 flex items-center justify-between hover:bg-white/[0.02] transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-xl">directions_bus</span>
+</div>
+<div>
+<p class="text-sm font-medium text-on-surface">Transport</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-wider">Optional Service</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-on-surface-variant font-medium">$</span>
+<input class="w-24 bg-surface-container-high/50 border-none rounded-lg text-right py-1 px-2 focus:ring-1 focus:ring-primary text-on-surface font-semibold" type="number" value="2200"/>
+</div>
+</div>
+</div>
+</div>
+<!-- Total Fee Calculation Card -->
+<div class="luxury-gradient p-[1px] rounded-xl shadow-lg">
+<div class="bg-surface-container-lowest/90 backdrop-blur-md rounded-[23px] p-6 flex items-center justify-between">
+<div>
+<p class="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-1">Total Batch Value</p>
+<h4 class="text-4xl font-extrabold font-headline text-on-surface tracking-tighter">$16,550</h4>
+</div>
+<div class="text-right">
+<p class="text-xs text-on-surface-variant">Per Student / Annually</p>
+<div class="flex items-center justify-end gap-1 mt-1 text-primary">
+<span class="material-symbols-outlined text-xs">trending_up</span>
+<span class="text-[10px] font-bold">4.2% VS PREV YEAR</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Aesthetic Visual Placeholder -->
+<div class="relative w-full h-48 rounded-xl overflow-hidden group">
+<img alt="Abstract technology background" class="w-full h-full object-cover opacity-40 grayscale group-hover:grayscale-0 transition-all duration-700" data-alt="Deep blue digital network grid with flowing lines of light representing secure financial data flow in a dark void" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDD11H1tkb-Eza6NZwYIRB2qgO53oGW0HNe0dLO5Umrgg2RJHNepbKbDSjcxj3SoZrhhMEVYDTLjN1fWQJW8sb9OLDx9kZakAKikllf7H2fOZeiU12t6ZOrGdzr40sEKpfhririN5C8bZMRQXg-FrH_52-pgsTI5FGuXdWMM0n_ZXHgM6uJh9MQk7L6gqv-i93Rh738GjaN8Oyyu3JIsaZswr6uWH_IEpmMbhhRmYpQgEt-B6ya6cA3O3-nX6UP0ZYA3M1KMLLyv8QN"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest to-transparent"></div>
+<div class="absolute bottom-6 left-6 right-6">
+<p class="text-on-surface font-headline font-bold text-lg">Predictive Analytics Ready</p>
+<p class="text-on-surface-variant text-xs">AI-driven cashflow forecasting will be available once the first student enrolls in this batch.</p>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 py-3 pb-6 bg-[#1e1e2c]/80 backdrop-blur-lg rounded-t-[1.5rem] shadow-[0_-8px_24px_rgba(13,13,26,0.5)] z-50">
+<!-- Batches Active -->
+<a class="flex flex-col items-center justify-center bg-gradient-to-br from-blue-600 to-purple-700 text-white rounded-2xl p-2 scale-110 duration-300 ease-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">layers</span>
+<span class="text-[10px] font-medium font-label mt-1">Batches</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#c3c6d7] p-2 hover:text-blue-400 transition-all" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="text-[10px] font-medium font-label mt-1">Ledger</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#c3c6d7] p-2 hover:text-blue-400 transition-all" href="#">
+<span class="material-symbols-outlined">query_stats</span>
+<span class="text-[10px] font-medium font-label mt-1">Analytics</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#c3c6d7] p-2 hover:text-blue-400 transition-all" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px] font-medium font-label mt-1">Settings</span>
+</a>
+</nav>
+</body></html>
