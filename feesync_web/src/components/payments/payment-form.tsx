@@ -42,7 +42,7 @@ export function PaymentForm({
     watch,
     setValue,
     formState: { errors },
-  } = useForm<PaymentInput>({
+  } = useForm({
     resolver: zodResolver(paymentSchema),
   })
 
@@ -50,7 +50,7 @@ export function PaymentForm({
   const selectedStudent = students.find((s) => s.id === studentId)
   const studentFees = feeStructures.filter((f) => f.class === selectedStudent?.class)
 
-  const onSubmitHandler = async (data: PaymentInput) => {
+  const onSubmitHandler = async (data: any) => {
     try {
       const feeIds = Array.from(selectedFees)
       const allocations = feeIds.map((feeId) => ({
@@ -75,7 +75,7 @@ export function PaymentForm({
           <Label htmlFor="student_id" className="label-md">
             Student *
           </Label>
-          <Select value={studentId || ''} onValueChange={(value) => setValue('student_id', value)}>
+          <Select value={studentId || ''} onValueChange={(value) => setValue('student_id', value || '')}>
             <SelectTrigger className="input-stitch">
               <SelectValue placeholder="Select student" />
             </SelectTrigger>
@@ -88,7 +88,7 @@ export function PaymentForm({
             </SelectContent>
           </Select>
           {errors.student_id && (
-            <p className="text-sm text-destructive">{errors.student_id.message}</p>
+            <p className="text-sm text-destructive">{errors.student_id.message as string}</p>
           )}
         </div>
 
@@ -107,7 +107,7 @@ export function PaymentForm({
             className="input-stitch"
           />
           {errors.amount && (
-            <p className="text-sm text-destructive">{errors.amount.message}</p>
+            <p className="text-sm text-destructive">{errors.amount.message as string}</p>
           )}
         </div>
 
@@ -129,7 +129,7 @@ export function PaymentForm({
             </SelectContent>
           </Select>
           {errors.payment_method && (
-            <p className="text-sm text-destructive">{errors.payment_method.message}</p>
+            <p className="text-sm text-destructive">{errors.payment_method.message as string}</p>
           )}
         </div>
 
@@ -145,7 +145,7 @@ export function PaymentForm({
             className="input-stitch"
           />
           {errors.payment_date && (
-            <p className="text-sm text-destructive">{errors.payment_date.message}</p>
+            <p className="text-sm text-destructive">{errors.payment_date.message as string}</p>
           )}
         </div>
 
@@ -161,7 +161,7 @@ export function PaymentForm({
             className="input-stitch"
           />
           {errors.receipt_number && (
-            <p className="text-sm text-destructive">{errors.receipt_number.message}</p>
+            <p className="text-sm text-destructive">{errors.receipt_number.message as string}</p>
           )}
         </div>
 
@@ -177,7 +177,7 @@ export function PaymentForm({
             className="input-stitch"
           />
           {errors.transaction_id && (
-            <p className="text-sm text-destructive">{errors.transaction_id.message}</p>
+            <p className="text-sm text-destructive">{errors.transaction_id.message as string}</p>
           )}
         </div>
       </div>

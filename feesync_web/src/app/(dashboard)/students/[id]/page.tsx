@@ -21,6 +21,7 @@ export default function EditStudentPage() {
   const { data: student, isLoading: isFetching, error } = useQuery({
     queryKey: ['student', studentId],
     queryFn: () => getStudentById(studentId),
+    select: (res) => res.data,
   })
 
   const handleSubmit = async (data: CreateStudentInput) => {

@@ -15,7 +15,7 @@ export const paymentSchema = z.object({
     .max(100, 'Transaction ID must be less than 100 characters')
     .optional()
     .or(z.literal('')),
-  status: z.enum(['pending', 'completed', 'failed']).default('completed'),
+  status: z.enum(['pending', 'completed', 'refunded', 'cancelled']).default('completed'),
   notes: z
     .string()
     .max(500, 'Notes must be less than 500 characters')

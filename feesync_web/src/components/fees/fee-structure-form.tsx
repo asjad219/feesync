@@ -38,9 +38,9 @@ export function FeeStructureForm({
     watch,
     setValue,
     formState: { errors },
-  } = useForm<FeeStructureInput>({
+  } = useForm({
     resolver: zodResolver(feeStructureSchema),
-    defaultValues,
+    defaultValues: defaultValues as any,
   })
 
   const categoryId = watch('category_id')
@@ -76,7 +76,7 @@ export function FeeStructureForm({
             </SelectContent>
           </Select>
           {errors.category_id && (
-            <p className="text-sm text-destructive">{errors.category_id.message}</p>
+            <p className="text-sm text-destructive">{errors.category_id.message as string}</p>
           )}
         </div>
 
@@ -92,7 +92,7 @@ export function FeeStructureForm({
             className="input-stitch"
           />
           {errors.name && (
-            <p className="text-sm text-destructive">{errors.name.message}</p>
+            <p className="text-sm text-destructive">{errors.name.message as string}</p>
           )}
         </div>
 
@@ -115,7 +115,7 @@ export function FeeStructureForm({
             </SelectContent>
           </Select>
           {errors.plan_type && (
-            <p className="text-sm text-destructive">{errors.plan_type.message}</p>
+            <p className="text-sm text-destructive">{errors.plan_type.message as string}</p>
           )}
         </div>
 
@@ -134,7 +134,7 @@ export function FeeStructureForm({
             className="input-stitch"
           />
           {errors.amount && (
-            <p className="text-sm text-destructive">{errors.amount.message}</p>
+            <p className="text-sm text-destructive">{errors.amount.message as string}</p>
           )}
         </div>
 
@@ -150,7 +150,7 @@ export function FeeStructureForm({
             className="input-stitch"
           />
           {errors.class && (
-            <p className="text-sm text-destructive">{errors.class.message}</p>
+            <p className="text-sm text-destructive">{errors.class.message as string}</p>
           )}
         </div>
 
@@ -166,7 +166,7 @@ export function FeeStructureForm({
             className="input-stitch"
           />
           {errors.due_date && (
-            <p className="text-sm text-destructive">{errors.due_date.message}</p>
+            <p className="text-sm text-destructive">{errors.due_date.message as string}</p>
           )}
         </div>
 
@@ -241,7 +241,7 @@ export function FeeStructureForm({
           rows={3}
         />
         {errors.description && (
-          <p className="text-sm text-destructive">{errors.description.message}</p>
+          <p className="text-sm text-destructive">{errors.description.message as string}</p>
         )}
       </div>
 

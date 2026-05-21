@@ -20,9 +20,9 @@ export function FeeCategoryForm({ onSubmit, isLoading, defaultValues }: FeeCateg
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<FeeCategoryInput>({
+  } = useForm({
     resolver: zodResolver(feeCategorySchema),
-    defaultValues,
+    defaultValues: defaultValues as any,
   })
 
   const onSubmitHandler = async (data: FeeCategoryInput) => {
@@ -48,7 +48,7 @@ export function FeeCategoryForm({ onSubmit, isLoading, defaultValues }: FeeCateg
           className="input-stitch"
         />
         {errors.name && (
-          <p className="text-sm text-destructive">{errors.name.message}</p>
+          <p className="text-sm text-destructive">{errors.name.message as string}</p>
         )}
       </div>
 
@@ -65,7 +65,7 @@ export function FeeCategoryForm({ onSubmit, isLoading, defaultValues }: FeeCateg
           rows={4}
         />
         {errors.description && (
-          <p className="text-sm text-destructive">{errors.description.message}</p>
+          <p className="text-sm text-destructive">{errors.description.message as string}</p>
         )}
       </div>
 

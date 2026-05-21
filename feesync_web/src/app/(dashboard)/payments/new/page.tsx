@@ -155,7 +155,7 @@ export default function NewPaymentPage() {
           </CardHeader>
           <CardContent>
             <Popover open={open} onOpenChange={setOpen}>
-              <PopoverTrigger asChild>
+              <PopoverTrigger>
                 <Button
                   variant="outline"
                   role="combobox"

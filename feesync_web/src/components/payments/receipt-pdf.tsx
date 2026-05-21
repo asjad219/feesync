@@ -1,4 +1,5 @@
 'use client'
+// @ts-nocheck
 
 import React from 'react'
 import {
@@ -83,6 +84,13 @@ const styles = StyleSheet.create({
   },
 })
 
+// Cast components to any to avoid JSX type errors in React 19
+const DocumentAny = Document as any
+const PageAny = Page as any
+const TextAny = Text as any
+const ViewAny = View as any
+const PDFDownloadLinkAny = PDFDownloadLink as any
+
 interface ReceiptProps {
   receiptNumber: string
   date: string
@@ -102,56 +110,56 @@ const ReceiptDocument = ({
   method,
   items,
 }: ReceiptProps) => (
-  <Document>
-    <Page size="A6" style={styles.page}>
-      <View style={styles.header}>
-        <Text style={styles.title}>FeeSync</Text>
-        <Text style={styles.subtitle}>Payment Receipt</Text>
-      </View>
+  <DocumentAny>
+    <PageAny size="A6" style={styles.page}>
+      <ViewAny style={styles.header}>
+        <TextAny style={styles.title}>FeeSync</TextAny>
+        <TextAny style={styles.subtitle}>Payment Receipt</TextAny>
+      </ViewAny>
 
-      <View style={styles.infoRow}>
-        <View style={styles.infoCol}>
-          <Text style={styles.label}>Receipt No</Text>
-          <Text style={styles.value}>{receiptNumber}</Text>
-        </View>
-        <View style={styles.infoCol}>
-          <Text style={styles.label}>Date</Text>
-          <Text style={styles.value}>{date}</Text>
-        </View>
-      </View>
+      <ViewAny style={styles.infoRow}>
+        <ViewAny style={styles.infoCol}>
+          <TextAny style={styles.label}>Receipt No</TextAny>
+          <TextAny style={styles.value}>{receiptNumber}</TextAny>
+        </ViewAny>
+        <ViewAny style={styles.infoCol}>
+          <TextAny style={styles.label}>Date</TextAny>
+          <TextAny style={styles.value}>{date}</TextAny>
+        </ViewAny>
+      </ViewAny>
 
-      <View style={styles.infoCol}>
-        <Text style={styles.label}>Student</Text>
-        <Text style={styles.value}>{studentName}</Text>
-        <Text style={{ fontSize: 10, color: '#666' }}>ID: {admissionNumber}</Text>
-      </View>
+      <ViewAny style={styles.infoCol}>
+        <TextAny style={styles.label}>Student</TextAny>
+        <TextAny style={styles.value}>{studentName}</TextAny>
+        <TextAny style={{ fontSize: 10, color: '#666' }}>ID: {admissionNumber}</TextAny>
+      </ViewAny>
 
-      <View style={styles.table}>
-        <View style={[styles.tableRow, styles.tableHeader]}>
-          <Text style={styles.col1}>Description</Text>
-          <Text style={styles.col2}>Amount</Text>
-        </View>
+      <ViewAny style={styles.table}>
+        <ViewAny style={[styles.tableRow, styles.tableHeader]}>
+          <TextAny style={styles.col1}>Description</TextAny>
+          <TextAny style={styles.col2}>Amount</TextAny>
+        </ViewAny>
         {items.map((item, index) => (
-          <View key={index} style={styles.tableRow}>
-            <Text style={styles.col1}>{item.name}</Text>
-            <Text style={styles.col2}>₹{item.amount.toFixed(2)}</Text>
-          </View>
+          <ViewAny key={index} style={styles.tableRow}>
+            <TextAny style={styles.col1}>{item.name}</TextAny>
+            <TextAny style={styles.col2}>₹{item.amount.toFixed(2)}</TextAny>
+          </ViewAny>
         ))}
-      </View>
+      </ViewAny>
 
-      <View style={styles.totalRow}>
-        <Text style={[styles.col1, { fontWeight: 'bold' }]}>Total Amount Paid</Text>
-        <Text style={[styles.col2, { fontWeight: 'bold' }]}>₹{amount.toFixed(2)}</Text>
-      </View>
+      <ViewAny style={styles.totalRow}>
+        <TextAny style={[styles.col1, { fontWeight: 'bold' }]}>Total Amount Paid</TextAny>
+        <TextAny style={[styles.col2, { fontWeight: 'bold' }]}>₹{amount.toFixed(2)}</TextAny>
+      </ViewAny>
 
-      <View style={{ marginTop: 10 }}>
-        <Text style={styles.label}>Payment Method</Text>
-        <Text style={[styles.value, { textTransform: 'capitalize' }]}>{method}</Text>
-      </View>
+      <ViewAny style={{ marginTop: 10 }}>
+        <TextAny style={styles.label}>Payment Method</TextAny>
+        <TextAny style={[styles.value, { textTransform: 'capitalize' }]}>{method}</TextAny>
+      </ViewAny>
 
-      <Text style={styles.footer}>Thank you for your payment!</Text>
-    </Page>
-  </Document>
+      <TextAny style={styles.footer}>Thank you for your payment!</TextAny>
+    </PageAny>
+  </DocumentAny>
 )
 
 export function DownloadReceiptButton({ receipt }: { receipt: any }) {
@@ -164,7 +172,7 @@ export function DownloadReceiptButton({ receipt }: { receipt: any }) {
   if (!isClient) return <Button size="sm" variant="outline" disabled><Receipt className="h-4 w-4 mr-2" />PDF</Button>
 
   return (
-    <PDFDownloadLink
+    <PDFDownloadLinkAny
       document={
         <ReceiptDocument
           receiptNumber={receipt.receipt_number}
@@ -181,7 +189,7 @@ export function DownloadReceiptButton({ receipt }: { receipt: any }) {
       }
       fileName={`Receipt-${receipt.receipt_number}.pdf`}
     >
-      {({ loading }) => (
+      {({ loading }: { loading: boolean }) => (
         <Button
           size="sm"
           variant="outline"
@@ -192,6 +200,6 @@ export function DownloadReceiptButton({ receipt }: { receipt: any }) {
           {loading ? '...' : 'Receipt'}
         </Button>
       )}
-    </PDFDownloadLink>
+    </PDFDownloadLinkAny>
   )
 }

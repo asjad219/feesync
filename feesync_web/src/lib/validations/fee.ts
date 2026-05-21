@@ -10,7 +10,7 @@ export const feeCategorySchema = z.object({
     .max(500, 'Description must be less than 500 characters')
     .optional()
     .or(z.literal('')),
-  is_active: z.boolean().default(true),
+  is_active: z.boolean().optional().default(true),
 })
 
 export const feeStructureSchema = z.object({
@@ -37,8 +37,8 @@ export const feeStructureSchema = z.object({
   late_fine: z.coerce.number().min(0).default(0),
   grace_days: z.coerce.number().int().min(0).default(0),
   gst_percent: z.coerce.number().min(0).max(100).default(0),
-  auto_generate_dues: z.boolean().default(true),
-  is_active: z.boolean().default(true),
+  auto_generate_dues: z.boolean().optional().default(true),
+  is_active: z.boolean().optional().default(true),
 })
 
 export const updateFeeStructureSchema = feeStructureSchema.partial()

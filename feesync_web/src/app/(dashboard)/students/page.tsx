@@ -27,6 +27,7 @@ export default function StudentsPage() {
     queryKey: ['students'],
     queryFn: () => getStudents(),
     staleTime: 5 * 60 * 1000,
+    select: (res) => res.data || [],
   })
 
   const filteredStudents = students.filter((student) =>

@@ -39,6 +39,7 @@ export default function PaymentsPage() {
   } = useQuery({
     queryKey: ['payments'],
     queryFn: () => getPayments(),
+    select: (res) => res.data || [],
   })
 
   const {
@@ -47,6 +48,7 @@ export default function PaymentsPage() {
   } = useQuery({
     queryKey: ['students'],
     queryFn: () => getStudents(),
+    select: (res) => res.data || [],
   })
 
   const {
@@ -55,6 +57,7 @@ export default function PaymentsPage() {
   } = useQuery({
     queryKey: ['fee-structures'],
     queryFn: () => getFeeStructures(),
+    select: (res) => res.data || [],
   })
 
   const studentMap = Object.fromEntries(students.map((s) => [s.id, s]))
@@ -73,11 +76,10 @@ export default function PaymentsPage() {
         amount: data.amount,
         payment_method: data.payment_method,
         payment_date: data.payment_date,
-        receipt_number: data.receipt_number,
-        transaction_id: data.transaction_id,
+        transaction_id: data.transaction_id || undefined,
         status: data.status || 'completed',
-        notes: data.notes,
-      })
+        notes: data.notes || undefined,
+      }, data.fee_allocations || [])
       toast.success('Payment recorded successfully')
       await refetchPayments()
       setOpenDialog(false)

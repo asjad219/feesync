@@ -65,7 +65,7 @@ export function PaymentTable({
             const statusColor =
               payment.status === 'completed'
                 ? 'success'
-                : payment.status === 'failed'
+                : (payment.status === 'cancelled' || payment.status === 'refunded')
                   ? 'error'
                   : 'warning'
 

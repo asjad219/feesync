@@ -29,14 +29,14 @@ export function StudentForm({ onSubmit, isLoading, defaultValues }: StudentFormP
     watch,
     setValue,
     formState: { errors },
-  } = useForm<CreateStudentInput>({
+  } = useForm({
     resolver: zodResolver(createStudentSchema),
-    defaultValues,
+    defaultValues: defaultValues as any,
   })
 
   const genderValue = watch('gender')
 
-  const onSubmitHandler = async (data: CreateStudentInput) => {
+  const onSubmitHandler = async (data: any) => {
     try {
       await onSubmit(data)
       toast.success('Student saved successfully')
@@ -60,7 +60,7 @@ export function StudentForm({ onSubmit, isLoading, defaultValues }: StudentFormP
             className="input-stitch"
           />
           {errors.admission_number && (
-            <p className="text-sm text-destructive">{errors.admission_number.message}</p>
+            <p className="text-sm text-destructive">{errors.admission_number.message as string}</p>
           )}
         </div>
 
@@ -76,7 +76,7 @@ export function StudentForm({ onSubmit, isLoading, defaultValues }: StudentFormP
             className="input-stitch"
           />
           {errors.class && (
-            <p className="text-sm text-destructive">{errors.class.message}</p>
+            <p className="text-sm text-destructive">{errors.class.message as string}</p>
           )}
         </div>
 
@@ -92,7 +92,7 @@ export function StudentForm({ onSubmit, isLoading, defaultValues }: StudentFormP
             className="input-stitch"
           />
           {errors.first_name && (
-            <p className="text-sm text-destructive">{errors.first_name.message}</p>
+            <p className="text-sm text-destructive">{errors.first_name.message as string}</p>
           )}
         </div>
 
@@ -108,7 +108,7 @@ export function StudentForm({ onSubmit, isLoading, defaultValues }: StudentFormP
             className="input-stitch"
           />
           {errors.last_name && (
-            <p className="text-sm text-destructive">{errors.last_name.message}</p>
+            <p className="text-sm text-destructive">{errors.last_name.message as string}</p>
           )}
         </div>
 
@@ -124,7 +124,7 @@ export function StudentForm({ onSubmit, isLoading, defaultValues }: StudentFormP
             className="input-stitch"
           />
           {errors.section && (
-            <p className="text-sm text-destructive">{errors.section.message}</p>
+            <p className="text-sm text-destructive">{errors.section.message as string}</p>
           )}
         </div>
 
@@ -140,7 +140,7 @@ export function StudentForm({ onSubmit, isLoading, defaultValues }: StudentFormP
             className="input-stitch"
           />
           {errors.stream && (
-            <p className="text-sm text-destructive">{errors.stream.message}</p>
+            <p className="text-sm text-destructive">{errors.stream.message as string}</p>
           )}
         </div>
 
@@ -160,7 +160,7 @@ export function StudentForm({ onSubmit, isLoading, defaultValues }: StudentFormP
             </SelectContent>
           </Select>
           {errors.gender && (
-            <p className="text-sm text-destructive">{errors.gender.message}</p>
+            <p className="text-sm text-destructive">{errors.gender.message as string}</p>
           )}
         </div>
 
@@ -176,7 +176,7 @@ export function StudentForm({ onSubmit, isLoading, defaultValues }: StudentFormP
             className="input-stitch"
           />
           {errors.date_of_birth && (
-            <p className="text-sm text-destructive">{errors.date_of_birth.message}</p>
+            <p className="text-sm text-destructive">{errors.date_of_birth.message as string}</p>
           )}
         </div>
 
@@ -192,7 +192,7 @@ export function StudentForm({ onSubmit, isLoading, defaultValues }: StudentFormP
             className="input-stitch"
           />
           {errors.parent_name && (
-            <p className="text-sm text-destructive">{errors.parent_name.message}</p>
+            <p className="text-sm text-destructive">{errors.parent_name.message as string}</p>
           )}
         </div>
 
@@ -209,7 +209,7 @@ export function StudentForm({ onSubmit, isLoading, defaultValues }: StudentFormP
             className="input-stitch"
           />
           {errors.parent_phone && (
-            <p className="text-sm text-destructive">{errors.parent_phone.message}</p>
+            <p className="text-sm text-destructive">{errors.parent_phone.message as string}</p>
           )}
         </div>
 
@@ -226,7 +226,7 @@ export function StudentForm({ onSubmit, isLoading, defaultValues }: StudentFormP
             className="input-stitch"
           />
           {errors.parent_email && (
-            <p className="text-sm text-destructive">{errors.parent_email.message}</p>
+            <p className="text-sm text-destructive">{errors.parent_email.message as string}</p>
           )}
         </div>
       </div>
@@ -244,7 +244,7 @@ export function StudentForm({ onSubmit, isLoading, defaultValues }: StudentFormP
           rows={3}
         />
         {errors.address && (
-          <p className="text-sm text-destructive">{errors.address.message}</p>
+          <p className="text-sm text-destructive">{errors.address.message as string}</p>
         )}
       </div>
 
