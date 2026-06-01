@@ -53,7 +53,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               Container(
                 width: 100,
                 height: 100,
-                decoration: BoxDecoration(gradient: AppGradients.primary, borderRadius: BorderRadius.circular(28), boxShadow: [BoxShadow(color: AppColors.primaryContainer.withOpacity(0.3), blurRadius: 40, offset: const Offset(0, 20))]),
+                decoration: BoxDecoration(gradient: AppGradients.primary, borderRadius: BorderRadius.circular(28), boxShadow: [BoxShadow(color: AppColors.primaryContainer.withValues(alpha: 0.3), blurRadius: 40, offset: const Offset(0, 20))]),
                 child: const Icon(Icons.sync_rounded, size: 56, color: Colors.white),
               ),
               const SizedBox(height: 32),

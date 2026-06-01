@@ -27,10 +27,10 @@ class KpiCard extends StatelessWidget {
       margin: const EdgeInsets.only(right: 16),
       child: GlassCard(
         padding: const EdgeInsets.all(16),
-        borderColor: color.withOpacity(0.3),
+        borderColor: color.withValues(alpha: 0.3),
         gradientColors: [
-          color.withOpacity(0.15),
-          color.withOpacity(0.02),
+          color.withValues(alpha: 0.15),
+          color.withValues(alpha: 0.02),
         ],
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,7 +42,7 @@ class KpiCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.2),
+                    color: color.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(icon, color: color, size: 20),
@@ -74,7 +74,7 @@ class KpiCard extends StatelessWidget {
                 Text(
                   title,
                   style: GoogleFonts.inter(
-                    color: Colors.white.withOpacity(0.6),
+                    color: Colors.white.withValues(alpha: 0.6),
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),

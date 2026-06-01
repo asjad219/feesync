@@ -35,7 +35,7 @@ class BatchListScreen extends ConsumerWidget {
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 128, 20, 120),
+            padding: const EdgeInsets.fromLTRB(20, 128, 20, 32),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

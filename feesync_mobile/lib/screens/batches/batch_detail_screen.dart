@@ -99,7 +99,7 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
                 height: 300,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: batch.color.withOpacity(isDark ? 0.2 : 0.15),
+                  color: batch.color.withValues(alpha: isDark ? 0.2 : 0.15),
                 ),
               ),
             ),
@@ -115,7 +115,7 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: batch.color.withOpacity(0.2),
+                          color: batch.color.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Icon(Icons.school, color: batch.color, size: 32),
@@ -534,9 +534,9 @@ class _QuickAction extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: color.withOpacity(0.2)),
+              border: Border.all(color: color.withValues(alpha: 0.2)),
             ),
             child: Icon(icon, color: color),
           ),
@@ -590,7 +590,7 @@ class _StudentListTile extends StatelessWidget {
         child: Row(
           children: [
             CircleAvatar(
-              backgroundColor: primaryColor.withOpacity(0.2),
+              backgroundColor: primaryColor.withValues(alpha: 0.2),
               child: Text(student.firstName[0], style: TextStyle(color: primaryColor)),
             ),
             const SizedBox(width: 16),
@@ -702,9 +702,9 @@ class _ToggleItem extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? primaryColor.withOpacity(0.1) : Colors.transparent,
+            color: isSelected ? primaryColor.withValues(alpha: 0.1) : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
-            border: isSelected ? Border.all(color: primaryColor.withOpacity(0.3)) : null,
+            border: isSelected ? Border.all(color: primaryColor.withValues(alpha: 0.3)) : null,
           ),
           child: Text(
             label,
@@ -889,7 +889,7 @@ class _AttendanceHistoryView extends ConsumerWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.history_rounded, size: 48, color: textTertiaryColor.withOpacity(0.2)),
+          Icon(Icons.history_rounded, size: 48, color: textTertiaryColor.withValues(alpha: 0.2)),
           const SizedBox(height: 16),
           Text('No history records yet', style: GoogleFonts.inter(color: textTertiaryColor)),
         ],
@@ -944,7 +944,7 @@ class _HistoryCard extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: healthColor.withOpacity(0.1),
+                  color: healthColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
@@ -1149,10 +1149,10 @@ class _StatusToggle extends StatelessWidget {
         height: 36,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isSelected ? activeColor : (isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.04)),
+          color: isSelected ? activeColor : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04)),
           shape: BoxShape.circle,
           border: Border.all(
-            color: isSelected ? activeColor : (isDark ? Colors.white.withOpacity(0.1) : Colors.black.withValues(alpha: 0.08)),
+            color: isSelected ? activeColor : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.08)),
           ),
         ),
         child: Text(
@@ -1348,7 +1348,7 @@ class _CircleProgress extends StatelessWidget {
               CircularProgressIndicator(
                 value: value,
                 strokeWidth: 6,
-                backgroundColor: color.withOpacity(0.1),
+                backgroundColor: color.withValues(alpha: 0.1),
                 valueColor: AlwaysStoppedAnimation(color),
               ),
               Center(
@@ -1599,7 +1599,7 @@ class _AnalyticsTab extends ConsumerWidget {
                             gradient: LinearGradient(
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
-                              colors: [const Color(0xFF10B981), const Color(0xFF10B981).withOpacity(0.3)],
+                              colors: [const Color(0xFF10B981), const Color(0xFF10B981).withValues(alpha: 0.3)],
                             ),
                             borderRadius: BorderRadius.circular(6),
                           ),
@@ -1654,7 +1654,7 @@ class _AnalyticsTab extends ConsumerWidget {
                             gradient: LinearGradient(
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
-                              colors: [const Color(0xFF2563EB), const Color(0xFF2563EB).withOpacity(0.3)],
+                              colors: [const Color(0xFF2563EB), const Color(0xFF2563EB).withValues(alpha: 0.3)],
                             ),
                             borderRadius: BorderRadius.circular(6),
                           ),
@@ -1721,7 +1721,7 @@ class _AnalyticsTab extends ConsumerWidget {
   Widget _buildAiInsights(BatchAnalytics data) {
     return GlassCard(
       padding: const EdgeInsets.all(20),
-      borderColor: activeAccentColor.withOpacity(0.3),
+      borderColor: activeAccentColor.withValues(alpha: 0.3),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1733,13 +1733,13 @@ class _AnalyticsTab extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 16),
-          ...data.aiInsights.map((text) => _InsightRow(text)),
+          ...data.aiInsights.map((text) => _buildInsightRow(text)),
         ],
       ),
     );
   }
 
-  Widget _InsightRow(String text) {
+  Widget _buildInsightRow(String text) {
     final bool isDark = AppColors.isDarkMode;
     final textSecondaryColor = isDark ? const Color(0xFFC3C6D7) : const Color(0xFF475569);
     return Padding(
@@ -1760,7 +1760,7 @@ class _AnalyticsTab extends ConsumerWidget {
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Text(msg, style: TextStyle(color: textTertiaryColor.withOpacity(0.5), fontSize: 12)),
+        child: Text(msg, style: TextStyle(color: textTertiaryColor.withValues(alpha: 0.5), fontSize: 12)),
       ),
     );
   }

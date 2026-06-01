@@ -115,7 +115,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined, size: 20, color: AppColors.textTertiary), 
               onPressed: () => setState(() => _obscurePassword = !_obscurePassword)
             ) : null,
-            fillColor: AppColors.surfaceContainer.withOpacity(0.5),
+            fillColor: AppColors.surfaceContainer.withValues(alpha: 0.5),
           ),
         ),
       ]
@@ -129,7 +129,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       decoration: BoxDecoration(
         gradient: AppGradients.primary, 
         borderRadius: BorderRadius.circular(24), 
-        boxShadow: [BoxShadow(color: AppColors.primaryContainer.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 8))]
+        boxShadow: [BoxShadow(color: AppColors.primaryContainer.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 8))]
       ),
       child: ElevatedButton(
         onPressed: _isLoading ? null : _login,

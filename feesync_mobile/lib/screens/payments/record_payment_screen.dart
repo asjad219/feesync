@@ -254,7 +254,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
         title: Text('Record Payment', style: GoogleFonts.manrope(fontWeight: FontWeight.w800)),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 120),
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
         child: Form(
           key: _formKey,
           child: Column(

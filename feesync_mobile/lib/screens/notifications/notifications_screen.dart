@@ -37,7 +37,7 @@ class NotificationsScreen extends ConsumerWidget {
           return RefreshIndicator(
             onRefresh: () => ref.read(notificationNotifierProvider.notifier).refresh(),
             child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 120),
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
               itemCount: notifications.length,
               separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) => _NotificationTile(
@@ -70,13 +70,13 @@ class _NotificationTile extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isRead
-            ? AppColors.surfaceContainer.withOpacity(0.3)
-            : AppColors.surfaceContainer.withOpacity(0.6),
+            ? AppColors.surfaceContainer.withValues(alpha: 0.3)
+            : AppColors.surfaceContainer.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isRead
-              ? Colors.white.withOpacity(0.02)
-              : AppColors.primary.withOpacity(0.1),
+              ? Colors.white.withValues(alpha: 0.02)
+              : AppColors.primary.withValues(alpha: 0.1),
         ),
       ),
       child: InkWell(
@@ -124,7 +124,7 @@ class _NotificationTile extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
+                        color: AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -189,7 +189,7 @@ class _NotificationTile extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         shape: BoxShape.circle,
       ),
       child: Icon(icon, color: color, size: 18),

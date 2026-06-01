@@ -70,7 +70,7 @@ class _PaymentListScreenState extends ConsumerState<PaymentListScreen> {
             if (widget.studentId == null) _buildStatsSection(),
             _buildFiltersSection(),
             _buildPaymentsList(filteredAsync),
-            const SliverToBoxAdapter(child: SizedBox(height: 120)),
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
           ],
         ),
         floatingActionButton: _buildFAB(),

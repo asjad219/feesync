@@ -90,7 +90,7 @@ class _StudentListScreenState extends ConsumerState<StudentListScreen> {
               decoration: InputDecoration(
                 hintText: 'Search students...',
                 prefixIcon: Icon(Icons.search_rounded, color: AppColors.textTertiary),
-                fillColor: AppColors.surfaceContainer.withOpacity(0.5),
+                fillColor: AppColors.surfaceContainer.withValues(alpha: 0.5),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
                         icon: Icon(Icons.close_rounded, color: AppColors.textTertiary),
@@ -178,7 +178,7 @@ class _EmptyState extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(color: AppColors.surfaceContainer.withOpacity(0.5), shape: BoxShape.circle),
+            decoration: BoxDecoration(color: AppColors.surfaceContainer.withValues(alpha: 0.5), shape: BoxShape.circle),
             child: Icon(Icons.group_off_rounded, size: 64, color: AppColors.textTertiary),
           ),
           const SizedBox(height: 24),

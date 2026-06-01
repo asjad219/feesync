@@ -11,7 +11,7 @@ class ThemeColor extends Color {
   const ThemeColor(this.darkColor, this.lightColor) : super(0);
 
   @override
-  int get value => AppColors.isDarkMode ? darkColor.value : lightColor.value;
+  int get value => AppColors.isDarkMode ? darkColor.toARGB32() : lightColor.toARGB32();
 
   @override
   int toARGB32() => value;
@@ -174,7 +174,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
           side: BorderSide(
-            color: Colors.white.withOpacity(0.05),
+            color: Colors.white.withValues(alpha: 0.05),
             width: 1,
           ),
         ),
@@ -195,7 +195,7 @@ class AppTheme {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(24),
           borderSide: BorderSide(
-            color: Colors.white.withOpacity(0.05),
+            color: Colors.white.withValues(alpha: 0.05),
           ),
         ),
         focusedBorder: OutlineInputBorder(
@@ -336,7 +336,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
           side: BorderSide(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             width: 1,
           ),
         ),
@@ -357,7 +357,7 @@ class AppTheme {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(24),
           borderSide: BorderSide(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
           ),
         ),
         focusedBorder: OutlineInputBorder(

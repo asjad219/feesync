@@ -57,7 +57,7 @@ class StudentDetailsScreen extends ConsumerWidget {
               ref.invalidate(studentBatchesProvider(studentId));
             },
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 120),
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
               physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

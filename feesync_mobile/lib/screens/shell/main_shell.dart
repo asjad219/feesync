@@ -14,7 +14,8 @@ class MainShell extends StatelessWidget {
     final selectedIndex = _calculateSelectedIndex(context);
 
     return Scaffold(
-      extendBody: true,
+      extendBody: false,
+      backgroundColor: AppColors.darkBg,
       body: child,
       bottomNavigationBar: _StyledBottomNav(
         selectedIndex: selectedIndex,
@@ -66,39 +67,42 @@ class _StyledBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isDark = AppColors.isDarkMode;
-    final shadowColor = isDark 
-        ? Colors.black.withValues(alpha: 0.4) 
-        : Colors.black.withValues(alpha: 0.06);
     final borderColor = isDark 
         ? Colors.white.withValues(alpha: 0.08) 
         : Colors.black.withValues(alpha: 0.06);
     final bg = isDark
-        ? AppColors.surfaceContainer.withValues(alpha: 0.75)
-        : Colors.white.withValues(alpha: 0.85);
+        ? AppColors.surfaceContainer.withValues(alpha: 0.85)
+        : Colors.white.withValues(alpha: 0.9);
+    final shadowColor = isDark 
+        ? Colors.black.withValues(alpha: 0.2) 
+        : Colors.black.withValues(alpha: 0.03);
+
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 28),
-      height: 72,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(100),
-        border: Border.all(color: borderColor, width: 1.5),
+        color: Colors.transparent,
         boxShadow: [
           BoxShadow(
             color: shadowColor,
-            blurRadius: 24,
-            offset: const Offset(0, 8),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(100),
+      child: ClipRect(
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Container(
             color: bg,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: EdgeInsets.fromLTRB(12, 10, 12, 10 + bottomPadding),
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(color: borderColor, width: 1.0),
+              ),
+            ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _NavItem(
                   icon: Icons.dashboard_rounded,

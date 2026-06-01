@@ -178,7 +178,7 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 120),
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
         child: Form(
           key: _formKey,
           child: Column(
@@ -340,7 +340,7 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: _selectedBatchId,
-                hint: Text('Select Batch', style: TextStyle(color: textTertiaryColor.withOpacity(0.5), fontSize: 14)),
+                hint: Text('Select Batch', style: TextStyle(color: textTertiaryColor.withValues(alpha: 0.5), fontSize: 14)),
                 isExpanded: true,
                 dropdownColor: dropdownBgColor,
                 icon: Icon(Icons.arrow_drop_down_rounded, color: textTertiaryColor),

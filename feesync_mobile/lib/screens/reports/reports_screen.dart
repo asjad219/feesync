@@ -52,7 +52,7 @@ class ReportsScreen extends ConsumerWidget {
     String currencySymbol,
   ) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 120),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
