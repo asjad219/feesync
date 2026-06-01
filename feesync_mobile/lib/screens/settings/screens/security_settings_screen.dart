@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../providers/user_provider.dart';
-import '../widgets/premium_widgets.dart';
+import '../../../core/widgets/glass/glass_card.dart';
 
 class SecuritySettingsScreen extends ConsumerStatefulWidget {
   const SecuritySettingsScreen({super.key});
@@ -27,7 +27,7 @@ class _SecuritySettingsScreenState extends ConsumerState<SecuritySettingsScreen>
         backgroundColor: AppColors.darkSurface,
         title: Text(
           'Delete Account',
-          style: GoogleFonts.manrope(color: Colors.white, fontWeight: FontWeight.w800),
+          style: GoogleFonts.manrope(color: AppColors.textPrimary, fontWeight: FontWeight.w800),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -40,7 +40,7 @@ class _SecuritySettingsScreenState extends ConsumerState<SecuritySettingsScreen>
             const SizedBox(height: 16),
             TextField(
               controller: reasonController,
-              style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
+              style: GoogleFonts.inter(color: AppColors.textPrimary, fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Reason for deletion (Optional)...',
                 hintStyle: GoogleFonts.inter(color: AppColors.textHint),
@@ -52,7 +52,7 @@ class _SecuritySettingsScreenState extends ConsumerState<SecuritySettingsScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: GoogleFonts.inter(color: Colors.white)),
+            child: Text('Cancel', style: GoogleFonts.inter(color: AppColors.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -63,7 +63,7 @@ class _SecuritySettingsScreenState extends ConsumerState<SecuritySettingsScreen>
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Deletion request submitted. Management will review shortly.', style: GoogleFonts.inter(color: AppColors.onError)),
+                      content: Text('Deletion request submitted. Management will review shortly.', style: GoogleFonts.inter(color: AppColors.onErrorContainer)),
                       backgroundColor: AppColors.errorContainer,
                     ),
                   );
@@ -77,8 +77,11 @@ class _SecuritySettingsScreenState extends ConsumerState<SecuritySettingsScreen>
                 }
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.errorContainer),
-            child: Text('Request Deletion', style: GoogleFonts.inter(color: Colors.white)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.errorContainer,
+              foregroundColor: AppColors.onErrorContainer,
+            ),
+            child: Text('Request Deletion', style: GoogleFonts.inter()),
           ),
         ],
       ),
@@ -110,7 +113,7 @@ class _SecuritySettingsScreenState extends ConsumerState<SecuritySettingsScreen>
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -118,7 +121,7 @@ class _SecuritySettingsScreenState extends ConsumerState<SecuritySettingsScreen>
           style: GoogleFonts.manrope(
             fontSize: 20,
             fontWeight: FontWeight.w800,
-            color: Colors.white,
+            color: AppColors.textPrimary,
           ),
         ),
       ),
@@ -129,26 +132,26 @@ class _SecuritySettingsScreenState extends ConsumerState<SecuritySettingsScreen>
           children: [
             _buildSectionHeader('Authentication Controls'),
             const SizedBox(height: 12),
-            GlassContainer(
+            GlassCard(
               padding: const EdgeInsets.all(12),
               child: Column(
                 children: [
                   SwitchListTile.adaptive(
                     value: _biometricEnabled,
-                    title: Text('Biometric Authentication', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                    title: Text('Biometric Authentication', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
                     subtitle: Text('Use FaceID/Fingerprint for fast secure logins', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
                     secondary: const Icon(Icons.fingerprint_rounded, color: AppColors.primary),
-                    activeColor: AppColors.primary,
+                    activeThumbColor: AppColors.primary,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                     onChanged: (val) => setState(() => _biometricEnabled = val),
                   ),
-                  Divider(color: Colors.white.withOpacity(0.05), height: 1),
+                  Divider(color: AppColors.outline.withValues(alpha: 0.1), height: 1),
                   SwitchListTile.adaptive(
                     value: _pinLockEnabled,
-                    title: Text('App Lock PIN', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                    title: Text('App Lock PIN', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
                     subtitle: Text('Require a 4-digit PIN access lock upon startup', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
                     secondary: const Icon(Icons.password_rounded, color: AppColors.primary),
-                    activeColor: AppColors.primary,
+                    activeThumbColor: AppColors.primary,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                     onChanged: (val) => setState(() => _pinLockEnabled = val),
                   ),
@@ -159,19 +162,19 @@ class _SecuritySettingsScreenState extends ConsumerState<SecuritySettingsScreen>
 
             _buildSectionHeader('Active Session Monitors'),
             const SizedBox(height: 12),
-            GlassContainer(
+            GlassCard(
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
                   _buildDeviceTile('Android Mobile (This Device)', 'Active Session • New Delhi, India', true),
-                  Divider(color: Colors.white.withOpacity(0.05), height: 16),
+                  Divider(color: AppColors.outline.withValues(alpha: 0.1), height: 16),
                   _buildDeviceTile('Chrome Web Application', 'Active Session • California, USA', false),
                   const SizedBox(height: 8),
                   SwitchListTile.adaptive(
                     value: _sessionAlerts,
-                    title: Text('Unknown Device Login Alerts', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13)),
+                    title: Text('Unknown Device Login Alerts', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 13)),
                     subtitle: Text('Push alert when account is signed in on a new host', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
-                    activeColor: AppColors.primary,
+                    activeThumbColor: AppColors.primary,
                     contentPadding: EdgeInsets.zero,
                     onChanged: (val) => setState(() => _sessionAlerts = val),
                   ),
@@ -182,7 +185,7 @@ class _SecuritySettingsScreenState extends ConsumerState<SecuritySettingsScreen>
 
             _buildSectionHeader('Diagnostics & Database Sync'),
             const SizedBox(height: 12),
-            GlassContainer(
+            GlassCard(
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
@@ -195,14 +198,14 @@ class _SecuritySettingsScreenState extends ConsumerState<SecuritySettingsScreen>
                   ElevatedButton(
                     onPressed: _isWipingCache ? null : _wipeOfflineCache,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white.withOpacity(0.05),
-                      foregroundColor: Colors.white,
-                      side: BorderSide(color: Colors.white.withOpacity(0.08)),
+                      backgroundColor: AppColors.outline.withValues(alpha: 0.1),
+                      foregroundColor: AppColors.textPrimary,
+                      side: BorderSide(color: AppColors.outline.withValues(alpha: 0.15)),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       minimumSize: const Size(double.infinity, 44),
                     ),
                     child: _isWipingCache
-                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: AppColors.textPrimary, strokeWidth: 2))
                         : Text('Wipe Offline Database Cache', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600)),
                   ),
                 ],
@@ -220,10 +223,13 @@ class _SecuritySettingsScreenState extends ConsumerState<SecuritySettingsScreen>
                   children: [
                     _buildSectionHeader('Danger Zone'),
                     const SizedBox(height: 12),
-                    GlassContainer(
+                    GlassCard(
                       padding: const EdgeInsets.all(20),
-                      backgroundColor: AppColors.error.withOpacity(0.02),
-                      borderColor: AppColors.error.withOpacity(0.1),
+                      gradientColors: [
+                        AppColors.error.withValues(alpha: 0.05),
+                        AppColors.error.withValues(alpha: 0.05),
+                      ],
+                      borderColor: AppColors.error.withValues(alpha: 0.2),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -241,7 +247,7 @@ class _SecuritySettingsScreenState extends ConsumerState<SecuritySettingsScreen>
                             onPressed: () => _showDeleteAccountDialog(user.accountId, user.id),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.errorContainer,
-                              foregroundColor: Colors.white,
+                              foregroundColor: AppColors.onErrorContainer,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               minimumSize: const Size(double.infinity, 48),
                             ),
@@ -287,7 +293,7 @@ class _SecuritySettingsScreenState extends ConsumerState<SecuritySettingsScreen>
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white)),
+                Text(name, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
                 Text(status, style: GoogleFonts.inter(fontSize: 11, color: AppColors.textTertiary)),
               ],
             ),
@@ -302,7 +308,7 @@ class _SecuritySettingsScreenState extends ConsumerState<SecuritySettingsScreen>
         else
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.15), borderRadius: BorderRadius.circular(4)),
+            decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(4)),
             child: Text('THIS DEVICE', style: GoogleFonts.inter(color: AppColors.primary, fontSize: 8, fontWeight: FontWeight.w800)),
           ),
       ],

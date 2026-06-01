@@ -4,7 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../providers/settings_provider.dart';
-import '../widgets/premium_widgets.dart';
+import '../../../core/widgets/glass/glass_card.dart';
+import '../../../models/app_settings.dart';
 
 class AiSettingsScreen extends ConsumerStatefulWidget {
   const AiSettingsScreen({super.key});
@@ -22,7 +23,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
   bool _isInitialized = false;
   bool _isSaving = false;
 
-  void _initFields(settings) {
+  void _initFields(AppSettings settings) {
     if (_isInitialized) return;
     _aiReminders = settings.aiRemindersEnabled;
     _aiPredictions = settings.aiPredictionsEnabled;
@@ -79,7 +80,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -87,13 +88,13 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
           style: GoogleFonts.manrope(
             fontSize: 20,
             fontWeight: FontWeight.w800,
-            color: Colors.white,
+            color: AppColors.textPrimary,
           ),
         ),
       ),
       body: settingsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error loading settings: $err', style: const TextStyle(color: Colors.white))),
+        error: (err, stack) => Center(child: Text('Error loading settings: $err', style: const TextStyle(color: AppColors.error))),
         data: (settings) {
           _initFields(settings);
           return SingleChildScrollView(
@@ -103,28 +104,28 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
               children: [
                 _buildSectionHeader('Smart Automations'),
                 const SizedBox(height: 12),
-                GlassContainer(
+                GlassCard(
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
                       SwitchListTile.adaptive(
                         value: _aiReminders,
-                        title: Text('Neural Reminders timing', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                        title: Text('Neural Reminders timing', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
                         subtitle: Text('Analyze parent activity pattern to schedule WhatsApp alerts when they are most active', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
                         secondary: const Icon(Icons.psychology_rounded, color: AppColors.primary),
-                        activeColor: AppColors.primary,
+                        activeThumbColor: AppColors.primary,
                         contentPadding: EdgeInsets.zero,
                         onChanged: (val) => setState(() => _aiReminders = val),
                       ),
                       const SizedBox(height: 8),
-                      Divider(color: Colors.white.withOpacity(0.05), height: 1),
+                      Divider(color: AppColors.outline.withValues(alpha: 0.1), height: 1),
                       const SizedBox(height: 8),
                       SwitchListTile.adaptive(
                         value: _aiPredictions,
-                        title: Text('Payment Defaulter Prediction', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                        title: Text('Payment Defaulter Prediction', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
                         subtitle: Text('Generate proactive risk metrics for late payments by scanning invoice delay histories', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
                         secondary: const Icon(Icons.online_prediction_rounded, color: AppColors.primary),
-                        activeColor: AppColors.primary,
+                        activeThumbColor: AppColors.primary,
                         contentPadding: EdgeInsets.zero,
                         onChanged: (val) => setState(() => _aiPredictions = val),
                       ),
@@ -135,16 +136,16 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                 
                 _buildSectionHeader('Computer Vision'),
                 const SizedBox(height: 12),
-                GlassContainer(
+                GlassCard(
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
                       SwitchListTile.adaptive(
                         value: _ocrEnabled,
-                        title: Text('OCR Bank slip scanner', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                        title: Text('OCR Bank slip scanner', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
                         subtitle: Text('Extract check numbers, deposit slips & bank logs directly from device camera snapshots', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
                         secondary: const Icon(Icons.document_scanner_rounded, color: AppColors.primary),
-                        activeColor: AppColors.primary,
+                        activeThumbColor: AppColors.primary,
                         contentPadding: EdgeInsets.zero,
                         onChanged: (val) => setState(() => _ocrEnabled = val),
                       ),
@@ -155,7 +156,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                 
                 _buildSectionHeader('Confidence & Engine Threshold'),
                 const SizedBox(height: 12),
-                GlassContainer(
+                GlassCard(
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -165,7 +166,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                         children: [
                           Text(
                             'Decision confidence rating',
-                            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
+                            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                           ),
                           Text(
                             '${(_confidenceThreshold * 100).toStringAsFixed(0)}%',
@@ -183,9 +184,9 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                         data: SliderTheme.of(context).copyWith(
                           trackHeight: 4,
                           activeTrackColor: AppColors.primary,
-                          inactiveTrackColor: Colors.white.withOpacity(0.05),
+                          inactiveTrackColor: AppColors.outline.withValues(alpha: 0.2),
                           thumbColor: AppColors.primary,
-                          overlayColor: AppColors.primary.withOpacity(0.2),
+                          overlayColor: AppColors.primary.withValues(alpha: 0.2),
                           thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
                         ),
                         child: Slider(
@@ -231,13 +232,13 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
       onPressed: _isSaving ? null : _saveSettings,
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primaryContainer,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.onPrimaryContainer,
         minimumSize: const Size(double.infinity, 56),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         elevation: 0,
       ),
       child: _isSaving
-          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: AppColors.onPrimaryContainer, strokeWidth: 2))
           : Text(
               'Save Changes',
               style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700),

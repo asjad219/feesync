@@ -4,7 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../providers/settings_provider.dart';
-import '../widgets/premium_widgets.dart';
+import '../../../core/widgets/glass/glass_card.dart';
+import '../../../models/app_settings.dart';
 
 class BillingSettingsScreen extends ConsumerStatefulWidget {
   const BillingSettingsScreen({super.key});
@@ -36,7 +37,7 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
     super.dispose();
   }
 
-  void _initFields(settings) {
+  void _initFields(AppSettings settings) {
     if (_isInitialized) return;
     _gracePeriodController = TextEditingController(text: settings.gracePeriodDays.toString());
     _lateFineController = TextEditingController(text: settings.lateFineAmount.toStringAsFixed(0));
@@ -103,7 +104,7 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -111,13 +112,13 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
           style: GoogleFonts.manrope(
             fontSize: 20,
             fontWeight: FontWeight.w800,
-            color: Colors.white,
+            color: AppColors.textPrimary,
           ),
         ),
       ),
       body: settingsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error loading settings: $err', style: const TextStyle(color: Colors.white))),
+        error: (err, stack) => Center(child: Text('Error loading settings: $err', style: const TextStyle(color: AppColors.error))),
         data: (settings) {
           _initFields(settings);
           return Form(
@@ -129,7 +130,7 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
                 children: [
                   _buildSectionHeader('Billing Cycle & Rollover'),
                   const SizedBox(height: 12),
-                  GlassContainer(
+                  GlassCard(
                     padding: const EdgeInsets.all(20),
                     child: Column(
                       children: [
@@ -143,22 +144,22 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
                         const SizedBox(height: 16),
                         SwitchListTile.adaptive(
                           value: _autoDueGeneration,
-                          title: Text('Auto Due Generation', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                          title: Text('Auto Due Generation', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
                           subtitle: Text('Generate monthly fee dues automatically on rollover day', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
                           secondary: const Icon(Icons.autorenew_rounded, color: AppColors.primary),
-                          activeColor: AppColors.primary,
+                          activeThumbColor: AppColors.primary,
                           contentPadding: EdgeInsets.zero,
                           onChanged: (val) => setState(() => _autoDueGeneration = val),
                         ),
                         const SizedBox(height: 8),
-                        Divider(color: Colors.white.withOpacity(0.05), height: 1),
+                        Divider(color: AppColors.outline.withValues(alpha: 0.1), height: 1),
                         const SizedBox(height: 8),
                         SwitchListTile.adaptive(
                           value: _partialPaymentsAllowed,
-                          title: Text('Allow Partial Payments', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                          title: Text('Allow Partial Payments', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
                           subtitle: Text('Allow parents to pay dues in multiple installments', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
                           secondary: const Icon(Icons.pie_chart_rounded, color: AppColors.primary),
-                          activeColor: AppColors.primary,
+                          activeThumbColor: AppColors.primary,
                           contentPadding: EdgeInsets.zero,
                           onChanged: (val) => setState(() => _partialPaymentsAllowed = val),
                         ),
@@ -169,22 +170,22 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
                   
                   _buildSectionHeader('Late Fee Penalty Rules'),
                   const SizedBox(height: 12),
-                  GlassContainer(
+                  GlassCard(
                     padding: const EdgeInsets.all(20),
                     child: Column(
                       children: [
                         SwitchListTile.adaptive(
                           value: _lateFinesEnabled,
-                          title: Text('Enable Late Fines', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                          title: Text('Enable Late Fines', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
                           subtitle: Text('Apply penalty when fee is paid after due date + grace period', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
                           secondary: const Icon(Icons.money_off_rounded, color: AppColors.primary),
-                          activeColor: AppColors.primary,
+                          activeThumbColor: AppColors.primary,
                           contentPadding: EdgeInsets.zero,
                           onChanged: (val) => setState(() => _lateFinesEnabled = val),
                         ),
                         if (_lateFinesEnabled) ...[
                           const SizedBox(height: 16),
-                          Divider(color: Colors.white.withOpacity(0.05), height: 1),
+                          Divider(color: AppColors.outline.withValues(alpha: 0.1), height: 1),
                           const SizedBox(height: 16),
                           _buildTextField(
                             controller: _gracePeriodController,
@@ -252,14 +253,14 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
       controller: controller,
       keyboardType: keyboardType,
       validator: validator,
-      style: GoogleFonts.inter(fontSize: 14, color: Colors.white),
+      style: GoogleFonts.inter(fontSize: 14, color: AppColors.textPrimary),
       decoration: InputDecoration(
         labelText: label,
         labelStyle: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 13),
         prefixIcon: Icon(icon, color: AppColors.textTertiary, size: 20),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
         filled: true,
-        fillColor: Colors.black.withOpacity(0.2),
+        fillColor: AppColors.surfaceContainer.withValues(alpha: 0.3),
       ),
     );
   }
@@ -275,18 +276,18 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
       initialValue: value,
       items: items.map((opt) => DropdownMenuItem(
         value: opt,
-        child: Text('$opt${_getDaySuffix(opt)} of the month', style: GoogleFonts.inter(fontSize: 14, color: Colors.white)),
+        child: Text('$opt${_getDaySuffix(opt)} of the month', style: GoogleFonts.inter(fontSize: 14, color: AppColors.textPrimary)),
       )).toList(),
       onChanged: onChanged,
       dropdownColor: AppColors.darkSurface,
-      style: GoogleFonts.inter(color: Colors.white),
+      style: GoogleFonts.inter(color: AppColors.textPrimary),
       decoration: InputDecoration(
         labelText: label,
         labelStyle: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 13),
         prefixIcon: Icon(icon, color: AppColors.textTertiary, size: 20),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
         filled: true,
-        fillColor: Colors.black.withOpacity(0.2),
+        fillColor: AppColors.surfaceContainer.withValues(alpha: 0.3),
       ),
     );
   }
@@ -306,13 +307,13 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
       onPressed: _isSaving ? null : _saveSettings,
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primaryContainer,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.onPrimaryContainer,
         minimumSize: const Size(double.infinity, 56),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         elevation: 0,
       ),
       child: _isSaving
-          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: AppColors.onPrimaryContainer, strokeWidth: 2))
           : Text(
               'Save Changes',
               style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700),

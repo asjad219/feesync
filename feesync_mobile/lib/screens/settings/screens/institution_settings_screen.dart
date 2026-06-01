@@ -4,7 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../providers/settings_provider.dart';
-import '../widgets/premium_widgets.dart';
+import '../../../core/widgets/glass/glass_card.dart';
+import '../../../models/app_settings.dart';
 
 class InstitutionSettingsScreen extends ConsumerStatefulWidget {
   const InstitutionSettingsScreen({super.key});
@@ -45,7 +46,7 @@ class _InstitutionSettingsScreenState extends ConsumerState<InstitutionSettingsS
     super.dispose();
   }
 
-  void _initFields(settings) {
+  void _initFields(AppSettings settings) {
     if (_isInitialized) return;
     _nameController = TextEditingController(text: settings.centerName);
     _addressController = TextEditingController(text: settings.centerAddress ?? '');
@@ -122,7 +123,7 @@ class _InstitutionSettingsScreenState extends ConsumerState<InstitutionSettingsS
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -130,13 +131,13 @@ class _InstitutionSettingsScreenState extends ConsumerState<InstitutionSettingsS
           style: GoogleFonts.manrope(
             fontSize: 20,
             fontWeight: FontWeight.w800,
-            color: Colors.white,
+            color: AppColors.textPrimary,
           ),
         ),
       ),
       body: settingsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error loading settings: $err', style: const TextStyle(color: Colors.white))),
+        error: (err, stack) => Center(child: Text('Error loading settings: $err', style: const TextStyle(color: AppColors.error))),
         data: (settings) {
           _initFields(settings);
           return Form(
@@ -148,7 +149,7 @@ class _InstitutionSettingsScreenState extends ConsumerState<InstitutionSettingsS
                 children: [
                   _buildSectionHeader('General Identity'),
                   const SizedBox(height: 12),
-                  GlassContainer(
+                  GlassCard(
                     padding: const EdgeInsets.all(20),
                     child: Column(
                       children: [
@@ -191,7 +192,7 @@ class _InstitutionSettingsScreenState extends ConsumerState<InstitutionSettingsS
                   
                   _buildSectionHeader('Regional & Fiscal'),
                   const SizedBox(height: 12),
-                  GlassContainer(
+                  GlassCard(
                     padding: const EdgeInsets.all(20),
                     child: Column(
                       children: [
@@ -232,26 +233,26 @@ class _InstitutionSettingsScreenState extends ConsumerState<InstitutionSettingsS
                   
                   _buildSectionHeader('Operational Controls'),
                   const SizedBox(height: 12),
-                  GlassContainer(
+                  GlassCard(
                     padding: const EdgeInsets.all(12),
                     child: Column(
                       children: [
                         SwitchListTile.adaptive(
                           value: _gstEnabled,
-                          title: Text('Enable GST Calculations', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                          title: Text('Enable GST Calculations', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
                           subtitle: Text('Apply tax on billing receipts automatically', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
                           secondary: const Icon(Icons.percent_rounded, color: AppColors.primary),
-                          activeColor: AppColors.primary,
+                          activeThumbColor: AppColors.primary,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                           onChanged: (val) => setState(() => _gstEnabled = val),
                         ),
-                        Divider(color: Colors.white.withOpacity(0.05), height: 1),
+                        Divider(color: AppColors.outline.withValues(alpha: 0.1), height: 1),
                         SwitchListTile.adaptive(
                           value: _parentPortal,
-                          title: Text('Parent Access Portal', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                          title: Text('Parent Access Portal', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
                           subtitle: Text('Allow parent accounts to view fee cards online', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
                           secondary: const Icon(Icons.family_restroom_rounded, color: AppColors.primary),
-                          activeColor: AppColors.primary,
+                          activeThumbColor: AppColors.primary,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                           onChanged: (val) => setState(() => _parentPortal = val),
                         ),
@@ -299,14 +300,14 @@ class _InstitutionSettingsScreenState extends ConsumerState<InstitutionSettingsS
       keyboardType: keyboardType,
       textCapitalization: textCapitalization,
       validator: validator,
-      style: GoogleFonts.inter(fontSize: 14, color: Colors.white),
+      style: GoogleFonts.inter(fontSize: 14, color: AppColors.textPrimary),
       decoration: InputDecoration(
         labelText: label,
         labelStyle: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 13),
         prefixIcon: Icon(icon, color: AppColors.textTertiary, size: 20),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
         filled: true,
-        fillColor: Colors.black.withOpacity(0.2),
+        fillColor: AppColors.surfaceContainer.withValues(alpha: 0.3),
       ),
     );
   }
@@ -322,18 +323,18 @@ class _InstitutionSettingsScreenState extends ConsumerState<InstitutionSettingsS
       initialValue: value,
       items: items.map((opt) => DropdownMenuItem(
         value: opt,
-        child: Text(opt, style: GoogleFonts.inter(fontSize: 14, color: Colors.white)),
+        child: Text(opt, style: GoogleFonts.inter(fontSize: 14, color: AppColors.textPrimary)),
       )).toList(),
       onChanged: onChanged,
       dropdownColor: AppColors.darkSurface,
-      style: GoogleFonts.inter(color: Colors.white),
+      style: GoogleFonts.inter(color: AppColors.textPrimary),
       decoration: InputDecoration(
         labelText: label,
         labelStyle: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 13),
         prefixIcon: Icon(icon, color: AppColors.textTertiary, size: 20),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
         filled: true,
-        fillColor: Colors.black.withOpacity(0.2),
+        fillColor: AppColors.surfaceContainer.withValues(alpha: 0.3),
       ),
     );
   }
@@ -343,13 +344,13 @@ class _InstitutionSettingsScreenState extends ConsumerState<InstitutionSettingsS
       onPressed: _isSaving ? null : _saveSettings,
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primaryContainer,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.onPrimaryContainer,
         minimumSize: const Size(double.infinity, 56),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         elevation: 0,
       ),
       child: _isSaving
-          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: AppColors.onPrimaryContainer, strokeWidth: 2))
           : Text(
               'Save Changes',
               style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700),

@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../providers/dashboard_provider.dart';
 import '../../providers/settings_provider.dart';
+import '../../core/widgets/glass/glass_card.dart';
 
 class ReportsScreen extends ConsumerWidget {
   const ReportsScreen({super.key});
@@ -79,17 +80,41 @@ class _KeyMetricsGrid extends StatelessWidget {
       children: [
         Row(
           children: [
-            _MetricMiniCard(label: 'TOTAL REVENUE', value: currencyFormatter.format(stats.totalFeesCollected), color: AppColors.primary),
+            _MetricMiniCard(
+              label: 'TOTAL REVENUE', 
+              value: currencyFormatter.format(stats.totalFeesCollected), 
+              color: AppColors.primary,
+              icon: Icons.account_balance_wallet_rounded,
+              iconBgColor: AppColors.primary,
+            ),
             const SizedBox(width: 16),
-            _MetricMiniCard(label: 'OUTSTANDING', value: currencyFormatter.format(stats.pendingFees), color: AppColors.error),
+            _MetricMiniCard(
+              label: 'OUTSTANDING', 
+              value: currencyFormatter.format(stats.pendingFees), 
+              color: AppColors.error,
+              icon: Icons.warning_amber_rounded,
+              iconBgColor: AppColors.error,
+            ),
           ],
         ),
         const SizedBox(height: 16),
         Row(
           children: [
-            _MetricMiniCard(label: 'COLLECTION RATE', value: '${stats.collectionRate.toStringAsFixed(1)}%', color: AppColors.secondary),
+            _MetricMiniCard(
+              label: 'COLLECTION RATE', 
+              value: '${stats.collectionRate.toStringAsFixed(1)}%', 
+              color: AppColors.secondary,
+              icon: Icons.analytics_rounded,
+              iconBgColor: AppColors.secondary,
+            ),
             const SizedBox(width: 16),
-            _MetricMiniCard(label: 'STUDENTS', value: '${stats.totalStudents}', color: AppColors.tertiary),
+            _MetricMiniCard(
+              label: 'STUDENTS', 
+              value: '${stats.totalStudents}', 
+              color: AppColors.tertiary,
+              icon: Icons.group_rounded,
+              iconBgColor: AppColors.tertiary,
+            ),
           ],
         ),
       ],
@@ -101,24 +126,60 @@ class _MetricMiniCard extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
-  const _MetricMiniCard({required this.label, required this.value, required this.color});
+  final IconData icon;
+  final Color iconBgColor;
+
+  const _MetricMiniCard({
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.icon,
+    required this.iconBgColor,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceContainer.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withOpacity(0.05)),
-        ),
+      child: GlassCard(
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: GoogleFonts.inter(fontSize: 9, fontWeight: FontWeight.w800, letterSpacing: 1.2, color: AppColors.textTertiary)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    label, 
+                    style: GoogleFonts.inter(
+                      fontSize: 9, 
+                      fontWeight: FontWeight.w800, 
+                      letterSpacing: 1.1, 
+                      color: AppColors.textTertiary
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: iconBgColor.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: iconBgColor, size: 14),
+                ),
+              ],
+            ),
             const SizedBox(height: 8),
-            Text(value, style: GoogleFonts.manrope(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+            Text(
+              value, 
+              style: GoogleFonts.manrope(
+                fontSize: 18, 
+                fontWeight: FontWeight.w800, 
+                color: AppColors.textPrimary
+              )
+            ),
           ],
         ),
       ),
@@ -135,13 +196,8 @@ class _RevenueChartCard extends StatelessWidget {
     if (monthly.isEmpty) return const SizedBox.shrink();
     final maxValue = monthly.map((m) => m.amount as double).reduce((a, b) => a > b ? a : b);
 
-    return Container(
+    return GlassCard(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainer.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -194,13 +250,8 @@ class _StatusDistributionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GlassCard(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainer.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -217,7 +268,7 @@ class _StatusDistributionCard extends StatelessWidget {
                     centerSpaceRadius: 35,
                     sections: [
                       PieChartSectionData(color: AppColors.primary, value: stats.totalFeesCollected, radius: 12, title: ''),
-                      PieChartSectionData(color: AppColors.error.withOpacity(0.2), value: stats.pendingFees, radius: 12, title: ''),
+                      PieChartSectionData(color: AppColors.error.withValues(alpha: 0.2), value: stats.pendingFees, radius: 12, title: ''),
                     ],
                   ),
                 ),

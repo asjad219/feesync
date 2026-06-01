@@ -6,7 +6,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/settings_provider.dart';
-import 'widgets/premium_widgets.dart';
+import '../../models/user_profile.dart';
+import '../../core/widgets/glass/glass_card.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -50,14 +51,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         centerTitle: false,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 12),
             userProfile.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, _) => Text('Error loading profile: $err', style: const TextStyle(color: Colors.white)),
+              error: (err, _) => Text('Error loading profile: $err', style: const TextStyle(color: AppColors.error)),
               data: (user) => _buildProfileHeader(user),
             ),
             const SizedBox(height: 24),
@@ -122,13 +123,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _buildProfileHeader(user) {
+  Widget _buildProfileHeader(UserProfile? user) {
     if (user == null) return const SizedBox();
     
     final avatarLetter = user.fullName.isNotEmpty ? user.fullName.substring(0, 1).toUpperCase() : 'K';
-    return GlassContainer(
+    return GlassCard(
       padding: const EdgeInsets.all(24),
-      borderRadius: 28,
       child: Row(
         children: [
           CircleAvatar(
@@ -139,7 +139,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               style: GoogleFonts.manrope(
                 fontSize: 24,
                 fontWeight: FontWeight.w800,
-                color: Colors.white,
+                color: AppColors.onPrimaryContainer,
               ),
             ),
           ),
@@ -171,7 +171,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryContainer.withOpacity(0.2),
+                    color: AppColors.primaryContainer.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -211,6 +211,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _buildThemeOption(String themeKey, String label, bool isSelected) {
+    final bool isDark = AppColors.isDarkMode;
     return Expanded(
       child: GestureDetector(
         onTap: () => _updateThemeMode(themeKey),
@@ -218,10 +219,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.primaryContainer : AppColors.surfaceContainer.withOpacity(0.3),
+            color: isSelected ? AppColors.primaryContainer : AppColors.surfaceContainer.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isSelected ? AppColors.primary : Colors.white.withOpacity(0.05),
+              color: isSelected ? AppColors.primary : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05)),
               width: 1.5,
             ),
           ),
@@ -231,7 +232,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               style: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? Colors.white : AppColors.textSecondary,
+                color: isSelected ? AppColors.onPrimaryContainer : AppColors.textSecondary,
               ),
             ),
           ),
@@ -256,12 +257,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _buildSettingsGroup(List<Widget> children) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainer.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
-      ),
+    return GlassCard(
+      padding: EdgeInsets.zero,
       child: Column(
         children: children,
       ),
@@ -269,10 +266,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _buildSubscriptionCard() {
-    return GlassContainer(
+    return GlassCard(
       padding: const EdgeInsets.all(20),
-      borderRadius: 24,
-      backgroundColor: AppColors.surfaceContainer.withOpacity(0.2),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -289,16 +284,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 8),
           Text(
             'Center Enrollment Seat Usage',
-            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white),
+            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 12),
-          const ClipRRect(
-            borderRadius: BorderRadius.all(Radius.circular(6)),
+          ClipRRect(
+            borderRadius: const BorderRadius.all(Radius.circular(6)),
             child: LinearProgressIndicator(
               value: 0.9,
               minHeight: 8,
-              backgroundColor: Colors.black26,
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFF59E0B)),
+              backgroundColor: AppColors.outline.withValues(alpha: 0.2),
+              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFF59E0B)),
             ),
           ),
           const SizedBox(height: 8),
@@ -306,7 +301,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('450 / 500 active students', style: GoogleFonts.inter(fontSize: 11, color: AppColors.textTertiary)),
-              Text('90% Limit', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
+              Text('90% Limit', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
             ],
           ),
         ],
@@ -315,17 +310,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _buildLogoutButton(BuildContext context) {
-    return GlassContainer(
+    return GlassCard(
       padding: EdgeInsets.zero,
-      borderRadius: 20,
-      backgroundColor: AppColors.error.withOpacity(0.05),
-      borderColor: AppColors.error.withOpacity(0.1),
+      borderColor: AppColors.error.withValues(alpha: 0.2),
       child: InkWell(
         onTap: () async {
           await Supabase.instance.client.auth.signOut();
           if (context.mounted) context.go('/login');
         },
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         child: Padding(
           padding: const EdgeInsets.all(18),
           child: Row(
@@ -373,7 +366,7 @@ class _SettingsItem extends StatelessWidget {
       leading: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: iconColor.withOpacity(0.1),
+          color: iconColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(icon, color: iconColor, size: 20),

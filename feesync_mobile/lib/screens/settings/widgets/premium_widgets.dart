@@ -22,8 +22,8 @@ class GlassContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final border = borderColor ?? Colors.white.withOpacity(0.1);
-    final bg = backgroundColor ?? AppColors.surfaceContainer.withOpacity(0.4);
+    final border = borderColor ?? Colors.white.withValues(alpha: 0.1);
+    final bg = backgroundColor ?? AppColors.surfaceContainer.withValues(alpha: 0.4);
 
     final content = ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
@@ -37,7 +37,7 @@ class GlassContainer extends StatelessWidget {
             border: Border.all(color: border, width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -119,7 +119,7 @@ class _GlowingStatusDotState extends State<GlowingStatusDot> with SingleTickerPr
             color: widget.color,
             boxShadow: [
               BoxShadow(
-                color: widget.color.withOpacity(_animation.value * 0.8),
+                color: widget.color.withValues(alpha: _animation.value * 0.8),
                 blurRadius: 8 * _animation.value,
                 spreadRadius: 2 * _animation.value,
               ),

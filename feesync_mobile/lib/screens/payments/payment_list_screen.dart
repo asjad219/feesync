@@ -10,6 +10,7 @@ import '../../providers/student_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../models/payment.dart';
 import '../../core/widgets/custom_widgets.dart';
+import '../../core/widgets/glass/glass_card.dart';
 
 class PaymentListScreen extends ConsumerStatefulWidget {
   final String? studentId;
@@ -21,7 +22,6 @@ class PaymentListScreen extends ConsumerStatefulWidget {
 
 class _PaymentListScreenState extends ConsumerState<PaymentListScreen> {
   final TextEditingController _searchController = TextEditingController();
-  bool _isSearching = false;
 
   @override
   void dispose() {
@@ -70,6 +70,7 @@ class _PaymentListScreenState extends ConsumerState<PaymentListScreen> {
             if (widget.studentId == null) _buildStatsSection(),
             _buildFiltersSection(),
             _buildPaymentsList(filteredAsync),
+            const SliverToBoxAdapter(child: SizedBox(height: 120)),
           ],
         ),
         floatingActionButton: _buildFAB(),
@@ -78,56 +79,25 @@ class _PaymentListScreenState extends ConsumerState<PaymentListScreen> {
 
   Widget _buildAppBar() {
     return SliverAppBar(
-      expandedHeight: 120.0,
       floating: false,
       pinned: true,
       backgroundColor: AppColors.darkBg,
       elevation: 0,
-      flexibleSpace: FlexibleSpaceBar(
-        titlePadding: const EdgeInsets.only(left: 24, bottom: 16),
-        title: _isSearching 
-          ? Container(
-              height: 40,
-              margin: const EdgeInsets.only(right: 60),
-              child: TextField(
-                controller: _searchController,
-                autofocus: true,
-                style: GoogleFonts.inter(color: Colors.white, fontSize: 16),
-                decoration: InputDecoration(
-                  hintText: 'Search payments...',
-                  hintStyle: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.5), fontSize: 16),
-                  border: InputBorder.none,
-                ),
-                onChanged: (value) => ref.read(paymentSearchProvider.notifier).state = value,
-              ),
-            )
-          : Text(
-              widget.studentId != null ? 'Payment History' : 'Payments',
-              style: GoogleFonts.manrope(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
-              ),
-            ),
+      title: Text(
+        widget.studentId != null ? 'Payment History' : 'Payments',
+        style: GoogleFonts.manrope(
+          fontSize: 22,
+          fontWeight: FontWeight.w800,
+          color: AppColors.textPrimary,
+          letterSpacing: -0.6,
+        ),
       ),
       actions: [
-        IconButton(
-          onPressed: () {
-            setState(() {
-              _isSearching = !_isSearching;
-              if (!_isSearching) {
-                _searchController.clear();
-                ref.read(paymentSearchProvider.notifier).state = '';
-              }
-            });
-          },
-          icon: Icon(_isSearching ? Icons.close_rounded : Icons.search_rounded, color: AppColors.textPrimary),
-        ),
         IconButton(
           onPressed: _refreshData,
           icon: const Icon(Icons.refresh_rounded, color: AppColors.textPrimary),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 16),
       ],
     );
   }
@@ -173,35 +143,74 @@ class _PaymentListScreenState extends ConsumerState<PaymentListScreen> {
 
   Widget _buildFiltersSection() {
     final currentStatus = ref.watch(paymentStatusFilterProvider);
-    
+    final bool isDark = AppColors.isDarkMode;
+    final Color surfaceColor = isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF);
+    final Color textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+
     return SliverToBoxAdapter(
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-        child: Row(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            FilterChipButton(
-              label: 'All',
-              isSelected: currentStatus == null,
-              onTap: () => ref.read(paymentStatusFilterProvider.notifier).state = null,
+            Container(
+              decoration: BoxDecoration(
+                color: surfaceColor.withValues(alpha: isDark ? 0.75 : 0.9),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
+                  width: 1.0,
+                ),
+              ),
+              child: TextField(
+                controller: _searchController,
+                style: TextStyle(color: textPrimaryColor, fontSize: 14),
+                onChanged: (value) => ref.read(paymentSearchProvider.notifier).state = value,
+                decoration: InputDecoration(
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  hintText: 'Search payments...',
+                  prefixIcon: Icon(Icons.search_rounded, color: textTertiaryColor, size: 18),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  fillColor: Colors.transparent,
+                  hintStyle: TextStyle(color: textTertiaryColor.withValues(alpha: 0.5), fontSize: 14),
+                ),
+              ),
             ),
-            const SizedBox(width: 8),
-            FilterChipButton(
-              label: 'Completed',
-              isSelected: currentStatus == PaymentStatus.completed,
-              onTap: () => ref.read(paymentStatusFilterProvider.notifier).state = PaymentStatus.completed,
-            ),
-            const SizedBox(width: 8),
-            FilterChipButton(
-              label: 'Pending',
-              isSelected: currentStatus == PaymentStatus.pending,
-              onTap: () => ref.read(paymentStatusFilterProvider.notifier).state = PaymentStatus.pending,
-            ),
-            const SizedBox(width: 8),
-            FilterChipButton(
-              label: 'Cancelled',
-              isSelected: currentStatus == PaymentStatus.cancelled,
-              onTap: () => ref.read(paymentStatusFilterProvider.notifier).state = PaymentStatus.cancelled,
+            const SizedBox(height: 16),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: [
+                  FilterChipButton(
+                    label: 'All',
+                    isSelected: currentStatus == null,
+                    onTap: () => ref.read(paymentStatusFilterProvider.notifier).state = null,
+                  ),
+                  const SizedBox(width: 8),
+                  FilterChipButton(
+                    label: 'Completed',
+                    isSelected: currentStatus == PaymentStatus.completed,
+                    onTap: () => ref.read(paymentStatusFilterProvider.notifier).state = PaymentStatus.completed,
+                  ),
+                  const SizedBox(width: 8),
+                  FilterChipButton(
+                    label: 'Pending',
+                    isSelected: currentStatus == PaymentStatus.pending,
+                    onTap: () => ref.read(paymentStatusFilterProvider.notifier).state = PaymentStatus.pending,
+                  ),
+                  const SizedBox(width: 8),
+                  FilterChipButton(
+                    label: 'Cancelled',
+                    isSelected: currentStatus == PaymentStatus.cancelled,
+                    onTap: () => ref.read(paymentStatusFilterProvider.notifier).state = PaymentStatus.cancelled,
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -287,22 +296,51 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isDark = AppColors.isDarkMode;
+    final cardColor = isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF);
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+
+    final cardBg = isDark
+        ? LinearGradient(
+            colors: [color.withValues(alpha: 0.04), cardColor.withValues(alpha: 0.9)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          )
+        : LinearGradient(
+            colors: [color.withValues(alpha: 0.02), Colors.white],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          );
+
+    final border = Border.all(
+      color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
+      width: 1.5,
+    );
+
+    final shadow = isDark
+        ? [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+            )
+          ]
+        : [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            )
+          ];
+
     return Container(
+      height: 160,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? color.withValues(alpha: 0.1) : Colors.white,
+        gradient: cardBg,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark ? color.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.08), 
-          width: 1.5,
-        ),
-        boxShadow: isDark ? null : [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          )
-        ],
+        border: border,
+        boxShadow: shadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -310,34 +348,61 @@ class _StatCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                label,
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.2,
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: isDark 
+                      ? color.withValues(alpha: 0.12)
+                      : color.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: color.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                ),
+                child: Icon(
+                  icon,
                   color: color,
+                  size: 20,
                 ),
               ),
-              Icon(icon, size: 16, color: color.withValues(alpha: 0.5)),
             ],
           ),
-          const SizedBox(height: 12),
+          const Spacer(),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: textTertiaryColor,
+              letterSpacing: 0.1,
+            ),
+          ),
+          const SizedBox(height: 6),
           asyncValue.when(
             data: (data) => Text(
               compactCurrencyFormatter.format(data['total'] ?? 0),
-              style: GoogleFonts.manrope(
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
+              style: GoogleFonts.outfit(
+                fontSize: 26,
+                fontWeight: FontWeight.w700,
+                color: textPrimaryColor,
+                letterSpacing: -0.5,
               ),
             ),
             loading: () => SizedBox(
-              height: 24,
-              width: 24,
-              child: CircularProgressIndicator(strokeWidth: 2, color: color),
+              height: 26,
+              width: 26,
+              child: CircularProgressIndicator(strokeWidth: 2.5, color: color),
             ),
-            error: (_, _) => Text('${currencySymbol}0', style: const TextStyle(color: AppColors.textTertiary)),
+            error: (_, _) => Text(
+              '${currencySymbol}0', 
+              style: GoogleFonts.outfit(
+                fontSize: 26,
+                fontWeight: FontWeight.w700,
+                color: textPrimaryColor,
+                letterSpacing: -0.5,
+              ),
+            ),
           ),
         ],
       ),
@@ -386,23 +451,7 @@ class _PaymentTransactionCard extends StatelessWidget {
         methodIcon = Icons.receipt_long_rounded;
     }
 
-    final bool isDark = AppColors.isDarkMode;
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceContainer.withValues(alpha: 0.5) : Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.08),
-          width: 1.5,
-        ),
-        boxShadow: isDark ? null : [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          )
-        ],
-      ),
+    return GlassCard(
       child: Material(
         color: Colors.transparent,
         child: InkWell(

@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../providers/settings_provider.dart';
+import '../../../core/widgets/glass/glass_card.dart';
+import '../../../models/app_settings.dart';
 import '../widgets/premium_widgets.dart';
 
 class AutomationSettingsScreen extends ConsumerStatefulWidget {
@@ -21,7 +23,7 @@ class _AutomationSettingsScreenState extends ConsumerState<AutomationSettingsScr
   bool _isInitialized = false;
   bool _isSaving = false;
 
-  void _initFields(settings) {
+  void _initFields(AppSettings settings) {
     if (_isInitialized) return;
     _whatsappEnabled = settings.whatsappEnabled;
     _smsFallbackEnabled = settings.smsFallbackEnabled;
@@ -78,7 +80,7 @@ class _AutomationSettingsScreenState extends ConsumerState<AutomationSettingsScr
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -86,13 +88,13 @@ class _AutomationSettingsScreenState extends ConsumerState<AutomationSettingsScr
           style: GoogleFonts.manrope(
             fontSize: 20,
             fontWeight: FontWeight.w800,
-            color: Colors.white,
+            color: AppColors.textPrimary,
           ),
         ),
       ),
       body: settingsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error loading settings: $err', style: const TextStyle(color: Colors.white))),
+        error: (err, stack) => Center(child: Text('Error loading settings: $err', style: const TextStyle(color: AppColors.error))),
         data: (settings) {
           _initFields(settings);
           return SingleChildScrollView(
@@ -102,7 +104,7 @@ class _AutomationSettingsScreenState extends ConsumerState<AutomationSettingsScr
               children: [
                 _buildSectionHeader('WhatsApp Business API'),
                 const SizedBox(height: 12),
-                GlassContainer(
+                GlassCard(
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
@@ -114,7 +116,7 @@ class _AutomationSettingsScreenState extends ConsumerState<AutomationSettingsScr
                               Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF10B981).withOpacity(0.1),
+                                  color: const Color(0xFF10B981).withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: const Icon(Icons.chat_bubble_rounded, color: Color(0xFF10B981), size: 22),
@@ -125,7 +127,7 @@ class _AutomationSettingsScreenState extends ConsumerState<AutomationSettingsScr
                                 children: [
                                   Text(
                                     'Meta Cloud Gateway',
-                                    style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white),
+                                    style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                                   ),
                                   Text(
                                     'Shared Official API Channel',
@@ -138,9 +140,9 @@ class _AutomationSettingsScreenState extends ConsumerState<AutomationSettingsScr
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF10B981).withOpacity(0.1),
+                              color: const Color(0xFF10B981).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
+                              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
                             ),
                             child: const Row(
                               children: [
@@ -161,13 +163,13 @@ class _AutomationSettingsScreenState extends ConsumerState<AutomationSettingsScr
                         ],
                       ),
                       const SizedBox(height: 20),
-                      Divider(color: Colors.white.withOpacity(0.05), height: 1),
+                      Divider(color: AppColors.outline.withValues(alpha: 0.1), height: 1),
                       const SizedBox(height: 16),
                       SwitchListTile.adaptive(
                         value: _whatsappEnabled,
-                        title: Text('WhatsApp Notifications', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                        title: Text('WhatsApp Notifications', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
                         subtitle: Text('Send invoices, late alerts, and receipts directly to parents', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
-                        activeColor: AppColors.primary,
+                        activeThumbColor: AppColors.primary,
                         contentPadding: EdgeInsets.zero,
                         onChanged: (val) => setState(() => _whatsappEnabled = val),
                       ),
@@ -178,28 +180,28 @@ class _AutomationSettingsScreenState extends ConsumerState<AutomationSettingsScr
                 
                 _buildSectionHeader('Alternative Delivery & Backup'),
                 const SizedBox(height: 12),
-                GlassContainer(
+                GlassCard(
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
                       SwitchListTile.adaptive(
                         value: _smsFallbackEnabled,
-                        title: Text('SMS Fallback Delivery', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                        title: Text('SMS Fallback Delivery', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
                         subtitle: Text('Auto-route via transactional SMS if WhatsApp delivery fails', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
                         secondary: const Icon(Icons.sms_rounded, color: AppColors.primary),
-                        activeColor: AppColors.primary,
+                        activeThumbColor: AppColors.primary,
                         contentPadding: EdgeInsets.zero,
                         onChanged: (val) => setState(() => _smsFallbackEnabled = val),
                       ),
                       const SizedBox(height: 8),
-                      Divider(color: Colors.white.withOpacity(0.05), height: 1),
+                      Divider(color: AppColors.outline.withValues(alpha: 0.1), height: 1),
                       const SizedBox(height: 8),
                       SwitchListTile.adaptive(
                         value: _autoReceiptEnabled,
-                        title: Text('Auto Receipt Sharing', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                        title: Text('Auto Receipt Sharing', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
                         subtitle: Text('Instantly issue & share PDF receipts on payment success', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
                         secondary: const Icon(Icons.receipt_long_rounded, color: AppColors.primary),
-                        activeColor: AppColors.primary,
+                        activeThumbColor: AppColors.primary,
                         contentPadding: EdgeInsets.zero,
                         onChanged: (val) => setState(() => _autoReceiptEnabled = val),
                       ),
@@ -210,14 +212,14 @@ class _AutomationSettingsScreenState extends ConsumerState<AutomationSettingsScr
                 
                 _buildSectionHeader('Message Templates (Read-only)'),
                 const SizedBox(height: 12),
-                GlassContainer(
+                GlassCard(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Column(
                     children: [
                       _buildTemplateTile('fees_due_reminder', 'Fee Dues Reminder', 'Hi [Parent], fee of ₹[Amount] is due for [Student]...'),
-                      Divider(color: Colors.white.withOpacity(0.05), height: 1),
+                      Divider(color: AppColors.outline.withValues(alpha: 0.1), height: 1),
                       _buildTemplateTile('payment_received', 'Payment Confirmed', 'Dear Parent, payment of ₹[Amount] received for [Student]...'),
-                      Divider(color: Colors.white.withOpacity(0.05), height: 1),
+                      Divider(color: AppColors.outline.withValues(alpha: 0.1), height: 1),
                       _buildTemplateTile('overdue_escalation', 'Overdue Escalation', 'URGENT: Fee for [Student] has been overdue for [Days] days...'),
                     ],
                   ),
@@ -255,11 +257,11 @@ class _AutomationSettingsScreenState extends ConsumerState<AutomationSettingsScr
       title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(name, style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+          Text(name, style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
@@ -287,13 +289,13 @@ class _AutomationSettingsScreenState extends ConsumerState<AutomationSettingsScr
       onPressed: _isSaving ? null : _saveSettings,
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primaryContainer,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.onPrimaryContainer,
         minimumSize: const Size(double.infinity, 56),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         elevation: 0,
       ),
       child: _isSaving
-          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: AppColors.onPrimaryContainer, strokeWidth: 2))
           : Text(
               'Save Changes',
               style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700),

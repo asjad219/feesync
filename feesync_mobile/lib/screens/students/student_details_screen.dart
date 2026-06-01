@@ -130,6 +130,10 @@ class _ProfileHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasBalance = balance != null && balance!.balance > 0;
     final String initials = student.fullName.split(' ').map((e) => e.isNotEmpty ? e[0].toUpperCase() : '').take(2).join();
+    final String capitalizedName = student.fullName
+        .split(' ')
+        .map((word) => word.isNotEmpty ? '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}' : '')
+        .join(' ');
 
     return GlassCard(
       padding: const EdgeInsets.all(24),
@@ -172,7 +176,7 @@ class _ProfileHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  student.fullName,
+                  capitalizedName,
                   style: GoogleFonts.manrope(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                 ),
                 const SizedBox(height: 4),
@@ -240,9 +244,9 @@ class _MetricsSection extends StatelessWidget {
             _MetricCard(
               label: 'DISCOUNT', 
               value: currencyFormatter.format(discountAmount), 
-              color: Colors.orangeAccent,
+              color: AppColors.tertiary,
               icon: Icons.local_offer_rounded,
-              iconBgColor: Colors.orangeAccent,
+              iconBgColor: AppColors.tertiary,
             ),
             const SizedBox(width: 16),
             _MetricCard(
@@ -363,10 +367,9 @@ class _BatchEnrollmentSection extends ConsumerWidget {
   }
 
   void _showEnrollmentSheet(BuildContext context, WidgetRef ref) {
-    final bool isDark = AppColors.isDarkMode;
     showModalBottomSheet(
       context: context,
-      backgroundColor: isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF),
+      backgroundColor: AppColors.surfaceContainer,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) => _EnrollmentSheet(studentId: studentId),
     );
@@ -421,18 +424,13 @@ class _EnrollmentSheet extends ConsumerWidget {
     final allBatchesAsync = ref.watch(filteredBatchesProvider);
     final userProfileAsync = ref.watch(currentUserProfileProvider);
     
-    final bool isDark = AppColors.isDarkMode;
-    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
-    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
-    final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
-
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Enroll in Batch', style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w800, color: textPrimaryColor)),
+          Text('Enroll in Batch', style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
           const SizedBox(height: 20),
           allBatchesAsync.when(
             data: (batches) => Flexible(
@@ -447,9 +445,9 @@ class _EnrollmentSheet extends ConsumerWidget {
                       backgroundColor: batch.color.withValues(alpha: 0.1),
                       child: Icon(Icons.school_rounded, color: batch.color),
                     ),
-                    title: Text(batch.name, style: TextStyle(color: textPrimaryColor, fontWeight: FontWeight.bold)),
-                    subtitle: Text(batch.subject, style: TextStyle(color: textTertiaryColor)),
-                    trailing: Icon(Icons.add_rounded, color: primaryColor),
+                    title: Text(batch.name, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+                    subtitle: Text(batch.subject, style: const TextStyle(color: AppColors.textTertiary)),
+                    trailing: const Icon(Icons.add_rounded, color: AppColors.primary),
                     onTap: () async {
                       final accountId = userProfileAsync.value?.accountId;
                       if (accountId != null) {
