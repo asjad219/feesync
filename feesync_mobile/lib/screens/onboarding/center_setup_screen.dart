@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/widgets/glass_card.dart';
-import '../../core/widgets/gradient_background.dart';
 import '../../providers/user_provider.dart';
 
 class CenterSetupScreen extends ConsumerStatefulWidget {
@@ -38,18 +37,12 @@ class _CenterSetupScreenState extends ConsumerState<CenterSetupScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user == null) {
-      _showError('You need to be logged in.');
-      return;
-    }
-
     setState(() => _isLoading = true);
-
     try {
-      final accountRepository = ref.read(accountRepositoryProvider);
-      await accountRepository.bootstrapOwner(
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) throw Exception('User not logged in');
+
+      await ref.read(accountRepositoryProvider).bootstrapOwner(
         centerName: _centerNameController.text.trim(),
         contactEmail: user.email ?? '',
         ownerFullName: user.userMetadata?['full_name']?.toString() ?? 'Owner',
@@ -57,139 +50,96 @@ class _CenterSetupScreenState extends ConsumerState<CenterSetupScreen> {
         centerAddress: _addressController.text.trim(),
       );
 
-      await Supabase.instance.client.auth.updateUser(
-        UserAttributes(
-          data: {
-            'onboarding_step': 'optional-profile',
-            'onboarding_center_setup_complete': true,
-          },
-        ),
-      );
-
-      if (mounted) {
-        context.go('/onboarding/optional-profile');
-      }
-    } on AuthException catch (e) {
-      _showError(e.message);
+      await Supabase.instance.client.auth.updateUser(UserAttributes(data: {'onboarding_step': 'optional-profile', 'onboarding_center_setup_complete': true}));
+      if (mounted) context.go('/onboarding/optional-profile');
     } catch (e) {
-      _showError('Failed to save center profile.');
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppColors.overdue,
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.darkBg,
-      body: GradientBackground(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      appBar: AppBar(title: Text('Institution Setup', style: GoogleFonts.manrope(fontWeight: FontWeight.w800))),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 120),
+        child: Form(
+          key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _SectionHeader(title: 'Institution Profile', subtitle: 'Global settings for your coaching center or school'),
+              const SizedBox(height: 32),
+              _buildField(label: 'CENTER NAME', controller: _centerNameController, hint: 'e.g. Luminary Academy', icon: Icons.account_balance_rounded),
               const SizedBox(height: 24),
-              const Text(
-                'Center Setup',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Tell us about your coaching center so we can personalize the experience.',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: AppColors.textSecondary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              GlassCard(
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      TextFormField(
-                        controller: _centerNameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Center Name',
-                          prefixIcon: Icon(Icons.school_outlined),
-                          hintText: 'Bright Future Coaching',
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your center name';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _addressController,
-                        decoration: const InputDecoration(
-                          labelText: 'Center Address',
-                          prefixIcon: Icon(Icons.location_on_outlined),
-                          hintText: 'Street, City, State',
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your address';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _phoneController,
-                        keyboardType: TextInputType.phone,
-                        decoration: const InputDecoration(
-                          labelText: 'Phone Number',
-                          prefixIcon: Icon(Icons.phone_outlined),
-                          hintText: '+91 90000 00000',
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter a contact number';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      ElevatedButton(
-                        onPressed: _isLoading ? null : _submit,
-                        child: _isLoading
-                            ? const SizedBox(
-                                height: 24,
-                                width: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation(
-                                    Colors.white,
-                                  ),
-                                ),
-                              )
-                            : const Text('Continue'),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              _buildField(label: 'CONTACT NUMBER', controller: _phoneController, hint: '+91 90000 00000', icon: Icons.phone_android_rounded, keyboardType: TextInputType.phone),
+              const SizedBox(height: 24),
+              _buildField(label: 'OFFICIAL ADDRESS', controller: _addressController, hint: 'Street, City, State', icon: Icons.location_on_outlined, maxLines: 3),
+              const SizedBox(height: 64),
+              _buildContinueButton(),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildField({required String label, required TextEditingController controller, required String hint, required IconData icon, int maxLines = 1, TextInputType? keyboardType}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: AppColors.textTertiary)),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          maxLines: maxLines,
+          keyboardType: keyboardType,
+          style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+          decoration: InputDecoration(
+            hintText: hint,
+            prefixIcon: Icon(icon, size: 20, color: AppColors.textTertiary),
+            fillColor: AppColors.surfaceContainer.withValues(alpha: 0.5),
+          ),
+          validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildContinueButton() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: AppGradients.primary,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [BoxShadow(color: AppColors.primaryContainer.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 8))],
+      ),
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : _submit,
+        style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent),
+        child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text('CONTINUE SETUP'),
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  const _SectionHeader({required this.title, required this.subtitle});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: GoogleFonts.manrope(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+        const SizedBox(height: 4),
+        Text(subtitle, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textTertiary)),
+      ],
     );
   }
 }

@@ -1,154 +1,166 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
 
 class StatCard extends StatelessWidget {
   final String title;
   final String value;
-  final String? suffix;
   final IconData icon;
-  final Color? valueColor;
-  final Color? backgroundColor;
-  final Color? borderColor;
-  final Color? iconBackgroundColor;
-  final Color? iconColor;
   final bool showTrend;
   final double trendPercent;
   final bool trendUp;
+  final Color iconColor;
+  final Color iconBackgroundColor;
+  final bool isGradient;
 
   const StatCard({
     super.key,
     required this.title,
     required this.value,
-    this.suffix,
     required this.icon,
-    this.valueColor,
-    this.backgroundColor,
-    this.borderColor,
-    this.iconBackgroundColor,
-    this.iconColor,
     this.showTrend = false,
     this.trendPercent = 0,
     this.trendUp = true,
+    required this.iconColor,
+    required this.iconBackgroundColor,
+    this.isGradient = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = AppColors.isDarkMode;
+
+    // Premium styling details based on theme
+    final cardBg = isGradient
+        ? (isDark
+            ? LinearGradient(
+                colors: [AppColors.primary.withOpacity(0.15), AppColors.secondary.withOpacity(0.05)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : LinearGradient(
+                colors: [AppColors.primary.withOpacity(0.08), AppColors.primaryLight.withOpacity(0.4)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ))
+        : null;
+
+    final border = Border.all(
+      color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.05),
+      width: 1.5,
+    );
+
+    final shadow = isDark
+        ? [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+            )
+          ]
+        : [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            )
+          ];
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      height: 160,
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: backgroundColor ?? AppColors.darkCard,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: borderColor ?? AppColors.darkBorder,
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.25),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        color: isGradient ? null : AppColors.darkCard.withOpacity(0.85),
+        gradient: cardBg,
+        borderRadius: BorderRadius.circular(24),
+        border: border,
+        boxShadow: shadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
         children: [
-          // Header: Title and Icon
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textTertiary,
-                  letterSpacing: 1.5,
-                ),
-              ),
+              // Styled Glassmorphic Icon Container
               Container(
-                width: 32,
-                height: 32,
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: iconBackgroundColor ?? AppColors.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
+                  color: isDark 
+                      ? iconColor.withOpacity(0.12)
+                      : iconColor.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: iconColor.withOpacity(0.2),
+                    width: 1,
+                  ),
                 ),
                 child: Icon(
                   icon,
-                  color: iconColor ?? AppColors.primaryLight,
-                  size: 18,
+                  color: iconColor,
+                  size: 20,
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // Value with suffix and trend
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: value,
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: valueColor ?? AppColors.textPrimary,
-                        ),
-                      ),
-                      if (suffix != null) ...[
-                        TextSpan(
-                          text: '\n$suffix',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.textTertiary,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
+              
+              // Clean pill-shaped trend indicator
               if (showTrend)
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: trendUp
-                        ? AppColors.paid.withValues(alpha: 0.15)
-                        : AppColors.pending.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(6),
+                    color: trendUp 
+                        ? AppColors.success.withOpacity(0.12) 
+                        : AppColors.error.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: trendUp 
+                          ? AppColors.success.withOpacity(0.2) 
+                          : AppColors.error.withOpacity(0.2),
+                      width: 1,
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        trendUp
-                            ? Icons.trending_up_rounded
-                            : Icons.trending_down_rounded,
-                        color: trendUp ? AppColors.paid : AppColors.pending,
-                        size: 14,
+                        trendUp ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                        color: trendUp ? AppColors.success : AppColors.error,
+                        size: 10,
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 2),
                       Text(
                         '${trendPercent.toStringAsFixed(1)}%',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: trendUp ? AppColors.paid : AppColors.pending,
+                        style: GoogleFonts.inter(
+                          color: trendUp ? AppColors.success : AppColors.error,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
                   ),
                 ),
             ],
+          ),
+          const Spacer(),
+          // Stat Title Label
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textTertiary,
+              letterSpacing: 0.1,
+            ),
+          ),
+          const SizedBox(height: 6),
+          // Value (Number/Amount)
+          Text(
+            value,
+            style: GoogleFonts.outfit(
+              fontSize: 26,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+              letterSpacing: -0.5,
+            ),
           ),
         ],
       ),

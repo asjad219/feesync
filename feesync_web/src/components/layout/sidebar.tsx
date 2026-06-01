@@ -24,12 +24,16 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 
+import { useQuery } from '@tanstack/react-query'
+import { getNotifications } from '@/lib/supabase/repositories/notifications'
+import { Badge } from '@/components/ui/badge'
+
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Students', href: '/students', icon: Users },
   { name: 'Fees', href: '/fees', icon: DollarSign },
   { name: 'Payments', href: '/payments', icon: Receipt },
-  { name: 'Notifications', href: '/notifications', icon: Bell },
+  { name: 'Notifications', href: '/notifications', icon: Bell, countKey: 'notifications' },
   { name: 'Settings', href: '/settings', icon: Settings },
 ]
 
@@ -42,6 +46,14 @@ export function Sidebar({ userName, userEmail }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
+
+  const { data: notifications = [] } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: () => getNotifications({ status: 'pending' }),
+    select: (res) => res.data || [],
+  })
+
+  const unreadCount = notifications.length
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -80,7 +92,12 @@ export function Sidebar({ userName, userEmail }: SidebarProps) {
               )}
             >
               <item.icon className="h-5 w-5" />
-              {item.name}
+              <span className="flex-1">{item.name}</span>
+              {item.countKey === 'notifications' && unreadCount > 0 && (
+                <Badge variant="secondary" className="bg-primary/20 text-primary hover:bg-primary/20 border-none px-1.5 py-0 h-5 min-w-5 justify-center">
+                  {unreadCount}
+                </Badge>
+              )}
             </Link>
           )
         })}

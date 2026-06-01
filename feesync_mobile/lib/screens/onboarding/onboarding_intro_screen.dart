@@ -1,9 +1,9 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/widgets/glass_card.dart';
-import '../../core/widgets/gradient_background.dart';
 
 class OnboardingIntroScreen extends StatelessWidget {
   const OnboardingIntroScreen({super.key});
@@ -12,101 +12,45 @@ class OnboardingIntroScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.darkBg,
-      body: GradientBackground(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-          child: Column(
-            children: [
-              const SizedBox(height: 16),
-              _IllustrationCard(),
-              const SizedBox(height: 24),
-              GlassCard(
-                child: Column(
-                  children: [
-                    const Text(
-                      'Simplify Fee Collection',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      "Manage your institution's finances with ease and precision.",
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textSecondary,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 20),
-                    _ProgressDots(),
-                    const SizedBox(height: 20),
-                    ElevatedButton.icon(
-                      onPressed: () => _continue(context),
-                      icon: const Icon(Icons.chevron_right),
-                      label: const Text('Next'),
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(52),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextButton(
-                      onPressed: () => _continue(context),
-                      child: const Text(
-                        'Skip for now',
-                        style: TextStyle(color: AppColors.textSecondary),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              _FooterBrand(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _IllustrationCard extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 300,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.35),
-            blurRadius: 26,
-            offset: const Offset(0, 16),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.hardEdge,
-      child: Stack(
-        fit: StackFit.expand,
+      body: Stack(
         children: [
-          Image.network(
-            'https://lh3.googleusercontent.com/aida-public/AB6AXuCqyD2NadE1B_dmPYIOCv17rZG6748M1ENMquRaxe-Lf-5GAyspjxS2tiVjsTPf16lNNojDpnHrQ49XUDXESSVoiXULEqyal13HXbQdKTzbfxhctlZoH2aM_j1cxJVIU_gOsyiC0F8Eb5LvyO1Hr_9kpf9TvwX8ZwH9ozFK3UZl5JoouFPz6EJ2toiWzt9lPJBGIx4AkkbsSfAJZKPyR2UdldnpreBnhqUQlPGgGcWyyWdHKUM0RLdtwxRe3ss67pWGho9Ipcx0HNzg',
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(color: AppColors.darkSurface);
-            },
+          Positioned(
+            top: -100,
+            right: -100,
+            child: ImageFiltered(
+              imageFilter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
+              child: Container(
+                width: 300, 
+                height: 300, 
+                decoration: BoxDecoration(
+                  color: AppColors.primaryContainer.withValues(alpha: 0.15), 
+                  shape: BoxShape.circle
+                )
+              ),
+            ),
           ),
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppColors.primary.withValues(alpha: 0.1),
-                  AppColors.darkBg.withValues(alpha: 0.2),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+              child: Column(
+                children: [
+                  const _IllustrationCard(),
+                  const Spacer(),
+                  Text('FeeSync Pro', style: GoogleFonts.manrope(fontSize: 32, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                  const SizedBox(height: 16),
+                  Text('Precision Fee Management', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.textSecondary, letterSpacing: 0.5)),
+                  const SizedBox(height: 32),
+                  Text('Automate collections, track dues, and generate professional receipts in seconds.', 
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(fontSize: 14, color: AppColors.textTertiary, height: 1.6),
+                  ),
+                  const Spacer(),
+                  _buildNextButton(context),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () => _continue(context),
+                    child: Text('SKIP SETUP', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: AppColors.textTertiary)),
+                  ),
                 ],
               ),
             ),
@@ -115,93 +59,51 @@ class _IllustrationCard extends StatelessWidget {
       ),
     );
   }
-}
 
-Future<void> _continue(BuildContext context) async {
-  await Supabase.instance.client.auth.updateUser(
-    UserAttributes(
-      data: {
-        'onboarding_step': 'center-setup',
-      },
-    ),
-  );
-
-  if (context.mounted) {
-    context.go('/onboarding/center-setup');
-  }
-}
-
-class _ProgressDots extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          width: 32,
-          height: 6,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppColors.primary, Color(0xFF571BC1)],
-            ),
-            borderRadius: BorderRadius.circular(20),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Container(
-          width: 8,
-          height: 6,
-          decoration: BoxDecoration(
-            color: AppColors.darkBorder,
-            borderRadius: BorderRadius.circular(20),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Container(
-          width: 8,
-          height: 6,
-          decoration: BoxDecoration(
-            color: AppColors.darkBorder,
-            borderRadius: BorderRadius.circular(20),
-          ),
-        ),
-      ],
+  Widget _buildNextButton(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: 56,
+      decoration: BoxDecoration(
+        gradient: AppGradients.primary, 
+        borderRadius: BorderRadius.circular(24), 
+        boxShadow: [BoxShadow(color: AppColors.primaryContainer.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 8))]
+      ),
+      child: ElevatedButton(
+        onPressed: () => _continue(context),
+        style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent),
+        child: Text('GET STARTED', style: GoogleFonts.inter(fontWeight: FontWeight.w700, letterSpacing: 1)),
+      ),
     );
   }
+
+  Future<void> _continue(BuildContext context) async {
+    await Supabase.instance.client.auth.updateUser(UserAttributes(data: {'onboarding_step': 'center-setup'}));
+    if (context.mounted) context.go('/onboarding/center-setup');
+  }
 }
 
-class _FooterBrand extends StatelessWidget {
+class _IllustrationCard extends StatelessWidget {
+  const _IllustrationCard();
+
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          width: 24,
-          height: 24,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppColors.primary, Color(0xFF571BC1)],
-            ),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Icon(
-            Icons.sync,
-            size: 14,
-            color: Colors.white,
-          ),
+    return Container(
+      height: 320,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainer.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+      ),
+      child: Center(
+        child: Container(
+          width: 120,
+          height: 120,
+          decoration: BoxDecoration(gradient: AppGradients.primary, shape: BoxShape.circle),
+          child: const Icon(Icons.sync_rounded, size: 64, color: Colors.white),
         ),
-        const SizedBox(width: 8),
-        const Text(
-          'FEESYNC',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.4,
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

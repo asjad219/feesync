@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/widgets/glass_card.dart';
-import '../../core/widgets/gradient_background.dart';
-import '../../providers/fee_provider.dart';
-import '../../providers/student_provider.dart';
-import '../../providers/user_provider.dart';
+import '../../providers/providers.dart';
 
 class AddFirstStudentScreen extends ConsumerStatefulWidget {
   const AddFirstStudentScreen({super.key});
@@ -43,223 +40,118 @@ class _AddFirstStudentScreenState extends ConsumerState<AddFirstStudentScreen> {
 
   Future<void> _saveStudent(String accountId) async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
-
     try {
-      final studentRepository = ref.read(studentRepositoryProvider);
-      final feeRepository = ref.read(feeRepositoryProvider);
-
-      final admissionNumber = 'FS-${DateTime.now().millisecondsSinceEpoch}';
-      final student = await studentRepository.createStudent({
+      final student = await ref.read(studentRepositoryProvider).createStudent({
         'account_id': accountId,
-        'admission_number': admissionNumber,
+        'admission_number': 'ADM-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}',
         'first_name': _firstNameController.text.trim(),
         'last_name': _lastNameController.text.trim(),
         'class': _batchController.text.trim(),
         'parent_phone': _parentPhoneController.text.trim(),
       });
 
-      final feeCategories = await feeRepository.getFeeCategories();
-      final category = feeCategories.isEmpty
-          ? await feeRepository.createFeeCategory({
-              'account_id': accountId,
-              'name': 'Tuition Fee',
-              'description': 'Default tuition fee category',
-            })
-          : feeCategories.first;
-
-      final feeAmount = double.tryParse(_feeAmountController.text.trim()) ?? 0;
-      if (feeAmount > 0) {
-        await feeRepository.createFeeStructure({
-          'account_id': accountId,
-          'category_id': category.id,
-          'name': 'Standard Plan',
-          'amount': feeAmount,
-          'class': _batchController.text.trim(),
-          'due_date': DateTime.now().add(const Duration(days: 30)).toIso8601String(),
-          'description': 'Auto-created during onboarding',
-        });
-      }
-
-      await Supabase.instance.client.auth.updateUser(
-        UserAttributes(
-          data: {
-            'onboarding_step': 'first-payment',
-            'onboarding_first_student_complete': true,
-            'onboarding_student_id': student.id,
-          },
-        ),
-      );
-
-      if (mounted) {
-        context.go('/onboarding/first-payment?studentId=${student.id}');
-      }
+      await Supabase.instance.client.auth.updateUser(UserAttributes(data: {'onboarding_step': 'first-payment', 'onboarding_first_student_complete': true, 'onboarding_student_id': student.id}));
+      if (mounted) context.go('/onboarding/first-payment?studentId=${student.id}');
     } catch (e) {
-      _showError('Failed to add your first student.');
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppColors.overdue,
+  @override
+  Widget build(BuildContext context) {
+    final profile = ref.watch(currentUserProfileProvider).value;
+    if (profile == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+
+    return Scaffold(
+      backgroundColor: AppColors.darkBg,
+      appBar: AppBar(title: Text('Enrollment', style: GoogleFonts.manrope(fontWeight: FontWeight.w800))),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 120),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _SectionHeader(title: 'First Student', subtitle: 'Add a student record to start tracking fee payments'),
+              const SizedBox(height: 32),
+              Row(
+                children: [
+                  Expanded(child: _buildField(label: 'FIRST NAME', controller: _firstNameController, hint: 'First name', icon: Icons.person_outline_rounded)),
+                  const SizedBox(width: 16),
+                  Expanded(child: _buildField(label: 'LAST NAME', controller: _lastNameController, hint: 'Last name', icon: Icons.person_outline_rounded)),
+                ],
+              ),
+              const SizedBox(height: 24),
+              _buildField(label: 'PARENT PHONE', controller: _parentPhoneController, hint: '+91 90000 00000', icon: Icons.phone_android_rounded, keyboardType: TextInputType.phone),
+              const SizedBox(height: 24),
+              _buildField(label: 'BATCH / CLASS', controller: _batchController, hint: 'e.g. Grade 10', icon: Icons.school_outlined),
+              const SizedBox(height: 24),
+              _buildField(label: 'EXPECTED MONTHLY FEE (INR)', controller: _feeAmountController, hint: '0', icon: Icons.currency_rupee_rounded, keyboardType: TextInputType.number),
+              const SizedBox(height: 64),
+              _buildSubmitButton(profile.accountId),
+            ],
+          ),
+        ),
       ),
     );
   }
 
+  Widget _buildField({required String label, required TextEditingController controller, required String hint, required IconData icon, int maxLines = 1, TextInputType? keyboardType}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: AppColors.textTertiary)),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          maxLines: maxLines,
+          keyboardType: keyboardType,
+          style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+          decoration: InputDecoration(
+            hintText: hint,
+            prefixIcon: Icon(icon, size: 20, color: AppColors.textTertiary),
+            fillColor: AppColors.surfaceContainer.withValues(alpha: 0.5),
+          ),
+          validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSubmitButton(String accountId) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: AppGradients.primary,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [BoxShadow(color: AppColors.primaryContainer.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 8))],
+      ),
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : () => _saveStudent(accountId),
+        style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent),
+        child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text('SAVE AND ENROLL'),
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  const _SectionHeader({required this.title, required this.subtitle});
+
   @override
   Widget build(BuildContext context) {
-    final userProfileAsync = ref.watch(currentUserProfileProvider);
-
-    return Scaffold(
-      backgroundColor: AppColors.darkBg,
-      body: GradientBackground(
-        child: userProfileAsync.when(
-          data: (profile) {
-            if (profile == null) {
-              return const Center(child: Text('Profile not found.'));
-            }
-
-            return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-              child: Column(
-                children: [
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Add Your First Student',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Capture the core student details and a starter fee plan.',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 20),
-                  GlassCard(
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        children: [
-                          TextFormField(
-                            controller: _firstNameController,
-                            decoration: const InputDecoration(
-                              labelText: 'First Name',
-                              prefixIcon: Icon(Icons.person_outline),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Enter first name';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: _lastNameController,
-                            decoration: const InputDecoration(
-                              labelText: 'Last Name',
-                              prefixIcon: Icon(Icons.person_outline),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Enter last name';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: _parentPhoneController,
-                            keyboardType: TextInputType.phone,
-                            decoration: const InputDecoration(
-                              labelText: 'Parent Phone',
-                              prefixIcon: Icon(Icons.phone_outlined),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Enter parent phone';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: _batchController,
-                            decoration: const InputDecoration(
-                              labelText: 'Batch / Class',
-                              prefixIcon: Icon(Icons.class_outlined),
-                              hintText: 'Grade 10 - Evening',
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Enter batch or class';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: _feeAmountController,
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              labelText: 'Monthly Fee Amount',
-                              prefixIcon: Icon(Icons.currency_rupee),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Enter fee amount';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 20),
-                          ElevatedButton(
-                            onPressed: _isLoading
-                                ? null
-                                : () => _saveStudent(profile.accountId),
-                            child: _isLoading
-                                ? const SizedBox(
-                                    height: 24,
-                                    width: 24,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation(
-                                        Colors.white,
-                                      ),
-                                    ),
-                                  )
-                                : const Text('Save and Continue'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, st) => Center(
-            child: Text(
-              'Unable to load profile.',
-              style: TextStyle(color: AppColors.overdue),
-            ),
-          ),
-        ),
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: GoogleFonts.manrope(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+        const SizedBox(height: 4),
+        Text(subtitle, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textTertiary)),
+      ],
     );
   }
 }

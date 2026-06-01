@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/currency_formatter.dart';
 import '../../models/dashboard_stats.dart';
 import '../../providers/dashboard_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../widgets/dashboard/monthly_analytics_chart.dart';
 import '../../widgets/dashboard/recent_transactions_widget.dart';
-import '../../widgets/dashboard/revenue_trend_chart.dart';
 import '../../widgets/dashboard/stat_card.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -26,188 +28,195 @@ class DashboardScreen extends ConsumerWidget {
     final statsAsync = ref.watch(dashboardStatsProvider);
     final monthlyDataAsync = ref.watch(monthlyCollectionDataProvider);
     final recentTransactionsAsync = ref.watch(recentTransactionsProvider);
+    final settingsAsync = ref.watch(settingsProvider);
+    final currencyCode = settingsAsync.value?.currency;
+    final currencyFormatter = CurrencyFormatter.numberFormat(currencyCode, decimalDigits: 0);
 
     return Scaffold(
       backgroundColor: AppColors.darkBg,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(76),
-        child: _DashboardTopBar(
-          onRefresh: () => _refreshAll(ref),
-        ),
-      ),
+      extendBodyBehindAppBar: true,
+      appBar: const _DashboardTopBar(),
       body: RefreshIndicator(
         onRefresh: () => _refreshAll(ref),
+        color: AppColors.primary,
+        backgroundColor: AppColors.darkSurface,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+            padding: const EdgeInsets.fromLTRB(24, 128, 24, 32),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const _GreetingHeader(),
-                const SizedBox(height: 20),
+                const SizedBox(height: 28),
                 statsAsync.when(
-                  data: (stats) => _StatsGrid(stats: stats),
-                  loading: () => const _LoadingCard(height: 160),
-                  error: (e, st) => _ErrorCard(message: 'Failed to load stats'),
+                  data: (stats) => _BentoStatsGrid(stats: stats, currencyFormatter: currencyFormatter),
+                  loading: () => const _LoadingPlaceholder(height: 340),
+                  error: (e, st) => const _ErrorPlaceholder(message: 'Stats error'),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 28),
                 monthlyDataAsync.when(
-                  data: (monthlyData) => RevenueTrendChart(
-                    data: monthlyData,
-                    title: 'Revenue Trend',
+                  data: (monthlyData) => MonthlyAnalyticsChart(data: monthlyData),
+                  loading: () => const _LoadingPlaceholder(height: 320),
+                  error: (e, st) => const _ErrorPlaceholder(message: 'Analytics error'),
+                ),
+                const SizedBox(height: 32),
+                Text(
+                  'Quick Actions',
+                  style: GoogleFonts.manrope(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.3,
                   ),
-                  loading: () => const _LoadingCard(height: 240),
-                  error: (e, st) =>
-                      _ErrorCard(message: 'Failed to load trend data'),
                 ),
-                const SizedBox(height: 20),
-                monthlyDataAsync.when(
-                  data: (monthlyData) => MonthlyAnalyticsChart(
-                    data: monthlyData,
-                    title: 'Monthly Revenue Analytics',
-                  ),
-                  loading: () => const _LoadingCard(height: 280),
-                  error: (e, st) => _ErrorCard(message: 'Failed to load analytics'),
-                ),
-                const SizedBox(height: 20),
-                _QuickActionsRow(
-                  onAddStudent: () => context.go('/students'),
-                  onRecordPayment: () => context.go('/payments'),
-                  onSendReminder: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Reminder workflow coming soon.'),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
+                const _QuickActionsRow(),
+                const SizedBox(height: 32),
                 recentTransactionsAsync.when(
                   data: (transactions) => RecentTransactionsWidget(
                     transactions: transactions,
+                    currencyFormatter: currencyFormatter,
                     onViewAll: () => context.go('/payments'),
                   ),
-                  loading: () => const _LoadingCard(height: 220),
-                  error: (e, st) =>
-                      _ErrorCard(message: 'Failed to load transactions'),
+                  loading: () => const _LoadingPlaceholder(height: 220),
+                  error: (e, st) => const _ErrorPlaceholder(message: 'Transactions error'),
                 ),
               ],
             ),
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        child: const Icon(Icons.add),
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          gradient: AppGradients.primary,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: FloatingActionButton(
+          onPressed: () => context.push('/students/add'),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          shape: const CircleBorder(),
+          child: const Icon(Icons.add_rounded, size: 32, color: Colors.white),
+        ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }
 
-class _DashboardTopBar extends StatelessWidget {
-  final VoidCallback onRefresh;
+class _DashboardTopBar extends StatelessWidget implements PreferredSizeWidget {
+  const _DashboardTopBar();
 
-  const _DashboardTopBar({required this.onRefresh});
+  @override
+  Size get preferredSize => const Size.fromHeight(80);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.darkSurface.withValues(alpha: 0.9),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.4),
-            blurRadius: 24,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.2),
-                  ),
-                ),
-                child: ClipOval(
-                  child: Image.network(
-                    'https://lh3.googleusercontent.com/aida-public/AB6AXuDFatqCXii6QXM23ITxI_J4L-gdJ3kpvJv3DVnywZap9XQDhFpegBVGt_Sj_kClmsz_lg-7ld9TAuw-ynUMnTURqFRfYSBK5X86Qu7tT9zDN4XKNsxFubjQfu50sy9M_AAL57qfJKz2WL0TDKAhrkAUpkfbAJAfbaQe5uAcPOkbXgxXEjRC_iKVXAJ2hTohysOQA6Is60PVERp8yHLsNF4sjZmQ0YrvcZevc91XzzHhwknnfHTk1eUvO_jq-vhKTqWhWFNQd1yHXpMb',
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Icon(Icons.person, color: AppColors.textHint);
-                    },
-                  ),
-                ),
+    final bool isDark = AppColors.isDarkMode;
+    return Consumer(
+      builder: (context, ref, _) {
+        final settings = ref.watch(settingsProvider).value;
+        final centerName = (settings?.centerName.trim().isNotEmpty ?? false)
+            ? settings!.centerName.trim()
+            : 'FeeSync';
+
+        return Container(
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainer.withValues(alpha: 0.85),
+            border: Border(
+              bottom: BorderSide(
+                color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04),
+                width: 1,
               ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
-                    'FeeSync',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    'ADMINISTRATOR',
-                    style: TextStyle(
-                      fontSize: 10,
-                      letterSpacing: 2.0,
-                      color: AppColors.textTertiary,
-                    ),
-                  ),
-                ],
-              ),
-              const Spacer(),
-              IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.search),
-                color: AppColors.textSecondary,
-              ),
-              IconButton(
-                onPressed: onRefresh,
-                icon: const Icon(Icons.refresh_rounded),
-                color: AppColors.textSecondary,
-              ),
-              Stack(
-                children: [
-                  IconButton(
-                    onPressed: () {},
-                    icon: const Icon(Icons.notifications_outlined),
-                    color: AppColors.textSecondary,
-                  ),
-                  Positioned(
-                    right: 12,
-                    top: 12,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: AppColors.primary,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.01),
+                blurRadius: 20,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
-        ),
-      ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.2), width: 1.5),
+                      image: const DecorationImage(
+                        image: NetworkImage('https://lh3.googleusercontent.com/aida-public/AB6AXuDFatqCXii6QXM23ITxI_J4L-gdJ3kpvJv3DVnywZap9XQDhFpegBVGt_Sj_kClmsz_lg-7ld9TAuw-ynUMnTURqFRfYSBK5X86Qu7tT9zDN4XKNsxFubjQfu50sy9M_AAL57qfJKz2WL0TDKAhrkAUpkfbAJAfbaQe5uAcPOkbXgxXEjRC_iKVXAJ2hTohysOQA6Is60PVERp8yHLsNF4sjZmQ0YrvcZevc91XzzHhwknnfHTk1eUvO_jq-vhKTqWhWFNQd1yHXpMb'),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          centerName,
+                          style: GoogleFonts.manrope(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                            letterSpacing: -0.5,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          'ADMINISTRATOR',
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.5,
+                            color: AppColors.textTertiary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {},
+                    icon: Icon(Icons.search_rounded, color: AppColors.textPrimary, size: 24),
+                  ),
+                  Stack(
+                    children: [
+                      IconButton(
+                        onPressed: () => context.push('/notifications'),
+                        icon: Icon(Icons.notifications_none_rounded, color: AppColors.textPrimary, size: 24),
+                      ),
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(color: AppColors.error, shape: BoxShape.circle),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -218,26 +227,34 @@ class _GreetingHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final dateFormatted = DateFormat('EEEE, MMMM d, yyyy').format(now);
-    final greeting = _timeBasedGreeting(now.hour);
-
+    final hour = now.hour;
+    String greeting = 'Good evening';
+    if (hour < 12) {
+      greeting = 'Good morning';
+    } else if (hour < 17) {
+      greeting = 'Good afternoon';
+    }
+    final dateFormatted = DateFormat('EEEE, MMMM d').format(now);
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          greeting,
-          style: const TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
+          '$greeting, Admin 👋',
+          style: GoogleFonts.manrope(
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
             color: AppColors.textPrimary,
+            letterSpacing: -0.5,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           dateFormatted,
-          style: const TextStyle(
-            fontSize: 12,
-            color: AppColors.textSecondary,
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textTertiary,
           ),
         ),
       ],
@@ -245,248 +262,274 @@ class _GreetingHeader extends StatelessWidget {
   }
 }
 
-class _StatsGrid extends StatelessWidget {
+class _BentoStatsGrid extends StatelessWidget {
   final DashboardStats stats;
+  final NumberFormat currencyFormatter;
 
-  const _StatsGrid({required this.stats});
+  const _BentoStatsGrid({required this.stats, required this.currencyFormatter});
 
   @override
   Widget build(BuildContext context) {
-    final currencyFormatter = NumberFormat.currency(
-      name: 'INR',
-      symbol: '₹',
-      decimalDigits: 0,
-    );
-
     return Column(
       children: [
-        _buildRow(
-          StatCard(
-            title: 'Total Collected',
-            value: currencyFormatter.format(stats.totalFeesCollected),
-            suffix: 'This month',
-            icon: Icons.account_balance_wallet,
-            showTrend: true,
-            trendPercent: stats.collectionRate,
-            trendUp: stats.collectionRate >= 0,
-          ),
-          StatCard(
-            title: 'Pending Fees',
-            value: currencyFormatter.format(stats.pendingFees),
-            icon: Icons.pending_actions,
-            iconBackgroundColor: AppColors.pending.withValues(alpha: 0.12),
-            iconColor: AppColors.pending,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: StatCard(
+                title: 'Total Collected',
+                value: currencyFormatter.format(stats.totalFeesCollected),
+                icon: Icons.account_balance_wallet_rounded,
+                showTrend: true,
+                trendPercent: 12.5,
+                trendUp: true,
+                iconColor: AppColors.primary,
+                iconBackgroundColor: AppColors.primaryContainer,
+                isGradient: true,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _CollectionRateGaugeCard(rate: stats.collectionRate),
+            ),
+          ],
         ),
-        const SizedBox(height: 12),
-        _buildRow(
-          StatCard(
-            title: 'Active Students',
-            value: stats.totalStudents.toString(),
-            icon: Icons.group,
-            iconBackgroundColor: AppColors.primary.withValues(alpha: 0.18),
-            iconColor: AppColors.primaryLight,
-          ),
-          StatCard(
-            title: 'Collection Rate',
-            value: '${stats.collectionRate.toStringAsFixed(1)}%',
-            icon: Icons.insights,
-            iconBackgroundColor: AppColors.paid.withValues(alpha: 0.12),
-            iconColor: AppColors.paid,
-          ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: StatCard(
+                title: 'Pending Fees',
+                value: currencyFormatter.format(stats.pendingFees),
+                icon: Icons.pending_actions_rounded,
+                iconColor: AppColors.error,
+                iconBackgroundColor: AppColors.errorContainer,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: StatCard(
+                title: 'Active Students',
+                value: stats.totalStudents.toString(),
+                icon: Icons.group_rounded,
+                iconColor: AppColors.secondary,
+                iconBackgroundColor: AppColors.secondaryContainer,
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
+}
 
-  Widget _buildRow(Widget left, Widget right) {
-    return Row(
-      children: [
-        Expanded(child: left),
-        const SizedBox(width: 12),
-        Expanded(child: right),
-      ],
+class _CollectionRateGaugeCard extends StatelessWidget {
+  final double rate;
+
+  const _CollectionRateGaugeCard({required this.rate});
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isDark = AppColors.isDarkMode;
+    return Container(
+      height: 160,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.darkCard.withOpacity(0.85),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.05),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.01),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Collection Rate',
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textTertiary,
+                ),
+              ),
+              Icon(Icons.percent_rounded, size: 14, color: AppColors.primary),
+            ],
+          ),
+          const Spacer(),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${rate.toStringAsFixed(1)}%',
+                  style: GoogleFonts.outfit(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 48,
+                height: 48,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    CircularProgressIndicator(
+                      value: rate / 100.0,
+                      strokeWidth: 5,
+                      backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    ),
+                    Icon(
+                      Icons.trending_up_rounded,
+                      size: 16,
+                      color: AppColors.primary,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
 
 class _QuickActionsRow extends StatelessWidget {
-  final VoidCallback onAddStudent;
-  final VoidCallback onRecordPayment;
-  final VoidCallback onSendReminder;
-
-  const _QuickActionsRow({
-    required this.onAddStudent,
-    required this.onRecordPayment,
-    required this.onSendReminder,
-  });
+  const _QuickActionsRow();
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        const Text(
-          'Quick Actions',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
+        _QuickAction(
+          label: 'Batches',
+          icon: Icons.layers_rounded,
+          onTap: () => context.go('/batches'),
+          actionColor: AppColors.primary,
         ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _QuickActionButton(
-                label: 'Add Student',
-                icon: Icons.person_add_alt_1,
-                color: AppColors.primary,
-                onTap: () => context.push('/students/add'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _QuickActionButton(
-                label: 'Record Payment',
-                icon: Icons.payments,
-                color: AppColors.paid,
-                onTap: () => context.push('/payments/record'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _QuickActionButton(
-                label: 'Fees',
-                icon: Icons.summarize_outlined,
-                color: AppColors.pending,
-                onTap: () => context.go('/fees'),
-              ),
-            ),
-          ],
+        const SizedBox(width: 12),
+        _QuickAction(
+          label: 'Add Student',
+          icon: Icons.person_add_rounded,
+          onTap: () => context.push('/students/add'),
+          actionColor: AppColors.secondary,
+        ),
+        const SizedBox(width: 12),
+        _QuickAction(
+          label: 'Record Pay',
+          icon: Icons.payments_rounded,
+          onTap: () => context.push('/payments/record'),
+          actionColor: const Color(0xFF10B981),
         ),
       ],
     );
   }
 }
 
-class _QuickActionButton extends StatelessWidget {
+class _QuickAction extends StatelessWidget {
   final String label;
   final IconData icon;
-  final Color color;
   final VoidCallback onTap;
+  final Color actionColor;
 
-  const _QuickActionButton({
+  const _QuickAction({
     required this.label,
     required this.icon,
-    required this.color,
     required this.onTap,
+    required this.actionColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        height: 92,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: color.withValues(alpha: 0.35),
-            width: 1,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
+    final bool isDark = AppColors.isDarkMode;
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 96,
+          decoration: BoxDecoration(
+            color: AppColors.darkCard.withOpacity(0.85),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.05),
+              width: 1.5,
             ),
-          ],
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.1 : 0.01),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              )
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: actionColor.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: actionColor, size: 24),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-String _timeBasedGreeting(int hour) {
-  if (hour < 12) {
-    return 'Good morning';
-  }
-
-  if (hour < 18) {
-    return 'Good afternoon';
-  }
-
-  return 'Good evening';
-}
-
-class _LoadingCard extends StatelessWidget {
+class _LoadingPlaceholder extends StatelessWidget {
   final double height;
-
-  const _LoadingCard({required this.height});
+  const _LoadingPlaceholder({required this.height});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       height: height,
-      decoration: BoxDecoration(
-        color: AppColors.darkCard,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.darkBorder),
-      ),
+      decoration: BoxDecoration(color: AppColors.darkCard, borderRadius: BorderRadius.circular(28)),
       child: const Center(child: CircularProgressIndicator()),
     );
   }
 }
 
-class _ErrorCard extends StatelessWidget {
+class _ErrorPlaceholder extends StatelessWidget {
   final String message;
-
-  const _ErrorCard({required this.message});
+  const _ErrorPlaceholder({required this.message});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.overdue.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.overdue.withValues(alpha: 0.3),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.error_outline,
-            color: AppColors.overdue,
-            size: 20,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              message,
-              style: TextStyle(
-                fontSize: 13,
-                color: AppColors.overdue,
-              ),
-            ),
-          ),
-        ],
-      ),
+      height: 100,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(color: AppColors.errorContainer.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(28)),
+      child: Center(child: Text(message, style: TextStyle(color: AppColors.error))),
     );
   }
 }

@@ -268,6 +268,7 @@ SELECT
   s.last_name,
   s.class,
   s.section,
+  s.batch_id,
   s.parent_name,
   s.parent_phone,
   s.parent_email,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/dashboard_stats.dart';
 
@@ -18,80 +19,94 @@ class MonthlyAnalyticsChart extends StatefulWidget {
 }
 
 class _MonthlyAnalyticsChartState extends State<MonthlyAnalyticsChart> {
-  String selectedPeriod = 'monthly'; // monthly, weekly
+  String selectedPeriod = 'monthly';
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = AppColors.isDarkMode;
     if (widget.data.isEmpty) {
-      return _emptyState();
+      return _emptyState(isDark);
     }
 
-    // Find max value for scaling
-    final maxValue = widget.data.isEmpty
-        ? 0.0
-        : widget.data.map((e) => e.amount).reduce((a, b) => a > b ? a : b);
-
+    final maxValue = widget.data.map((e) => e.amount).reduce((a, b) => a > b ? a : b);
     final maxIndex = widget.data.indexWhere((e) => e.amount == maxValue);
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.darkCard.withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(20),
+        color: AppColors.darkCard.withOpacity(0.85),
+        borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.05),
-          width: 1,
+          color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.04),
+          width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.35),
+            color: Colors.black.withOpacity(isDark ? 0.15 : 0.01),
             blurRadius: 20,
             offset: const Offset(0, 10),
-          ),
+          )
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
+          // Header Row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.title,
+                      style: GoogleFonts.manrope(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                        letterSpacing: -0.3,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Performance comparison over the last 6 months',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textTertiary,
+                    const SizedBox(height: 4),
+                    Text(
+                      'Collections overview for the last 6 months',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textTertiary,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Modern Toggle Pills
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.surfaceContainerLow : const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(99),
+                  border: Border.all(
+                    color: isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.03),
                   ),
-                ],
+                ),
+                child: Row(
+                  children: [
+                    _buildPeriodButton('W', 'weekly', isDark),
+                    const SizedBox(width: 4),
+                    _buildPeriodButton('M', 'monthly', isDark),
+                  ],
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
-
-          Row(
-            children: [
-              _buildPeriodButton('Weekly', 'weekly'),
-              const SizedBox(width: 8),
-              _buildPeriodButton('Monthly', 'monthly'),
-            ],
-          ),
-          const SizedBox(height: 20),
-
-          // Bar Chart
+          const SizedBox(height: 32),
+          // Chart Wrapper
           SizedBox(
             height: 220,
             child: BarChart(
@@ -103,12 +118,11 @@ class _MonthlyAnalyticsChartState extends State<MonthlyAnalyticsChart> {
                   show: true,
                   drawVerticalLine: false,
                   horizontalInterval: maxValue > 0 ? maxValue / 4 : 1000,
-                  getDrawingHorizontalLine: (value) {
-                    return FlLine(
-                      color: AppColors.darkBorder.withValues(alpha: 0.15),
-                      strokeWidth: 1,
-                    );
-                  },
+                  getDrawingHorizontalLine: (value) => FlLine(
+                    color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.04),
+                    strokeWidth: 1,
+                    dashArray: [4, 4],
+                  ),
                 ),
                 titlesData: FlTitlesData(
                   show: true,
@@ -117,70 +131,58 @@ class _MonthlyAnalyticsChartState extends State<MonthlyAnalyticsChart> {
                       showTitles: true,
                       getTitlesWidget: (value, meta) {
                         final index = value.toInt();
-                        if (index < 0 || index >= widget.data.length) {
-                          return const Text('');
-                        }
+                        if (index < 0 || index >= widget.data.length) return const SizedBox();
                         return Padding(
                           padding: const EdgeInsets.only(top: 10),
                           child: Text(
                             widget.data[index].month.toUpperCase(),
-                            style: const TextStyle(
+                            style: GoogleFonts.inter(
                               color: AppColors.textTertiary,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 1.2,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
                             ),
                           ),
                         );
                       },
-                      reservedSize: 35,
+                      reservedSize: 32,
                     ),
                   ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        return Text(
-                          'INR ${(value / 1000).toStringAsFixed(0)}k',
-                          style: const TextStyle(
-                            color: AppColors.textTertiary,
-                            fontSize: 9,
-                          ),
-                        );
-                      },
-                      reservedSize: 40,
-                    ),
-                  ),
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
+                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 ),
-                borderData: FlBorderData(
-                  show: false,
-                ),
+                borderData: FlBorderData(show: false),
                 barGroups: List.generate(widget.data.length, (index) {
                   final isPeak = index == maxIndex;
+                  // Beautiful gradients for the bar chart
+                  final peakGradient = LinearGradient(
+                    colors: [AppColors.primary, AppColors.secondary],
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                  );
+                  final defaultGradient = LinearGradient(
+                    colors: [
+                      AppColors.primary.withOpacity(0.35),
+                      AppColors.primary.withOpacity(0.15)
+                    ],
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                  );
+
                   return BarChartGroupData(
                     x: index,
                     barRods: [
                       BarChartRodData(
                         toY: widget.data[index].amount,
-                        color: isPeak
-                            ? AppColors.primaryLight
-                            : AppColors.darkSurface,
-                        width: 18,
+                        gradient: isPeak ? peakGradient : defaultGradient,
+                        width: 32,
                         borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(10),
-                          topRight: Radius.circular(10),
+                          topLeft: Radius.circular(8),
+                          topRight: Radius.circular(8),
                         ),
                         borderSide: isPeak
-                            ? BorderSide(
-                                color: AppColors.primary.withValues(alpha: 0.4),
-                                width: 2,
-                              )
+                            ? BorderSide(color: AppColors.primary.withOpacity(0.3), width: 1)
                             : BorderSide.none,
                       ),
                     ],
@@ -194,59 +196,55 @@ class _MonthlyAnalyticsChartState extends State<MonthlyAnalyticsChart> {
     );
   }
 
-  Widget _buildPeriodButton(String label, String value) {
+  Widget _buildPeriodButton(String label, String value, bool isDark) {
     final isSelected = selectedPeriod == value;
     return GestureDetector(
       onTap: () => setState(() => selectedPeriod = value),
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 8,
-        ),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primary
-              : AppColors.darkSurface,
-          borderRadius: BorderRadius.circular(20),
-          border: isSelected
-              ? null
-              : Border.all(
-                  color: AppColors.darkBorder.withValues(alpha: 0.6),
-                  width: 1,
-                ),
+          color: isSelected 
+              ? (isDark ? AppColors.primaryContainer : Colors.white) 
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(99),
+          boxShadow: isSelected && !isDark
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  )
+                ]
+              : null,
         ),
         child: Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: isSelected ? Colors.white : AppColors.textSecondary,
-            letterSpacing: 0.3,
+          style: GoogleFonts.inter(
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            color: isSelected 
+                ? (isDark ? AppColors.onPrimaryContainer : AppColors.primary) 
+                : AppColors.textTertiary,
           ),
         ),
       ),
     );
   }
 
-  Widget _emptyState() {
+  Widget _emptyState(bool isDark) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: AppColors.darkCard,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.darkCard.withOpacity(0.85),
+        borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: AppColors.darkBorder,
-          width: 1,
+          color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.04),
+          width: 1.5,
         ),
       ),
-      child: Center(
-        child: Text(
-          'No data available',
-          style: const TextStyle(
-            color: AppColors.textTertiary,
-            fontSize: 14,
-          ),
-        ),
+      child: const Center(
+        child: Text('No analytical data available', style: TextStyle(color: AppColors.textTertiary)),
       ),
     );
   }

@@ -25,7 +25,7 @@ class PaymentRepository {
       query.lte('payment_date', endDate.toIso8601String());
     }
 
-    query.order('payment_date');
+    query.order('payment_date', ascending: false);
 
     final response = await query;
     return (response as List).map((json) => Payment.fromJson(json)).toList();

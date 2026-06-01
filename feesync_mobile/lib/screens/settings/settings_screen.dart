@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/user_provider.dart';
+import '../../providers/settings_provider.dart';
+import 'widgets/premium_widgets.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -13,123 +16,174 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  bool _isDeleting = false;
+  Future<void> _updateThemeMode(String theme) async {
+    try {
+      await ref.read(settingsProvider.notifier).updateSetting('theme_mode', theme);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update theme: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final user = Supabase.instance.client.auth.currentUser;
+    final userProfile = ref.watch(currentUserProfileProvider);
+    final settingsAsync = ref.watch(settingsProvider);
 
     return Scaffold(
+      backgroundColor: AppColors.darkBg,
       appBar: AppBar(
-        title: const Text('Settings'),
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        backgroundColor: AppColors.darkSurface,
+        scrolledUnderElevation: 0,
+        title: Text(
+          'Settings',
+          style: GoogleFonts.manrope(
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        centerTitle: false,
       ),
-      body: ListView(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 12),
+            userProfile.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, _) => Text('Error loading profile: $err', style: const TextStyle(color: Colors.white)),
+              data: (user) => _buildProfileHeader(user),
+            ),
+            const SizedBox(height: 24),
+            
+            _buildThemeSelector(settingsAsync.value?.themeMode ?? 'dark_luxury'),
+            const SizedBox(height: 24),
+            
+            _buildSectionHeader('Operational Settings'),
+            const SizedBox(height: 12),
+            _buildSettingsGroup([
+              _SettingsItem(
+                icon: Icons.business_rounded,
+                iconColor: AppColors.primary,
+                title: 'Institution & Branding',
+                subtitle: 'Registration details, currency, school logo',
+                onTap: () => context.push('/settings/institution'),
+              ),
+              _SettingsItem(
+                icon: Icons.account_balance_wallet_rounded,
+                iconColor: const Color(0xFF10B981),
+                title: 'Fee & Billing Engine',
+                subtitle: 'Penalties, due date cycles, payment policies',
+                onTap: () => context.push('/settings/billing'),
+              ),
+              _SettingsItem(
+                icon: Icons.campaign_rounded,
+                iconColor: const Color(0xFFF59E0B),
+                title: 'Communications & Sync',
+                subtitle: 'WhatsApp official templates, SMS delivery, auto alerts',
+                onTap: () => context.push('/settings/automation'),
+              ),
+            ]),
+            const SizedBox(height: 24),
+
+            _buildSectionHeader('Preferences & Intelligence'),
+            const SizedBox(height: 12),
+            _buildSettingsGroup([
+              _SettingsItem(
+                icon: Icons.auto_awesome_rounded,
+                iconColor: const Color(0xFF8B5CF6),
+                title: 'AI Intelligence',
+                subtitle: 'Smart due patterns, OCR bills camera tools',
+                onTap: () => context.push('/settings/ai'),
+              ),
+              _SettingsItem(
+                icon: Icons.security_rounded,
+                iconColor: const Color(0xFFEF4444),
+                title: 'Security & System',
+                subtitle: 'Biometrics check, lock screen, server logs',
+                onTap: () => context.push('/settings/security'),
+              ),
+            ]),
+            const SizedBox(height: 24),
+
+            _buildSubscriptionCard(),
+            const SizedBox(height: 28),
+            _buildLogoutButton(context),
+            const SizedBox(height: 48),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileHeader(user) {
+    if (user == null) return const SizedBox();
+    
+    final avatarLetter = user.fullName.isNotEmpty ? user.fullName.substring(0, 1).toUpperCase() : 'K';
+    return GlassContainer(
+      padding: const EdgeInsets.all(24),
+      borderRadius: 28,
+      child: Row(
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+          CircleAvatar(
+            radius: 32,
+            backgroundColor: AppColors.primaryContainer,
+            child: Text(
+              avatarLetter,
+              style: GoogleFonts.manrope(
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [AppColors.primary, AppColors.primaryLight],
-                    ),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      user?.email?[0].toUpperCase() ?? 'U',
-                      style: const TextStyle(
-                        fontSize: 40,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
                 Text(
-                  user?.email ?? 'User',
-                  style: const TextStyle(
+                  user.fullName,
+                  style: GoogleFonts.inter(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
                   ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Account Administrator',
-                  style: TextStyle(
-                    fontSize: 14,
+                const SizedBox(height: 2),
+                Text(
+                  user.email,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
                     color: AppColors.textTertiary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryContainer.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    user.role.toUpperCase(),
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
               ],
-            ),
-          ),
-          const Divider(color: AppColors.divider),
-          _buildSettingItem(
-            icon: Icons.person_outline,
-            title: 'Account',
-            subtitle: 'Manage your account settings',
-            onTap: () {},
-          ),
-          _buildSettingItem(
-            icon: Icons.notifications_outlined,
-            title: 'Notifications',
-            subtitle: 'Configure notification preferences',
-            onTap: () {},
-          ),
-          _buildSettingItem(
-            icon: Icons.security,
-            title: 'Two-Factor Security',
-            subtitle: 'Enable TOTP protection',
-            onTap: () => context.go('/auth/totp-required'),
-          ),
-          _buildSettingItem(
-            icon: Icons.info_outline,
-            title: 'About',
-            subtitle: 'App version and information',
-            onTap: () {},
-          ),
-          const Divider(color: AppColors.divider),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: ElevatedButton.icon(
-              onPressed: _isDeleting ? null : () => _requestDeletion(),
-              icon: const Icon(Icons.delete_outline),
-              label: _isDeleting
-                  ? const Text('Submitting request...')
-                  : const Text('Request Account Deletion'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.pending,
-                foregroundColor: Colors.white,
-                minimumSize: const Size.fromHeight(48),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            child: ElevatedButton.icon(
-              onPressed: () async {
-                await Supabase.instance.client.auth.signOut();
-                if (context.mounted) {
-                  context.go('/login');
-                }
-              },
-              icon: const Icon(Icons.logout),
-              label: const Text('Logout'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.overdue,
-                foregroundColor: Colors.white,
-                minimumSize: const Size.fromHeight(48),
-              ),
             ),
           ),
         ],
@@ -137,130 +191,213 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _buildSettingItem({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
+  Widget _buildThemeSelector(String currentTheme) {
+    final cleanTheme = currentTheme.toLowerCase();
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader('Appearance Theme'),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            _buildThemeOption('dark_luxury', 'Dark Luxury', cleanTheme == 'dark_luxury'),
+            const SizedBox(width: 12),
+            _buildThemeOption('light', 'Light Mode', cleanTheme == 'light'),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildThemeOption(String themeKey, String label, bool isSelected) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _updateThemeMode(themeKey),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primaryContainer : AppColors.surfaceContainer.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isSelected ? AppColors.primary : Colors.white.withOpacity(0.05),
+              width: 1.5,
+            ),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? Colors.white : AppColors.textSecondary,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4),
+      child: Text(
+        title,
+        style: GoogleFonts.manrope(
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textTertiary,
+          letterSpacing: 0.2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsGroup(List<Widget> children) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainer.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: Column(
+        children: children,
+      ),
+    );
+  }
+
+  Widget _buildSubscriptionCard() {
+    return GlassContainer(
+      padding: const EdgeInsets.all(20),
+      borderRadius: 24,
+      backgroundColor: AppColors.surfaceContainer.withOpacity(0.2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'PRO TIER SUBSCRIPTION',
+                style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w800, color: const Color(0xFFF59E0B)),
+              ),
+              const Icon(Icons.workspace_premium_rounded, color: Color(0xFFF59E0B), size: 18),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Center Enrollment Seat Usage',
+            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white),
+          ),
+          const SizedBox(height: 12),
+          const ClipRRect(
+            borderRadius: BorderRadius.all(Radius.circular(6)),
+            child: LinearProgressIndicator(
+              value: 0.9,
+              minHeight: 8,
+              backgroundColor: Colors.black26,
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFF59E0B)),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('450 / 500 active students', style: GoogleFonts.inter(fontSize: 11, color: AppColors.textTertiary)),
+              Text('90% Limit', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLogoutButton(BuildContext context) {
+    return GlassContainer(
+      padding: EdgeInsets.zero,
+      borderRadius: 20,
+      backgroundColor: AppColors.error.withOpacity(0.05),
+      borderColor: AppColors.error.withOpacity(0.1),
+      child: InkWell(
+        onTap: () async {
+          await Supabase.instance.client.auth.signOut();
+          if (context.mounted) context.go('/login');
+        },
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.logout_rounded, color: AppColors.error, size: 20),
+              const SizedBox(width: 12),
+              Text(
+                'Sign Out Account',
+                style: GoogleFonts.inter(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.error,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsItem extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _SettingsItem({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      leading: Icon(icon, color: AppColors.primary),
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      leading: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: iconColor.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, color: iconColor, size: 20),
+      ),
       title: Text(
         title,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
+        style: GoogleFonts.inter(
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
         ),
       ),
       subtitle: Text(
         subtitle,
-        style: const TextStyle(
-          fontSize: 12,
+        style: GoogleFonts.inter(
+          fontSize: 11,
           color: AppColors.textTertiary,
         ),
       ),
-      trailing: const Icon(Icons.chevron_right, color: AppColors.textTertiary),
-      onTap: onTap,
+      trailing: const Icon(
+        Icons.chevron_right_rounded,
+        color: AppColors.textTertiary,
+        size: 20,
+      ),
     );
-  }
-
-  Future<void> _requestDeletion() async {
-    final reasonController = TextEditingController();
-    final userProfile = await ref.read(currentUserProfileProvider.future);
-    final userId = Supabase.instance.client.auth.currentUser?.id;
-
-    if (!mounted) {
-      reasonController.dispose();
-      return;
-    }
-
-    if (userProfile == null || userId == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Unable to submit deletion request.'),
-            backgroundColor: AppColors.overdue,
-          ),
-        );
-      }
-      reasonController.dispose();
-      return;
-    }
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Request Account Deletion'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'We will begin erasing your data within 30 days.',
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: reasonController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  hintText: 'Optional reason for leaving',
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Submit'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmed != true) {
-      reasonController.dispose();
-      return;
-    }
-
-    setState(() => _isDeleting = true);
-
-    try {
-      final repository = ref.read(accountRepositoryProvider);
-      await repository.requestAccountDeletion(
-        userProfile.accountId,
-        userId,
-        reasonController.text.trim().isEmpty
-            ? null
-            : reasonController.text.trim(),
-      );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Deletion request submitted.'),
-            backgroundColor: AppColors.paid,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to submit deletion request.'),
-            backgroundColor: AppColors.overdue,
-          ),
-        );
-      }
-    } finally {
-      reasonController.dispose();
-      if (mounted) setState(() => _isDeleting = false);
-    }
   }
 }

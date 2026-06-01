@@ -7,6 +7,7 @@ class Student {
   final String firstName;
   final String lastName;
   final String studentClass;
+  final String? batchId;
   final String? section;
   final String? stream;
   final Gender? gender;
@@ -15,6 +16,9 @@ class Student {
   final String? parentPhone;
   final String? parentEmail;
   final String? address;
+  final String? rollNumber;
+  final DateTime? joiningDate;
+  final double discountAmount;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -25,6 +29,7 @@ class Student {
     required this.firstName,
     required this.lastName,
     required this.studentClass,
+    this.batchId,
     this.section,
     this.stream,
     this.gender,
@@ -33,6 +38,9 @@ class Student {
     this.parentPhone,
     this.parentEmail,
     this.address,
+    this.rollNumber,
+    this.joiningDate,
+    this.discountAmount = 0,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -47,6 +55,7 @@ class Student {
       firstName: json['first_name'],
       lastName: json['last_name'],
       studentClass: json['class'],
+      batchId: json['batch_id'],
       section: json['section'],
       stream: json['stream'],
       gender: json['gender'] != null ? Gender.values.firstWhere(
@@ -60,6 +69,11 @@ class Student {
       parentPhone: json['parent_phone'],
       parentEmail: json['parent_email'],
       address: json['address'],
+      rollNumber: json['roll_number'],
+      joiningDate: json['joining_date'] != null
+          ? DateTime.parse(json['joining_date'])
+          : null,
+      discountAmount: double.parse((json['discount_amount'] ?? 0).toString()),
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
     );
@@ -73,6 +87,7 @@ class Student {
       'first_name': firstName,
       'last_name': lastName,
       'class': studentClass,
+      'batch_id': batchId,
       'section': section,
       'stream': stream,
       'gender': gender?.name,
@@ -81,6 +96,9 @@ class Student {
       'parent_phone': parentPhone,
       'parent_email': parentEmail,
       'address': address,
+      'roll_number': rollNumber,
+      'joining_date': joiningDate?.toIso8601String().split('T')[0],
+      'discount_amount': discountAmount,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
@@ -91,9 +109,11 @@ class StudentBalance {
   final String id;
   final String accountId;
   final String admissionNumber;
+  final String? rollNumber;
   final String firstName;
   final String lastName;
   final String studentClass;
+  final String? batchId;
   final String? section;
   final String? parentName;
   final String? parentPhone;
@@ -106,9 +126,11 @@ class StudentBalance {
     required this.id,
     required this.accountId,
     required this.admissionNumber,
+    this.rollNumber,
     required this.firstName,
     required this.lastName,
     required this.studentClass,
+    this.batchId,
     this.section,
     this.parentName,
     this.parentPhone,
@@ -125,9 +147,11 @@ class StudentBalance {
       id: json['id'],
       accountId: json['account_id'],
       admissionNumber: json['admission_number'],
+      rollNumber: json['roll_number'],
       firstName: json['first_name'],
       lastName: json['last_name'],
       studentClass: json['class'],
+      batchId: json['batch_id'],
       section: json['section'],
       parentName: json['parent_name'],
       parentPhone: json['parent_phone'],

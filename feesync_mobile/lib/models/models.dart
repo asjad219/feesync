@@ -4,3 +4,6 @@ export 'payment.dart';
 export 'dashboard_stats.dart';
 export 'user_profile.dart';
 export 'account_profile.dart';
+export 'batch.dart';
+export 'attendance.dart';
+export 'schedule.dart';

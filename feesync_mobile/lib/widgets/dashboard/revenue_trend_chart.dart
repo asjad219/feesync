@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/dashboard_stats.dart';
 
@@ -15,31 +16,15 @@ class RevenueTrendChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (data.isEmpty) {
-      return _emptyState();
-    }
-
-    // Find max value for scaling
-    final maxValue = data.isEmpty
-        ? 0.0
-        : data.map((e) => e.amount).reduce((a, b) => a > b ? a : b);
+    if (data.isEmpty) return _emptyState();
+    final maxValue = data.map((e) => e.amount).reduce((a, b) => a > b ? a : b);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.darkCard,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.darkBorder,
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.25),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        color: AppColors.darkCard.withValues(alpha: 0.8),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -47,125 +32,53 @@ class RevenueTrendChart extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
+              Text(title, style: GoogleFonts.manrope(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Text(
-                  '6 months',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.primaryLight,
-                  ),
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(99)),
+                child: Text('6 months', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.primary)),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 32),
           SizedBox(
-            height: 200,
+            height: 180,
             child: LineChart(
               LineChartData(
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  horizontalInterval: maxValue > 0 ? maxValue / 4 : 1000,
-                  getDrawingHorizontalLine: (value) {
-                    return FlLine(
-                      color: AppColors.darkBorder.withValues(alpha: 0.3),
-                      strokeWidth: 1,
-                    );
-                  },
-                ),
+                gridData: const FlGridData(show: false),
                 titlesData: FlTitlesData(
                   show: true,
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      interval: 1,
-                      getTitlesWidget: (value, meta) {
-                        final index = value.toInt();
-                        if (index < 0 || index >= data.length) {
-                          return const Text('');
-                        }
-                        return Text(
-                          data[index].month,
-                          style: const TextStyle(
-                            color: AppColors.textTertiary,
-                            fontSize: 12,
-                          ),
+                      getTitlesWidget: (val, _) {
+                        final i = val.toInt();
+                        if (i < 0 || i >= data.length) return const SizedBox();
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: Text(data[i].month.substring(0, 3).toUpperCase(), style: GoogleFonts.inter(fontSize: 10, color: AppColors.textTertiary, fontWeight: FontWeight.w600)),
                         );
                       },
                     ),
                   ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        return Text(
-                          'INR ${(value / 1000).toStringAsFixed(0)}k',
-                          style: const TextStyle(
-                            color: AppColors.textTertiary,
-                            fontSize: 10,
-                          ),
-                        );
-                      },
-                      reservedSize: 40,
-                    ),
-                  ),
+                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 ),
-                borderData: FlBorderData(
-                  show: false,
-                ),
+                borderData: FlBorderData(show: false),
                 lineBarsData: [
                   LineChartBarData(
-                    spots: List.generate(data.length, (index) {
-                      return FlSpot(index.toDouble(), data[index].amount);
-                    }),
+                    spots: data.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.amount)).toList(),
                     isCurved: true,
-                    color: AppColors.primaryLight,
-                    barWidth: 2,
-                    belowBarData: BarAreaData(
-                      show: true,
-                      color: AppColors.primary.withValues(alpha: 0.18),
-                    ),
-                    dotData: FlDotData(
-                      show: true,
-                      getDotPainter: (spot, percent, barData, index) {
-                        return FlDotCirclePainter(
-                          radius: 4,
-                          color: AppColors.primaryLight,
-                          strokeWidth: 2,
-                          strokeColor: AppColors.darkCard,
-                        );
-                      },
-                    ),
+                    color: AppColors.primary,
+                    barWidth: 3,
+                    isStrokeCapRound: true,
+                    belowBarData: BarAreaData(show: true, gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [AppColors.primary.withValues(alpha: 0.2), AppColors.primary.withValues(alpha: 0)])),
+                    dotData: FlDotData(show: true, getDotPainter: (_, _, _, _) => FlDotCirclePainter(radius: 4, color: AppColors.primary, strokeWidth: 2, strokeColor: AppColors.darkBg)),
                   ),
                 ],
-                minX: 0,
-                maxX: (data.length - 1).toDouble(),
                 minY: 0,
-                maxY: maxValue * 1.2,
+                maxY: maxValue * 1.3,
               ),
             ),
           ),
@@ -176,24 +89,9 @@ class RevenueTrendChart extends StatelessWidget {
 
   Widget _emptyState() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.darkCard,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.darkBorder,
-          width: 1,
-        ),
-      ),
-      child: Center(
-        child: Text(
-          'No data available',
-          style: const TextStyle(
-            color: AppColors.textTertiary,
-            fontSize: 14,
-          ),
-        ),
-      ),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(color: AppColors.darkCard, borderRadius: BorderRadius.circular(24)),
+      child: const Center(child: Text('No analytical trend available', style: TextStyle(color: AppColors.textTertiary))),
     );
   }
 }

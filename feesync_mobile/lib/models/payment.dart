@@ -41,7 +41,7 @@ class Payment {
       studentId: json['student_id'],
       amount: double.parse(json['amount'].toString()),
       paymentMethod: PaymentMethod.values.firstWhere(
-        (e) => e.name == json['payment_method'].toString().replaceAll('_', ''),
+        (e) => e.name.toLowerCase() == json['payment_method'].toString().replaceAll('_', '').toLowerCase(),
         orElse: () => PaymentMethod.other,
       ),
       transactionId: json['transaction_id'],
@@ -50,7 +50,7 @@ class Payment {
       notes: json['notes'],
       receiptNumber: json['receipt_number'],
       status: PaymentStatus.values.firstWhere(
-        (e) => e.name == json['status'],
+        (e) => e.name.toLowerCase() == json['status'].toString().toLowerCase(),
         orElse: () => PaymentStatus.pending,
       ),
       createdAt: DateTime.parse(json['created_at']),

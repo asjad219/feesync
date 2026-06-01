@@ -18,9 +18,51 @@ final totalCollectionProvider = FutureProvider<Map<String, dynamic>>((ref) async
   return repository.getTotalCollection();
 });
 
+final todayCollectionProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  final repository = ref.watch(paymentRepositoryProvider);
+  final now = DateTime.now();
+  final startOfDay = DateTime(now.year, now.month, now.day);
+  final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59);
+  return repository.getTotalCollection(startDate: startOfDay, endDate: endOfDay);
+});
+
+final monthCollectionProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  final repository = ref.watch(paymentRepositoryProvider);
+  final now = DateTime.now();
+  final startOfMonth = DateTime(now.year, now.month, 1);
+  final nextMonth = now.month == 12 ? DateTime(now.year + 1, 1, 1) : DateTime(now.year, now.month + 1, 1);
+  final endOfMonth = nextMonth.subtract(const Duration(seconds: 1));
+  return repository.getTotalCollection(startDate: startOfMonth, endDate: endOfMonth);
+});
+
 final allPaymentsProvider = FutureProvider<List<Payment>>((ref) async {
   final repository = ref.watch(paymentRepositoryProvider);
   return repository.getPayments();
+});
+
+final paymentSearchProvider = StateProvider<String>((ref) => '');
+final paymentStatusFilterProvider = StateProvider<PaymentStatus?>((ref) => null);
+final paymentMethodFilterProvider = StateProvider<PaymentMethod?>((ref) => null);
+
+final filteredPaymentsProvider = Provider<AsyncValue<List<Payment>>>((ref) {
+  final paymentsAsync = ref.watch(paymentNotifierProvider);
+  final search = ref.watch(paymentSearchProvider).toLowerCase();
+  final statusFilter = ref.watch(paymentStatusFilterProvider);
+  final methodFilter = ref.watch(paymentMethodFilterProvider);
+
+  return paymentsAsync.whenData((payments) {
+    return payments.where((payment) {
+      final matchesSearch = search.isEmpty ||
+          (payment.student?.fullName.toLowerCase().contains(search) ?? false) ||
+          (payment.receiptNumber?.toLowerCase().contains(search) ?? false) ||
+          (payment.transactionId?.toLowerCase().contains(search) ?? false);
+      
+      final matchesStatus = statusFilter == null || payment.status == statusFilter;
+      final matchesMethod = methodFilter == null || payment.paymentMethod == methodFilter;
+
+      return matchesSearch && matchesStatus && matchesMethod;
+    }).toList();
+  });
 });
 
 class PaymentNotifier extends StateNotifier<AsyncValue<List<Payment>>> {

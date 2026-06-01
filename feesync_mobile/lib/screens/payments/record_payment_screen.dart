@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
-import '../../models/student.dart';
-import '../../providers/providers.dart';
-import '../../models/fee.dart';
 import '../../core/utils/currency_formatter.dart';
+import '../../models/student.dart';
+import '../../models/fee.dart';
+import '../../providers/providers.dart';
+import '../../core/utils/receipt_service.dart';
 
 class RecordPaymentScreen extends ConsumerStatefulWidget {
   final Student? student;
@@ -31,7 +34,9 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedStudent = widget.student;
+    if (widget.student != null) {
+      _selectedStudent = widget.student;
+    }
   }
 
   @override
@@ -47,10 +52,18 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
       initialDate: _paymentDate,
       firstDate: DateTime(2000),
       lastDate: DateTime.now(),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.dark(
+            primary: AppColors.primary,
+            onPrimary: AppColors.onPrimary,
+            surface: AppColors.surfaceContainer,
+          ),
+        ),
+        child: child!,
+      ),
     );
-    if (picked != null && picked != _paymentDate) {
-      setState(() => _paymentDate = picked);
-    }
+    if (picked != null) setState(() => _paymentDate = picked);
   }
 
   Future<void> _savePayment(List<Due> availableDues) async {
@@ -59,9 +72,27 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a student')));
       return;
     }
-    if (_selectedDueIds.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select at least one due')));
+    
+    final amount = double.tryParse(_amountController.text) ?? 0;
+    if (amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a valid amount')));
       return;
+    }
+
+    if (_selectedDueIds.isEmpty) {
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: AppColors.surfaceContainer,
+          title: const Text('Record as Advance?'),
+          content: const Text('No specific fee periods selected. This will be recorded as an advance payment for future dues.'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('CANCEL')),
+            TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('PROCEED', style: TextStyle(color: AppColors.primary))),
+          ],
+        ),
+      );
+      if (confirm != true) return;
     }
 
     setState(() => _isLoading = true);
@@ -69,22 +100,21 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
       final accountId = ref.read(currentUserProfileProvider).value?.accountId;
       if (accountId == null) throw Exception('Account ID not found');
 
-      final amount = double.parse(_amountController.text);
-      
-      // Basic allocation logic
       double remaining = amount;
       final allocations = <Map<String, dynamic>>[];
       
-      for (final dueId in _selectedDueIds) {
-        final due = availableDues.firstWhere((d) => d.id == dueId);
-        final paymentForDue = remaining > due.amountOutstanding ? due.amountOutstanding : remaining;
-        if (paymentForDue > 0) {
-          allocations.add({
-            'fee_structure_id': due.feeStructureId,
-            'due_id': due.id,
-            'amount': paymentForDue,
-          });
-          remaining -= paymentForDue;
+      if (_selectedDueIds.isNotEmpty) {
+        for (final dueId in _selectedDueIds) {
+          final due = availableDues.firstWhere((d) => d.id == dueId);
+          final paymentForDue = remaining > due.amountOutstanding ? due.amountOutstanding : remaining;
+          if (paymentForDue > 0) {
+            allocations.add({
+              'fee_structure_id': due.feeStructureId,
+              'due_id': due.id,
+              'amount': paymentForDue,
+            });
+            remaining -= paymentForDue;
+          }
         }
       }
 
@@ -94,23 +124,116 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
         'amount': amount,
         'payment_method': _paymentMode,
         'payment_date': _paymentDate.toIso8601String(),
-        'notes': _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+        'notes': _notesController.text.trim().isEmpty 
+            ? (_selectedDueIds.isEmpty ? 'Advance Payment' : null) 
+            : _notesController.text.trim(),
         'status': 'completed',
       };
 
       await ref.read(paymentRepositoryProvider).createPayment(paymentData, allocations);
-
-      // Refresh data
       ref.invalidate(studentBalancesProvider);
       ref.invalidate(studentPaymentsProvider(_selectedStudent!.id));
-      ref.invalidate(studentDuesProvider(_selectedStudent!.id));
+      if (_selectedStudent != null) ref.invalidate(studentDuesProvider(_selectedStudent!.id));
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment recorded successfully')));
-        context.pop();
+        _showSuccessDialog(amount);
       }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showSuccessDialog(double amount) {
+    final settings = ref.read(settingsProvider).value;
+    final currencyFormatter = CurrencyFormatter.numberFormat(settings?.currency, decimalDigits: 0);
+    final canShareReceipt = (settings?.autoReceiptEnabled ?? true) && (settings?.whatsappEnabled ?? true);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surfaceContainer,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(color: Colors.greenAccent.withOpacity(0.1), shape: BoxShape.circle),
+              child: const Icon(Icons.check_circle_rounded, color: Colors.greenAccent, size: 64),
+            ),
+            const SizedBox(height: 24),
+            Text('Payment Recorded!', style: GoogleFonts.manrope(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+            const SizedBox(height: 8),
+            Text('${currencyFormatter.format(amount)} received from ${_selectedStudent!.fullName}', textAlign: TextAlign.center, style: GoogleFonts.inter(fontSize: 14, color: AppColors.textTertiary)),
+            const SizedBox(height: 32),
+            if (canShareReceipt) ...[
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _shareReceipt(amount),
+                  icon: const Icon(Icons.share_rounded, size: 18),
+                  label: const Text('SEND RECEIPT VIA WHATSAPP'),
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF25D366)),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                context.pop();
+              },
+              child: const Text('DONE', style: TextStyle(color: AppColors.textTertiary, fontWeight: FontWeight.w700)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _shareReceipt(double amount) async {
+    final student = _selectedStudent!;
+    final invoiceNo = 'INV-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+    
+    setState(() => _isLoading = true);
+    try {
+      final textReceipt = ReceiptService.generateTextReceipt(
+        student: student,
+        amount: amount,
+        paymentMode: _paymentMode,
+        date: _paymentDate,
+        invoiceNo: invoiceNo,
+      );
+
+      final pdfFile = await ReceiptService.generatePdfReceipt(
+        student: student,
+        amount: amount,
+        paymentMode: _paymentMode,
+        date: _paymentDate,
+        invoiceNo: invoiceNo,
+      );
+
+      String cleanPhone = (student.parentPhone ?? '').replaceAll(RegExp(r'[^0-9]'), '');
+      if (cleanPhone.length == 10) {
+        cleanPhone = '91$cleanPhone';
+      }
+
+      await ReceiptService.shareToWhatsApp(
+        phone: cleanPhone,
+        text: textReceipt,
+        pdfFile: pdfFile,
+      );
+
+      if (mounted) {
+        Navigator.pop(context);
+        context.pop();
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error sharing receipt: $e')));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -122,144 +245,87 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
     final duesAsync = _selectedStudent != null 
         ? ref.watch(studentDuesProvider(_selectedStudent!.id)) 
         : const AsyncValue<List<Due>>.data([]);
+    final currencyCode = ref.watch(settingsProvider).value?.currency;
+    final currencySymbol = CurrencyFormatter.symbolFor(currencyCode);
+    final currencyFormatter = CurrencyFormatter.numberFormat(currencyCode, decimalDigits: 0);
 
     return Scaffold(
+      backgroundColor: AppColors.darkBg,
       appBar: AppBar(
-        title: const Text('Record Payment'),
-        backgroundColor: AppColors.darkSurface,
+        title: Text('Record Payment', style: GoogleFonts.manrope(fontWeight: FontWeight.w800)),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 120),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Transactions',
-                style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, letterSpacing: 1, fontSize: 12),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Record Payment',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, fontFamily: 'Manrope'),
-              ),
+              _SectionHeader(title: 'Transaction Details', subtitle: 'Link payment to a student and select due periods'),
               const SizedBox(height: 32),
-
-              // Student Selection
+              
               _buildLabel('STUDENT NAME'),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               studentsAsync.when(
-                data: (balances) => _buildStudentDropdown(balances),
+                data: (balances) => _buildStudentPicker(balances),
                 loading: () => const LinearProgressIndicator(),
                 error: (e, _) => Text('Error: $e'),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
 
-              // Dues Selection Section
               if (_selectedStudent != null) ...[
                 _buildLabel('SELECT PENDING DUES'),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 duesAsync.when(
                   data: (dues) => _buildDuesList(dues),
                   loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Text('Error loading dues: $e'),
+                  error: (e, _) => Text('Error loading dues'),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
               ],
 
-              // Amount & Date
               Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: _buildTextField(
-                      label: 'AMOUNT',
+                    child: _buildField(
+                      label: 'AMOUNT ($currencySymbol)',
                       controller: _amountController,
-                      hint: '0.00',
-                      icon: Icons.payments_outlined,
+                      hint: '0',
+                      icon: Icons.currency_rupee_rounded,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      validator: (v) {
-                        if (v?.isEmpty ?? true) return 'Required';
-                        if (double.tryParse(v!) == null) return 'Invalid number';
-                        return null;
-                      },
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildLabel('PAYMENT DATE'),
-                        const SizedBox(height: 8),
-                        InkWell(
-                          onTap: () => _selectDate(context),
-                          child: Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(color: AppColors.darkSurface, borderRadius: BorderRadius.circular(12)),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.calendar_today_outlined, size: 20, color: AppColors.textTertiary),
-                                const SizedBox(width: 12),
-                                Text(
-                                  '${_paymentDate.day}/${_paymentDate.month}/${_paymentDate.year}',
-                                  style: const TextStyle(fontWeight: FontWeight.w500),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                    child: _buildDatePicker(),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
 
-              // Payment Mode
               _buildLabel('PAYMENT MODE'),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               Row(
                 children: [
-                  _buildModeItem('online', Icons.language, 'Online'),
+                  _buildModeToggle('online', Icons.account_balance_wallet_rounded, 'Online'),
                   const SizedBox(width: 12),
-                  _buildModeItem('cash', Icons.payments, 'Cash'),
+                  _buildModeToggle('cash', Icons.payments_rounded, 'Cash'),
                   const SizedBox(width: 12),
-                  _buildModeItem('bank_transfer', Icons.account_balance, 'Bank'),
+                  _buildModeToggle('bank', Icons.account_balance_rounded, 'Bank'),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
 
-              // Notes
-              _buildTextField(
+              _buildField(
                 label: 'NOTES',
                 controller: _notesController,
-                hint: 'Add optional remarks...',
-                icon: Icons.description_outlined,
-                maxLines: 3,
+                hint: 'Internal remarks...',
+                icon: Icons.notes_rounded,
+                maxLines: 2,
               ),
-              const SizedBox(height: 48),
+              const SizedBox(height: 64),
 
-              // Submit Button
-              duesAsync.when(
-                data: (dues) => SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton.icon(
-                    onPressed: _isLoading || _selectedStudent == null ? null : () => _savePayment(dues),
-                    icon: const Icon(Icons.check_circle_outline),
-                    label: const Text('RECORD PAYMENT', style: TextStyle(fontWeight: FontWeight.bold)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    ),
-                  ),
-                ),
-                loading: () => const SizedBox.shrink(),
-                error: (e, _) => const SizedBox.shrink(),
-              ),
+              _buildSubmitButton(duesAsync.value ?? []),
             ],
           ),
         ),
@@ -267,24 +333,40 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
     );
   }
 
-  Widget _buildLabel(String text) => Text(text, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.5, color: AppColors.textTertiary));
+  Widget _buildLabel(String text) => Text(text, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: AppColors.textTertiary));
 
-  Widget _buildStudentDropdown(List<StudentBalance> balances) {
+  Widget _buildStudentPicker(List<StudentBalance> balances) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(color: AppColors.darkSurface, borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainer.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           isExpanded: true,
           value: _selectedStudent?.id,
           hint: const Text('Select a student'),
-          dropdownColor: AppColors.darkSurface,
-          items: balances.map((b) => DropdownMenuItem(value: b.id, child: Text('${b.fullName} - ${b.studentClass}'))).toList(),
+          dropdownColor: AppColors.surfaceContainer,
+          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textTertiary),
+          items: balances.map((b) => DropdownMenuItem(value: b.id, child: Text('${b.fullName} (${b.studentClass})'))).toList(),
           onChanged: (value) {
             if (value != null) {
               final student = balances.firstWhere((b) => b.id == value);
               setState(() {
-                _selectedStudent = Student(id: student.id, accountId: student.accountId, admissionNumber: student.admissionNumber, firstName: student.firstName, lastName: student.lastName, studentClass: student.studentClass, createdAt: DateTime.now(), updatedAt: DateTime.now());
+                _selectedStudent = Student(
+                  id: student.id, 
+                  accountId: student.accountId, 
+                  admissionNumber: student.admissionNumber, 
+                  firstName: student.firstName, 
+                  lastName: student.lastName, 
+                  studentClass: student.studentClass, 
+                  rollNumber: student.rollNumber,
+                  parentPhone: student.parentPhone,
+                  createdAt: DateTime.now(), 
+                  updatedAt: DateTime.now()
+                );
                 _selectedDueIds.clear();
                 _amountController.clear();
               });
@@ -296,48 +378,68 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
   }
 
   Widget _buildDuesList(List<Due> dues) {
-    if (dues.isEmpty) return const Text('No pending dues', style: TextStyle(color: AppColors.success));
+    if (dues.isEmpty) {
+      return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.05), borderRadius: BorderRadius.circular(20)),
+      child: Center(child: Text('No pending dues for this student', style: GoogleFonts.inter(color: AppColors.primary, fontWeight: FontWeight.w600))),
+    );
+    }
+    
+    final currencyCode = ref.read(settingsProvider).value?.currency;
+    final currencyFormatter = CurrencyFormatter.numberFormat(currencyCode, decimalDigits: 0);
+
     return Column(
       children: dues.map((due) {
         final isSelected = _selectedDueIds.contains(due.id);
         return Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
-          child: CheckboxListTile(
-            value: isSelected,
-            onChanged: (val) {
+          padding: const EdgeInsets.only(bottom: 12),
+          child: GestureDetector(
+            onTap: () {
               setState(() {
-                if (val == true) {
-                  _selectedDueIds.add(due.id);
-                  final currentAmount = double.tryParse(_amountController.text) ?? 0;
-                  _amountController.text = (currentAmount + due.amountOutstanding).toStringAsFixed(2);
-                } else {
+                if (isSelected) {
                   _selectedDueIds.remove(due.id);
-                  final currentAmount = double.tryParse(_amountController.text) ?? 0;
-                  _amountController.text = (currentAmount - due.amountOutstanding).toStringAsFixed(2);
+                  final current = double.tryParse(_amountController.text) ?? 0;
+                  _amountController.text = (current - due.amountOutstanding).toStringAsFixed(0);
+                } else {
+                  _selectedDueIds.add(due.id);
+                  final current = double.tryParse(_amountController.text) ?? 0;
+                  _amountController.text = (current + due.amountOutstanding).toStringAsFixed(0);
                 }
               });
             },
-            title: Text('${due.periodName} - ${due.feeStructure?.name ?? 'Fee'}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-            subtitle: Text('Due: ${due.dueDate.day}/${due.dueDate.month}/${due.dueDate.year}', style: const TextStyle(fontSize: 12)),
-            secondary: Text(CurrencyFormatter.format(due.amountOutstanding), style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
-            tileColor: AppColors.darkSurface,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isSelected ? AppColors.primary.withOpacity(0.1) : AppColors.surfaceContainer.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: isSelected ? AppColors.primary.withOpacity(0.3) : Colors.white.withOpacity(0.05)),
+              ),
+              child: Row(
+                children: [
+                  Icon(isSelected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded, color: isSelected ? AppColors.primary : AppColors.textTertiary, size: 20),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(due.periodName, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                        Text('Due: ${DateFormat('MMM d, yyyy').format(due.dueDate)}', style: GoogleFonts.inter(fontSize: 12, color: AppColors.textTertiary)),
+                      ],
+                    ),
+                  ),
+                  Text(currencyFormatter.format(due.amountOutstanding), style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                ],
+              ),
+            ),
           ),
         );
       }).toList(),
     );
   }
 
-  Widget _buildTextField({
-    required String label,
-    required TextEditingController controller,
-    required String hint,
-    required IconData icon,
-    String? Function(String?)? validator,
-    TextInputType? keyboardType,
-    int maxLines = 1,
-  }) {
+  Widget _buildField({required String label, required TextEditingController controller, required String hint, required IconData icon, int maxLines = 1, TextInputType? keyboardType}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -345,44 +447,103 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
-          validator: validator,
-          keyboardType: keyboardType,
           maxLines: maxLines,
-          style: const TextStyle(fontWeight: FontWeight.w500),
+          keyboardType: keyboardType,
+          style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
           decoration: InputDecoration(
             hintText: hint,
             prefixIcon: Icon(icon, size: 20, color: AppColors.textTertiary),
-            filled: true,
-            fillColor: AppColors.darkSurface,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            fillColor: AppColors.surfaceContainer.withOpacity(0.5),
+          ),
+          validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDatePicker() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel('PAYMENT DATE'),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: () => _selectDate(context),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceContainer.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white.withOpacity(0.05)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.calendar_month_rounded, size: 20, color: AppColors.textTertiary),
+                const SizedBox(width: 12),
+                Text(DateFormat('MMM d, yyyy').format(_paymentDate), style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+              ],
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildModeItem(String value, IconData icon, String label) {
+  Widget _buildModeToggle(String value, IconData icon, String label) {
     final isSelected = _paymentMode == value;
     return Expanded(
-      child: InkWell(
+      child: GestureDetector(
         onTap: () => setState(() => _paymentMode = value),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : AppColors.darkSurface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: isSelected ? AppColors.primary : Colors.transparent, width: 2),
+            color: isSelected ? AppColors.primary.withOpacity(0.1) : AppColors.surfaceContainer.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: isSelected ? AppColors.primary.withOpacity(0.3) : Colors.white.withOpacity(0.05)),
           ),
           child: Column(
             children: [
-              Icon(icon, color: isSelected ? AppColors.primary : AppColors.textTertiary),
-              const SizedBox(height: 4),
-              Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isSelected ? AppColors.primary : AppColors.textTertiary)),
+              Icon(icon, color: isSelected ? AppColors.primary : AppColors.textTertiary, size: 24),
+              const SizedBox(height: 8),
+              Text(label, style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: isSelected ? AppColors.primary : AppColors.textTertiary)),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildSubmitButton(List<Due> availableDues) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: AppGradients.primary,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [BoxShadow(color: AppColors.primaryContainer.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 8))],
+      ),
+      child: ElevatedButton(
+        onPressed: _isLoading || _selectedStudent == null ? null : () => _savePayment(availableDues),
+        style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent),
+        child: Text(_isLoading ? 'RECORDING...' : 'RECORD PAYMENT'),
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  const _SectionHeader({required this.title, required this.subtitle});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: GoogleFonts.manrope(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+        const SizedBox(height: 4),
+        Text(subtitle, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textTertiary)),
+      ],
     );
   }
 }

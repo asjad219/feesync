@@ -16,7 +16,14 @@ import 'screens/students/add_edit_student_screen.dart';
 import 'screens/fees/fees_screen.dart';
 import 'screens/payments/payment_list_screen.dart';
 import 'screens/payments/record_payment_screen.dart';
+import 'screens/reports/reports_screen.dart';
+import 'screens/notifications/notifications_screen.dart';
 import 'screens/settings/settings_screen.dart';
+import 'screens/settings/screens/institution_settings_screen.dart';
+import 'screens/settings/screens/billing_settings_screen.dart';
+import 'screens/settings/screens/automation_settings_screen.dart';
+import 'screens/settings/screens/ai_settings_screen.dart';
+import 'screens/settings/screens/security_settings_screen.dart';
 import 'screens/shell/main_shell.dart';
 import 'screens/onboarding/onboarding_intro_screen.dart';
 import 'screens/onboarding/center_setup_screen.dart';
@@ -25,6 +32,9 @@ import 'screens/onboarding/dashboard_empty_screen.dart';
 import 'screens/onboarding/add_first_student_screen.dart';
 import 'screens/onboarding/first_payment_screen.dart';
 import 'screens/onboarding/receipt_preview_screen.dart';
+import 'screens/batches/batch_list_screen.dart';
+import 'screens/batches/batch_creation_screen.dart';
+import 'screens/batches/batch_detail_screen.dart';
 import 'models/student.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -159,26 +169,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const DashboardScreen(),
           ),
           GoRoute(
+            path: '/batches',
+            builder: (context, state) => const BatchListScreen(),
+          ),
+          GoRoute(
             path: '/students',
             builder: (context, state) => const StudentListScreen(),
-            routes: [
-              GoRoute(
-                path: 'add',
-                builder: (context, state) => const AddEditStudentScreen(),
-              ),
-              GoRoute(
-                path: 'edit/:id',
-                builder: (context, state) => AddEditStudentScreen(
-                  studentId: state.pathParameters['id'],
-                ),
-              ),
-              GoRoute(
-                path: ':id',
-                builder: (context, state) => StudentDetailsScreen(
-                  studentId: state.pathParameters['id']!,
-                ),
-              ),
-            ],
           ),
           GoRoute(
             path: '/fees',
@@ -186,21 +182,80 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/payments',
-            builder: (context, state) => const PaymentListScreen(),
-            routes: [
-              GoRoute(
-                path: 'record',
-                builder: (context, state) => RecordPaymentScreen(
-                  student: state.extra as Student?,
-                ),
-              ),
-            ],
+            builder: (context, state) => PaymentListScreen(
+              studentId: state.uri.queryParameters['studentId'],
+            ),
+          ),
+          GoRoute(
+            path: '/reports',
+            builder: (context, state) => const ReportsScreen(),
           ),
           GoRoute(
             path: '/settings',
             builder: (context, state) => const SettingsScreen(),
           ),
+          GoRoute(
+            path: '/settings/institution',
+            builder: (context, state) => const InstitutionSettingsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/billing',
+            builder: (context, state) => const BillingSettingsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/automation',
+            builder: (context, state) => const AutomationSettingsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/ai',
+            builder: (context, state) => const AiSettingsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/security',
+            builder: (context, state) => const SecuritySettingsScreen(),
+          ),
         ],
+      ),
+
+      // Full-screen routes (Outside Shell)
+      GoRoute(
+        path: '/batches/create',
+        builder: (context, state) => const BatchCreationScreen(),
+      ),
+      GoRoute(
+        path: '/batches/:id',
+        builder: (context, state) => BatchDetailScreen(
+          batchId: state.pathParameters['id']!,
+          initialTabIndex: int.tryParse(state.uri.queryParameters['tab'] ?? '0') ?? 0,
+        ),
+      ),
+      GoRoute(
+        path: '/students/add',
+        builder: (context, state) => AddEditStudentScreen(
+          initialBatchId: state.uri.queryParameters['batchId'],
+        ),
+      ),
+      GoRoute(
+        path: '/students/edit/:id',
+        builder: (context, state) => AddEditStudentScreen(
+          studentId: state.pathParameters['id'],
+        ),
+      ),
+      GoRoute(
+        path: '/students/:id',
+        builder: (context, state) => StudentDetailsScreen(
+          studentId: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        path: '/payments/record',
+        builder: (context, state) => RecordPaymentScreen(
+          student: state.extra as Student?,
+        ),
+      ),
+      GoRoute(
+        path: '/notifications',
+        builder: (context, state) => const NotificationsScreen(),
       ),
     ],
   );

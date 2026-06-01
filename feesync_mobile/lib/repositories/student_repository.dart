@@ -57,7 +57,19 @@ class StudentRepository {
         .select()
         .single();
 
-    return Student.fromJson(response);
+    final student = Student.fromJson(response);
+
+    // Sync with student_enrollments
+    if (data['batch_id'] != null) {
+      await _client.from('student_enrollments').upsert({
+        'account_id': data['account_id'],
+        'student_id': student.id,
+        'batch_id': data['batch_id'],
+        'status': 'active',
+      });
+    }
+
+    return student;
   }
 
   Future<Student> updateStudent(String id, Map<String, dynamic> data) async {
@@ -68,7 +80,19 @@ class StudentRepository {
         .select()
         .single();
 
-    return Student.fromJson(response);
+    final student = Student.fromJson(response);
+
+    // Sync with student_enrollments if batch_id changed or is provided
+    if (data['batch_id'] != null) {
+      await _client.from('student_enrollments').upsert({
+        'account_id': data['account_id'],
+        'student_id': id,
+        'batch_id': data['batch_id'],
+        'status': 'active',
+      });
+    }
+
+    return student;
   }
 
   Future<void> deleteStudent(String id) async {

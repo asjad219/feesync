@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/currency_formatter.dart';
 import '../../core/widgets/custom_widgets.dart';
 import '../../models/student.dart';
 import '../../models/payment.dart';
+import '../../models/batch.dart';
 import '../../providers/providers.dart';
-import '../../core/utils/currency_formatter.dart';
-
-import 'package:url_launcher/url_launcher.dart';
+import '../../core/utils/receipt_service.dart';
 
 class StudentDetailsScreen extends ConsumerWidget {
   final String studentId;
@@ -20,41 +23,66 @@ class StudentDetailsScreen extends ConsumerWidget {
     final studentAsync = ref.watch(studentByIdProvider(studentId));
     final balanceAsync = ref.watch(studentBalanceByIdProvider(studentId));
     final paymentsAsync = ref.watch(studentPaymentsProvider(studentId));
+    final batchesAsync = ref.watch(studentBatchesProvider(studentId));
+    final settingsAsync = ref.watch(settingsProvider);
+    final currencyFormatter = CurrencyFormatter.numberFormat(settingsAsync.value?.currency, decimalDigits: 0);
 
     return Scaffold(
+      backgroundColor: AppColors.darkBg,
       appBar: AppBar(
-        title: const Text('Student Details'),
+        title: Text(
+          'Student Details',
+          style: GoogleFonts.manrope(fontWeight: FontWeight.w800),
+        ),
         actions: [
           IconButton(
             onPressed: () => context.push('/students/edit/$studentId'),
-            icon: const Icon(Icons.edit_outlined),
+            icon: const Icon(Icons.edit_note_rounded),
           ),
           IconButton(
             onPressed: () => _confirmDelete(context, ref),
-            icon: Icon(Icons.delete_outline, color: AppColors.error),
+            icon: const Icon(Icons.delete_outline_rounded, color: AppColors.error),
           ),
         ],
       ),
       body: studentAsync.when(
         data: (student) {
           if (student == null) return const Center(child: Text('Student not found'));
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildProfileHeader(student, balanceAsync.value),
-                const SizedBox(height: 24),
-                _buildMetricsGrid(balanceAsync.value),
-                const SizedBox(height: 24),
-                _buildTabs(),
-                const SizedBox(height: 16),
-                _buildRecentPayments(paymentsAsync),
-                const SizedBox(height: 24),
-                _buildContactInfo(student),
-                const SizedBox(height: 32),
-                _buildActions(context, student),
-              ],
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(studentByIdProvider(studentId));
+              ref.invalidate(studentBalanceByIdProvider(studentId));
+              ref.invalidate(studentPaymentsProvider(studentId));
+              ref.invalidate(studentBatchesProvider(studentId));
+            },
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 120),
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _ProfileHeader(student: student, balance: balanceAsync.value),
+                  const SizedBox(height: 32),
+                  _MetricsSection(
+                    balance: balanceAsync.value,
+                    discountAmount: student.discountAmount,
+                    currencyFormatter: currencyFormatter,
+                  ),
+                  const SizedBox(height: 32),
+                  _BatchEnrollmentSection(studentId: studentId, batchesAsync: batchesAsync),
+                  const SizedBox(height: 32),
+                  _RecentPaymentsList(
+                    paymentsAsync: paymentsAsync,
+                    studentId: studentId,
+                    student: student,
+                    currencyFormatter: currencyFormatter,
+                  ),
+                  const SizedBox(height: 32),
+                  _ContactInfoCard(student: student),
+                  const SizedBox(height: 40),
+                  _ActionButtons(student: student),
+                ],
+              ),
             ),
           );
         },
@@ -64,14 +92,48 @@ class StudentDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildProfileHeader(Student student, StudentBalance? balance) {
-    final hasBalance = balance != null && balance.balance > 0;
+  void _confirmDelete(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surfaceContainer,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text('Delete Student?', style: GoogleFonts.manrope(fontWeight: FontWeight.w800)),
+        content: const Text('This will permanently delete all records and payment history.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
+          TextButton(
+            onPressed: () async {
+              await ref.read(studentRepositoryProvider).deleteStudent(studentId);
+              ref.invalidate(studentBalancesProvider);
+              if (context.mounted) {
+                Navigator.pop(context);
+                context.pop();
+              }
+            },
+            child: const Text('DELETE', style: TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileHeader extends StatelessWidget {
+  final Student student;
+  final StudentBalance? balance;
+
+  const _ProfileHeader({required this.student, this.balance});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasBalance = balance != null && balance!.balance > 0;
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.darkSurface,
+        color: AppColors.surfaceContainer.withOpacity(0.5),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.darkBorder.withValues(alpha: 0.5)),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
       child: Row(
         children: [
@@ -79,11 +141,10 @@ class StudentDetailsScreen extends ConsumerWidget {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.primary.withValues(alpha: 0.2), width: 2),
+              color: AppColors.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(20),
             ),
-            child: const Icon(Icons.person, size: 40, color: AppColors.primary),
+            child: const Icon(Icons.person_rounded, size: 40, color: AppColors.textTertiary),
           ),
           const SizedBox(width: 20),
           Expanded(
@@ -92,36 +153,20 @@ class StudentDetailsScreen extends ConsumerWidget {
               children: [
                 Text(
                   student.fullName,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Manrope',
-                  ),
+                  style: GoogleFonts.manrope(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                 ),
+                const SizedBox(height: 4),
                 Text(
-                  '${student.studentClass}${student.section != null ? ' - ${student.section}' : ''} • ID: ${student.admissionNumber}',
-                  style: const TextStyle(color: AppColors.textTertiary),
+                  '${student.studentClass} • ID: ${student.admissionNumber}',
+                  style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textTertiary),
                 ),
+                if (student.rollNumber != null)
+                  Text(
+                    'Roll No: ${student.rollNumber}',
+                    style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primary),
+                  ),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    StatusBadge(
-                      status: hasBalance ? 'OVERDUE' : 'PAID',
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.darkBorder.withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        student.stream ?? 'General',
-                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
+                StatusBadge(status: hasBalance ? 'OVERDUE' : 'PAID'),
               ],
             ),
           ),
@@ -129,192 +174,108 @@ class StudentDetailsScreen extends ConsumerWidget {
       ),
     );
   }
+}
 
-  Widget _buildMetricsGrid(StudentBalance? balance) {
+class _MetricsSection extends StatelessWidget {
+  final StudentBalance? balance;
+  final double discountAmount;
+  final NumberFormat currencyFormatter;
+
+  const _MetricsSection({
+    this.balance,
+    this.discountAmount = 0,
+    required this.currencyFormatter,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     if (balance == null) return const SizedBox.shrink();
 
-    final paidPercent = balance.totalFeeAmount > 0 
-        ? (balance.totalPaidAmount / balance.totalFeeAmount)
-        : 0.0;
-
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 16,
-      crossAxisSpacing: 16,
-      childAspectRatio: 1.5,
+    return Column(
       children: [
-        _buildMetricCard(
-          'TOTAL FEE',
-          CurrencyFormatter.format(balance.totalFeeAmount),
-          AppColors.textPrimary,
-          1.0,
+        Row(
+          children: [
+            _MetricCard(label: 'TOTAL FEE', value: currencyFormatter.format(balance!.totalFeeAmount), color: AppColors.textPrimary),
+            const SizedBox(width: 16),
+            _MetricCard(label: 'PAID', value: currencyFormatter.format(balance!.totalPaidAmount), color: AppColors.primary),
+          ],
         ),
-        _buildMetricCard(
-          'PAID',
-          CurrencyFormatter.format(balance.totalPaidAmount),
-          AppColors.primary,
-          paidPercent,
-        ),
-        _buildMetricCard(
-          'OUTSTANDING',
-          CurrencyFormatter.format(balance.balance),
-          balance.balance > 0 ? AppColors.error : AppColors.success,
-          balance.totalFeeAmount > 0 ? (balance.balance / balance.totalFeeAmount) : 0.0,
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            _MetricCard(label: 'DISCOUNT', value: currencyFormatter.format(discountAmount), color: Colors.orangeAccent),
+            const SizedBox(width: 16),
+            _MetricCard(
+              label: 'OUTSTANDING',
+              value: currencyFormatter.format(balance!.balance),
+              color: balance!.balance > 0 ? AppColors.error : AppColors.primary,
+            ),
+          ],
         ),
       ],
     );
   }
+}
 
-  Widget _buildMetricCard(String label, String value, Color color, double progress) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.darkSurface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.darkBorder.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1,
-              color: AppColors.textTertiary,
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(2),
-            child: LinearProgressIndicator(
-              value: progress,
-              backgroundColor: AppColors.darkBorder.withValues(alpha: 0.2),
-              valueColor: AlwaysStoppedAnimation<Color>(color.withValues(alpha: 0.7)),
-              minHeight: 4,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+class _MetricCard extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
 
-  Widget _buildTabs() {
-    return Row(
-      children: [
-        _buildTabItem('Overview', true),
-        _buildTabItem('History', false),
-        _buildTabItem('Documents', false),
-      ],
-    );
-  }
+  const _MetricCard({required this.label, required this.value, required this.color});
 
-  Widget _buildTabItem(String label, bool isActive) {
-    return Container(
-      margin: const EdgeInsets.only(right: 24),
-      padding: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: isActive ? AppColors.primary : Colors.transparent,
-            width: 2,
-          ),
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceContainer.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
         ),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          color: isActive ? AppColors.primary : AppColors.textTertiary,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: AppColors.textTertiary)),
+            const SizedBox(height: 12),
+            Text(value, style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w800, color: color)),
+          ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildRecentPayments(AsyncValue<List<Payment>> paymentsAsync) {
+class _BatchEnrollmentSection extends ConsumerWidget {
+  final String studentId;
+  final AsyncValue<List<Batch>> batchesAsync;
+
+  const _BatchEnrollmentSection({required this.studentId, required this.batchesAsync});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: const [
-            Text(
-              'Recent Payments',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              'View All',
-              style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 12),
+          children: [
+            Text('Enrolled Batches', style: GoogleFonts.manrope(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+            TextButton.icon(
+              onPressed: () => _showEnrollmentSheet(context, ref),
+              icon: const Icon(Icons.add_circle_outline_rounded, size: 20),
+              label: const Text('Assign'),
+              style: TextButton.styleFrom(foregroundColor: AppColors.primary),
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        paymentsAsync.when(
-          data: (payments) {
-            if (payments.isEmpty) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: 16),
-                child: Text('No payments recorded yet', style: TextStyle(color: AppColors.textTertiary)),
-              );
-            }
-            return ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: payments.length > 3 ? 3 : payments.length,
-              itemBuilder: (context, index) {
-                final payment = payments[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.darkSurface,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Icon(Icons.receipt_long, color: AppColors.primary, size: 20),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                CurrencyFormatter.format(payment.amount),
-                                style: const TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              Text(
-                                '${payment.paymentMethod.name.toUpperCase()} • ${_formatDate(payment.paymentDate)}',
-                                style: const TextStyle(fontSize: 12, color: AppColors.textTertiary),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Icon(Icons.chevron_right, color: AppColors.textTertiary),
-                      ],
-                    ),
-                  ),
-                );
-              },
+        const SizedBox(height: 16),
+        batchesAsync.when(
+          data: (batches) {
+            if (batches.isEmpty) return const Text('No batches assigned yet', style: TextStyle(color: AppColors.textTertiary));
+            return Column(
+              children: batches.map((batch) => _BatchTile(batch: batch)).toList(),
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),
@@ -324,142 +285,357 @@ class StudentDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildContactInfo(Student student) {
+  void _showEnrollmentSheet(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.darkBg,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) => _EnrollmentSheet(studentId: studentId),
+    );
+  }
+}
+
+class _BatchTile extends StatelessWidget {
+  final Batch batch;
+  const _BatchTile({required this.batch});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.darkSurface,
+        color: AppColors.surfaceContainer.withOpacity(0.5),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.darkBorder.withValues(alpha: 0.3)),
+        border: Border.all(color: batch.color.withOpacity(0.2)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: batch.color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+            child: Icon(Icons.school_rounded, color: batch.color, size: 20),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(batch.name, style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                Text('${batch.subject} • ${batch.teacherName}', style: GoogleFonts.inter(fontSize: 11, color: AppColors.textTertiary)),
+              ],
+            ),
+          ),
+          InkWell(
+            onTap: () => context.push('/batches/${batch.id}'),
+            child: const Icon(Icons.chevron_right_rounded, color: AppColors.textTertiary),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EnrollmentSheet extends ConsumerWidget {
+  final String studentId;
+  const _EnrollmentSheet({required this.studentId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final allBatchesAsync = ref.watch(filteredBatchesProvider);
+    final userProfileAsync = ref.watch(currentUserProfileProvider);
+
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Enroll in Batch', style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+          const SizedBox(height: 20),
+          allBatchesAsync.when(
+            data: (batches) => Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: batches.length,
+                itemBuilder: (context, index) {
+                  final batch = batches[index];
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: CircleAvatar(backgroundColor: batch.color.withOpacity(0.1), child: Icon(Icons.school, color: batch.color)),
+                    title: Text(batch.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    subtitle: Text(batch.subject, style: const TextStyle(color: Colors.white54)),
+                    trailing: const Icon(Icons.add, color: AppColors.primary),
+                    onTap: () async {
+                      final accountId = userProfileAsync.value?.accountId;
+                      if (accountId != null) {
+                        await ref.read(batchRepositoryProvider).enrollStudentInBatch(
+                          studentId: studentId,
+                          batchId: batch.id,
+                          accountId: accountId,
+                        );
+                        ref.invalidate(studentBatchesProvider(studentId));
+                        if (context.mounted) Navigator.pop(context);
+                      } else {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Error: Could not determine account')),
+                          );
+                        }
+                      }
+                    },
+                  );
+                },
+              ),
+            ),
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Text('Error: $e'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RecentPaymentsList extends StatelessWidget {
+  final AsyncValue<List<Payment>> paymentsAsync;
+  final String studentId;
+  final Student student;
+  final NumberFormat currencyFormatter;
+
+  const _RecentPaymentsList({
+    required this.paymentsAsync,
+    required this.studentId,
+    required this.student,
+    required this.currencyFormatter,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Recent Payments', style: GoogleFonts.manrope(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+            GestureDetector(
+              onTap: () => context.push('/payments?studentId=$studentId'),
+              child: Text('View All', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primary)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        paymentsAsync.when(
+          data: (payments) {
+            if (payments.isEmpty) return const Text('No payments recorded yet', style: TextStyle(color: AppColors.textTertiary));
+            return Column(
+              children: payments
+                  .take(3)
+                  .map((p) => _PaymentTile(payment: p, student: student, currencyFormatter: currencyFormatter))
+                  .toList(),
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Text('Error: $e'),
+        ),
+      ],
+    );
+  }
+}
+
+class _PaymentTile extends StatelessWidget {
+  final Payment payment;
+  final Student student;
+  final NumberFormat currencyFormatter;
+  const _PaymentTile({required this.payment, required this.student, required this.currencyFormatter});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainer.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(color: AppColors.surfaceContainerLow, borderRadius: BorderRadius.circular(12)),
+            child: const Icon(Icons.receipt_rounded, color: AppColors.primary, size: 20),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(currencyFormatter.format(payment.amount), style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                Text('${payment.paymentMethod.name.toUpperCase()} • ${DateFormat('MMM d, yyyy').format(payment.paymentDate)}',
+                    style: GoogleFonts.inter(fontSize: 11, color: AppColors.textTertiary)),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: () => _sharePastReceipt(context),
+            icon: const Icon(Icons.share_rounded, size: 20, color: AppColors.primary),
+            tooltip: 'Share Receipt',
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _sharePastReceipt(BuildContext context) async {
+    final invoiceNo = payment.receiptNumber ?? 'INV-${payment.id.substring(0, 8)}';
+    
+    final textReceipt = ReceiptService.generateTextReceipt(
+      student: student,
+      amount: payment.amount,
+      paymentMode: payment.paymentMethod.name,
+      date: payment.paymentDate,
+      invoiceNo: invoiceNo,
+    );
+
+    final pdfFile = await ReceiptService.generatePdfReceipt(
+      student: student,
+      amount: payment.amount,
+      paymentMode: payment.paymentMethod.name,
+      date: payment.paymentDate,
+      invoiceNo: invoiceNo,
+    );
+
+    String phone = student.parentPhone ?? '';
+    String cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    if (cleanPhone.length == 10) {
+      cleanPhone = '91$cleanPhone';
+    }
+
+    await ReceiptService.shareToWhatsApp(
+      phone: cleanPhone,
+      text: textReceipt,
+      pdfFile: pdfFile,
+    );
+  }
+}
+
+class _ContactInfoCard extends StatelessWidget {
+  final Student student;
+  const _ContactInfoCard({required this.student});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainer.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: const [
-              Icon(Icons.info_outline, size: 18, color: AppColors.primary),
-              SizedBox(width: 8),
-              Text(
-                'Contact Information',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-            ],
-          ),
+          Text('Contact Details', style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
           const SizedBox(height: 20),
-          _buildInfoRow('Parent Name', student.parentName ?? 'Not provided'),
-          _buildInfoRow('Email Address', student.parentEmail ?? 'Not provided'),
-          _buildInfoRow('Phone Number', student.parentPhone ?? 'Not provided'),
-          _buildInfoRow('Address', student.address ?? 'Not provided', isLast: true),
+          _InfoRow(label: 'Parent Name', value: student.parentName ?? '--'),
+          _InfoRow(label: 'Phone Number', value: student.parentPhone ?? '--'),
+          _InfoRow(label: 'Email', value: student.parentEmail ?? '--'),
+          _InfoRow(label: 'Address', value: student.address ?? '--', isLast: true),
         ],
       ),
     );
   }
+}
 
-  Widget _buildInfoRow(String label, String value, {bool isLast = false}) {
+class _InfoRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool isLast;
+
+  const _InfoRow({required this.label, required this.value, this.isLast = false});
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(bottom: isLast ? 0 : 16),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: AppColors.textTertiary, fontSize: 13)),
+          Text(label, style: GoogleFonts.inter(fontSize: 13, color: AppColors.textTertiary)),
           const SizedBox(width: 16),
           Expanded(
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
-            ),
+            child: Text(value, textAlign: TextAlign.right, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildActions(BuildContext context, Student student) {
+class _ActionButtons extends StatelessWidget {
+  final Student student;
+  const _ActionButtons({required this.student});
+
+  @override
+  Widget build(BuildContext context) {
     return Row(
       children: [
         Expanded(
-          child: ElevatedButton.icon(
-            onPressed: () => context.push('/payments/record', extra: student),
-            icon: const Icon(Icons.add_card),
-            label: const Text('RECORD PAYMENT'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Container(
+            decoration: BoxDecoration(gradient: AppGradients.primary, borderRadius: BorderRadius.circular(24)),
+            child: ElevatedButton.icon(
+              onPressed: () => context.push('/payments/record', extra: student),
+              icon: const Icon(Icons.add_card_rounded),
+              label: const Text('RECORD PAYMENT'),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent),
             ),
           ),
         ),
         const SizedBox(width: 12),
-        Container(
-          decoration: BoxDecoration(
-            color: AppColors.darkSurface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.darkBorder.withValues(alpha: 0.5)),
-          ),
-          child: IconButton(
-            onPressed: () {
-              if (student.parentPhone != null) {
-                _launchWhatsApp(student.parentPhone!, student.fullName);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Parent phone number not available')),
-                );
-              }
-            },
-            icon: const Icon(Icons.message_outlined, color: Colors.green),
-          ),
+        _CircleIconButton(
+          icon: Icons.chat_bubble_rounded,
+          color: const Color(0xFF25D366),
+          onTap: () => _launchWhatsApp(student.parentPhone ?? '', student.fullName),
         ),
         const SizedBox(width: 12),
+        _CircleIconButton(
+          icon: Icons.call_rounded,
+          color: AppColors.primary,
+          onTap: () => launchUrl(Uri.parse('tel:${student.parentPhone}')),
+        ),
       ],
     );
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
-  }
-
   Future<void> _launchWhatsApp(String phone, String name) async {
-    final cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
-    final url = 'https://wa.me/$cleanPhone?text=${Uri.encodeComponent('Hello, regarding student $name...')}';
-    if (await canLaunchUrl(Uri.parse(url))) {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    String cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    if (cleanPhone.length == 10) {
+      cleanPhone = '91$cleanPhone';
     }
+    final url = 'https://wa.me/$cleanPhone?text=${Uri.encodeComponent('Hello, regarding student $name...')}';
+    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
   }
+}
 
-  void _confirmDelete(BuildContext context, WidgetRef ref) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Student?'),
-        content: const Text('This action cannot be undone. All student records and payment history will be permanently deleted.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('CANCEL'),
-          ),
-          TextButton(
-            onPressed: () async {
-              try {
-                await ref.read(studentRepositoryProvider).deleteStudent(studentId);
-                ref.invalidate(studentBalancesProvider);
-                if (context.mounted) {
-                  Navigator.pop(context); // Close dialog
-                  context.pop(); // Go back from details
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error deleting student: $e')),
-                  );
-                }
-              }
-            },
-            child: Text('DELETE', style: TextStyle(color: AppColors.error)),
-          ),
-        ],
+class _CircleIconButton extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _CircleIconButton({required this.icon, required this.color, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle, border: Border.all(color: color.withOpacity(0.2))),
+        child: Icon(icon, color: color, size: 24),
       ),
     );
   }

@@ -1,6 +1,12 @@
 export 'supabase_provider.dart';
 export 'student_provider.dart';
+export 'batch_provider.dart';
+export 'batch_students_provider.dart';
+export 'batch_attendance_provider.dart';
 export 'fee_provider.dart';
 export 'payment_provider.dart';
+export 'batch_analytics_provider.dart';
 export 'dashboard_provider.dart';
 export 'user_provider.dart';
+export 'notification_provider.dart';
+export 'settings_provider.dart';
