@@ -29,38 +29,56 @@ class StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isDark = AppColors.isDarkMode;
+    final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
+    final primaryLightColor = isDark ? const Color(0xFFEEEFFF) : const Color(0xFFEBF0FF);
+    final secondaryColor = isDark ? const Color(0xFFD0BCFF) : const Color(0xFF7C3AED);
+    final cardColor = isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF);
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+    final successColor = isDark ? const Color(0xFFB4F0C5) : const Color(0xFF16A34A);
+    final errorColor = isDark ? const Color(0xFFFFB4AB) : const Color(0xFFDC2626);
 
     // Premium styling details based on theme
     final cardBg = isGradient
         ? (isDark
             ? LinearGradient(
-                colors: [AppColors.primary.withOpacity(0.15), AppColors.secondary.withOpacity(0.05)],
+                colors: [primaryColor.withValues(alpha: 0.15), secondaryColor.withValues(alpha: 0.05)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               )
             : LinearGradient(
-                colors: [AppColors.primary.withOpacity(0.08), AppColors.primaryLight.withOpacity(0.4)],
+                colors: [primaryColor.withValues(alpha: 0.08), primaryLightColor.withValues(alpha: 0.4)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ))
-        : null;
+        : (isDark
+            ? LinearGradient(
+                colors: [iconColor.withValues(alpha: 0.04), cardColor.withValues(alpha: 0.9)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : LinearGradient(
+                colors: [iconColor.withValues(alpha: 0.02), Colors.white],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ));
 
     final border = Border.all(
-      color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.05),
+      color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
       width: 1.5,
     );
 
     final shadow = isDark
         ? [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha: 0.15),
               blurRadius: 16,
               offset: const Offset(0, 8),
             )
           ]
         : [
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
+              color: Colors.black.withValues(alpha: 0.02),
               blurRadius: 12,
               offset: const Offset(0, 6),
             )
@@ -70,7 +88,6 @@ class StatCard extends StatelessWidget {
       height: 160,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isGradient ? null : AppColors.darkCard.withOpacity(0.85),
         gradient: cardBg,
         borderRadius: BorderRadius.circular(24),
         border: border,
@@ -87,11 +104,11 @@ class StatCard extends StatelessWidget {
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: isDark 
-                      ? iconColor.withOpacity(0.12)
-                      : iconColor.withOpacity(0.08),
+                      ? iconColor.withValues(alpha: 0.12)
+                      : iconColor.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: iconColor.withOpacity(0.2),
+                    color: iconColor.withValues(alpha: 0.2),
                     width: 1,
                   ),
                 ),
@@ -108,13 +125,13 @@ class StatCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: trendUp 
-                        ? AppColors.success.withOpacity(0.12) 
-                        : AppColors.error.withOpacity(0.12),
+                        ? successColor.withValues(alpha: 0.12) 
+                        : errorColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: trendUp 
-                          ? AppColors.success.withOpacity(0.2) 
-                          : AppColors.error.withOpacity(0.2),
+                          ? successColor.withValues(alpha: 0.2) 
+                          : errorColor.withValues(alpha: 0.2),
                       width: 1,
                     ),
                   ),
@@ -123,14 +140,14 @@ class StatCard extends StatelessWidget {
                     children: [
                       Icon(
                         trendUp ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
-                        color: trendUp ? AppColors.success : AppColors.error,
+                        color: trendUp ? successColor : errorColor,
                         size: 10,
                       ),
                       const SizedBox(width: 2),
                       Text(
                         '${trendPercent.toStringAsFixed(1)}%',
                         style: GoogleFonts.inter(
-                          color: trendUp ? AppColors.success : AppColors.error,
+                          color: trendUp ? successColor : errorColor,
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                         ),
@@ -147,7 +164,7 @@ class StatCard extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: AppColors.textTertiary,
+              color: textTertiaryColor,
               letterSpacing: 0.1,
             ),
           ),
@@ -158,7 +175,7 @@ class StatCard extends StatelessWidget {
             style: GoogleFonts.outfit(
               fontSize: 26,
               fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+              color: textPrimaryColor,
               letterSpacing: -0.5,
             ),
           ),

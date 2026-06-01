@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/dashboard_stats.dart';
 
 class MonthlyAnalyticsChart extends StatefulWidget {
   final List<MonthlyStat> data;
   final String title;
+  final NumberFormat? currencyFormatter;
 
   const MonthlyAnalyticsChart({
     super.key,
     required this.data,
     this.title = 'Monthly Revenue Analytics',
+    this.currencyFormatter,
   });
 
   @override
@@ -30,19 +33,30 @@ class _MonthlyAnalyticsChartState extends State<MonthlyAnalyticsChart> {
 
     final maxValue = widget.data.map((e) => e.amount).reduce((a, b) => a > b ? a : b);
     final maxIndex = widget.data.indexWhere((e) => e.amount == maxValue);
+    final formatter = widget.currencyFormatter ?? NumberFormat.compact();
+
+    // Redefined dynamic colors for chart
+    final Color cardColor = isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF);
+    final Color textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final Color textSecondaryColor = isDark ? const Color(0xFFC3C6D7) : const Color(0xFF475569);
+    final Color textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+    final Color primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
+    final Color secondaryColor = isDark ? const Color(0xFFD0BCFF) : const Color(0xFF7C3AED);
+    final Color surfaceContainerLowColor = isDark ? const Color(0xFF1A1A28) : const Color(0xFFF8FAFC);
+    final Color surfaceContainerHighColor = isDark ? const Color(0xFF292937) : const Color(0xFFF1F5F9);
 
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.darkCard.withOpacity(0.85),
+        color: cardColor.withValues(alpha: isDark ? 0.75 : 0.9),
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.04),
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.15 : 0.01),
+            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.01),
             blurRadius: 20,
             offset: const Offset(0, 10),
           )
@@ -64,7 +78,7 @@ class _MonthlyAnalyticsChartState extends State<MonthlyAnalyticsChart> {
                       style: GoogleFonts.manrope(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
+                        color: textPrimaryColor,
                         letterSpacing: -0.3,
                       ),
                       maxLines: 1,
@@ -76,7 +90,7 @@ class _MonthlyAnalyticsChartState extends State<MonthlyAnalyticsChart> {
                       style: GoogleFonts.inter(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: AppColors.textTertiary,
+                        color: textTertiaryColor,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -89,10 +103,10 @@ class _MonthlyAnalyticsChartState extends State<MonthlyAnalyticsChart> {
               Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.surfaceContainerLow : const Color(0xFFF1F5F9),
+                  color: isDark ? surfaceContainerLowColor : const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(99),
                   border: Border.all(
-                    color: isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.03),
+                    color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
                   ),
                 ),
                 child: Row(
@@ -114,12 +128,44 @@ class _MonthlyAnalyticsChartState extends State<MonthlyAnalyticsChart> {
                 alignment: BarChartAlignment.spaceAround,
                 maxY: maxValue * 1.2,
                 minY: 0,
+                barTouchData: BarTouchData(
+                  touchTooltipData: BarTouchTooltipData(
+                    tooltipBgColor: surfaceContainerHighColor.withValues(alpha: 0.95),
+                    tooltipBorder: BorderSide(
+                      color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05),
+                      width: 1,
+                    ),
+                    tooltipPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    tooltipMargin: 8,
+                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                      final amount = widget.data[groupIndex].amount;
+                      return BarTooltipItem(
+                        '${widget.data[groupIndex].month.toUpperCase()}\n',
+                        GoogleFonts.inter(
+                          color: textSecondaryColor,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        children: <TextSpan>[
+                          TextSpan(
+                            text: formatter.format(amount),
+                            style: GoogleFonts.outfit(
+                              color: textPrimaryColor,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
                   horizontalInterval: maxValue > 0 ? maxValue / 4 : 1000,
                   getDrawingHorizontalLine: (value) => FlLine(
-                    color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.04),
+                    color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04),
                     strokeWidth: 1,
                     dashArray: [4, 4],
                   ),
@@ -137,7 +183,7 @@ class _MonthlyAnalyticsChartState extends State<MonthlyAnalyticsChart> {
                           child: Text(
                             widget.data[index].month.toUpperCase(),
                             style: GoogleFonts.inter(
-                              color: AppColors.textTertiary,
+                              color: textTertiaryColor,
                               fontSize: 9,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.5,
@@ -157,14 +203,14 @@ class _MonthlyAnalyticsChartState extends State<MonthlyAnalyticsChart> {
                   final isPeak = index == maxIndex;
                   // Beautiful gradients for the bar chart
                   final peakGradient = LinearGradient(
-                    colors: [AppColors.primary, AppColors.secondary],
+                    colors: [primaryColor, secondaryColor],
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
                   );
                   final defaultGradient = LinearGradient(
                     colors: [
-                      AppColors.primary.withOpacity(0.35),
-                      AppColors.primary.withOpacity(0.15)
+                      primaryColor.withValues(alpha: 0.35),
+                      primaryColor.withValues(alpha: 0.15)
                     ],
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
@@ -182,7 +228,7 @@ class _MonthlyAnalyticsChartState extends State<MonthlyAnalyticsChart> {
                           topRight: Radius.circular(8),
                         ),
                         borderSide: isPeak
-                            ? BorderSide(color: AppColors.primary.withOpacity(0.3), width: 1)
+                            ? BorderSide(color: primaryColor.withValues(alpha: 0.3), width: 1)
                             : BorderSide.none,
                       ),
                     ],
@@ -198,6 +244,11 @@ class _MonthlyAnalyticsChartState extends State<MonthlyAnalyticsChart> {
 
   Widget _buildPeriodButton(String label, String value, bool isDark) {
     final isSelected = selectedPeriod == value;
+    final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
+    final primaryContainerColor = isDark ? const Color(0xFF2563EB) : const Color(0xFFDBEAFE);
+    final onPrimaryContainerColor = isDark ? const Color(0xFFEEEFFF) : const Color(0xFF1E40AF);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+
     return GestureDetector(
       onTap: () => setState(() => selectedPeriod = value),
       child: AnimatedContainer(
@@ -205,13 +256,13 @@ class _MonthlyAnalyticsChartState extends State<MonthlyAnalyticsChart> {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected 
-              ? (isDark ? AppColors.primaryContainer : Colors.white) 
+              ? (isDark ? primaryContainerColor : Colors.white) 
               : Colors.transparent,
           borderRadius: BorderRadius.circular(99),
           boxShadow: isSelected && !isDark
               ? [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   )
@@ -224,8 +275,8 @@ class _MonthlyAnalyticsChartState extends State<MonthlyAnalyticsChart> {
             fontSize: 11,
             fontWeight: FontWeight.w800,
             color: isSelected 
-                ? (isDark ? AppColors.onPrimaryContainer : AppColors.primary) 
-                : AppColors.textTertiary,
+                ? (isDark ? onPrimaryContainerColor : primaryColor) 
+                : textTertiaryColor,
           ),
         ),
       ),
@@ -233,18 +284,20 @@ class _MonthlyAnalyticsChartState extends State<MonthlyAnalyticsChart> {
   }
 
   Widget _emptyState(bool isDark) {
+    final Color cardColor = isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF);
+    final Color textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: AppColors.darkCard.withOpacity(0.85),
+        color: cardColor.withValues(alpha: isDark ? 0.75 : 0.9),
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.04),
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04),
           width: 1.5,
         ),
       ),
-      child: const Center(
-        child: Text('No analytical data available', style: TextStyle(color: AppColors.textTertiary)),
+      child: Center(
+        child: Text('No analytical data available', style: TextStyle(color: textTertiaryColor)),
       ),
     );
   }

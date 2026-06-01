@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -32,14 +33,19 @@ class DashboardScreen extends ConsumerWidget {
     final currencyCode = settingsAsync.value?.currency;
     final currencyFormatter = CurrencyFormatter.numberFormat(currencyCode, decimalDigits: 0);
 
+    final bool isDark = AppColors.isDarkMode;
+    final Color primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
+    final Color scaffoldBgColor = isDark ? const Color(0xFF0D0D1A) : const Color(0xFFF8FAFC);
+    final Color textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+
     return Scaffold(
-      backgroundColor: AppColors.darkBg,
+      backgroundColor: scaffoldBgColor,
       extendBodyBehindAppBar: true,
       appBar: const _DashboardTopBar(),
       body: RefreshIndicator(
         onRefresh: () => _refreshAll(ref),
-        color: AppColors.primary,
-        backgroundColor: AppColors.darkSurface,
+        color: primaryColor,
+        backgroundColor: isDark ? const Color(0xFF12121F) : const Color(0xFFFFFFFF),
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Padding(
@@ -51,14 +57,17 @@ class DashboardScreen extends ConsumerWidget {
                 const SizedBox(height: 28),
                 statsAsync.when(
                   data: (stats) => _BentoStatsGrid(stats: stats, currencyFormatter: currencyFormatter),
-                  loading: () => const _LoadingPlaceholder(height: 340),
-                  error: (e, st) => const _ErrorPlaceholder(message: 'Stats error'),
+                  loading: () => _LoadingPlaceholder(height: 340, isDark: isDark),
+                  error: (e, st) => _ErrorPlaceholder(message: 'Stats error', isDark: isDark),
                 ),
                 const SizedBox(height: 28),
                 monthlyDataAsync.when(
-                  data: (monthlyData) => MonthlyAnalyticsChart(data: monthlyData),
-                  loading: () => const _LoadingPlaceholder(height: 320),
-                  error: (e, st) => const _ErrorPlaceholder(message: 'Analytics error'),
+                  data: (monthlyData) => MonthlyAnalyticsChart(
+                    data: monthlyData,
+                    currencyFormatter: currencyFormatter,
+                  ),
+                  loading: () => _LoadingPlaceholder(height: 320, isDark: isDark),
+                  error: (e, st) => _ErrorPlaceholder(message: 'Analytics error', isDark: isDark),
                 ),
                 const SizedBox(height: 32),
                 Text(
@@ -66,7 +75,7 @@ class DashboardScreen extends ConsumerWidget {
                   style: GoogleFonts.manrope(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
+                    color: textPrimaryColor,
                     letterSpacing: -0.3,
                   ),
                 ),
@@ -79,8 +88,8 @@ class DashboardScreen extends ConsumerWidget {
                     currencyFormatter: currencyFormatter,
                     onViewAll: () => context.go('/payments'),
                   ),
-                  loading: () => const _LoadingPlaceholder(height: 220),
-                  error: (e, st) => const _ErrorPlaceholder(message: 'Transactions error'),
+                  loading: () => _LoadingPlaceholder(height: 220, isDark: isDark),
+                  error: (e, st) => _ErrorPlaceholder(message: 'Transactions error', isDark: isDark),
                 ),
               ],
             ),
@@ -89,11 +98,15 @@ class DashboardScreen extends ConsumerWidget {
       ),
       floatingActionButton: Container(
         decoration: BoxDecoration(
-          gradient: AppGradients.primary,
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF2563EB), Color(0xFF7C3AED)],
+          ),
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.3),
+              color: const Color(0xFF2563EB).withValues(alpha: 0.3),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
@@ -115,98 +128,147 @@ class _DashboardTopBar extends StatelessWidget implements PreferredSizeWidget {
   const _DashboardTopBar();
 
   @override
-  Size get preferredSize => const Size.fromHeight(80);
+  Size get preferredSize => const Size.fromHeight(88);
 
   @override
   Widget build(BuildContext context) {
     final bool isDark = AppColors.isDarkMode;
-    return Consumer(
-      builder: (context, ref, _) {
-        final settings = ref.watch(settingsProvider).value;
-        final centerName = (settings?.centerName.trim().isNotEmpty ?? false)
-            ? settings!.centerName.trim()
-            : 'FeeSync';
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+    final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
+    final surfaceContainerColor = isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF);
 
-        return Container(
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          height: 120,
           decoration: BoxDecoration(
-            color: AppColors.surfaceContainer.withValues(alpha: 0.85),
+            color: surfaceContainerColor.withValues(alpha: isDark ? 0.7 : 0.85),
             border: Border(
               bottom: BorderSide(
-                color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04),
+                color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.05),
                 width: 1,
               ),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.01),
-                blurRadius: 20,
-                offset: const Offset(0, 4),
-              ),
-            ],
           ),
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               child: Row(
                 children: [
                   Container(
-                    width: 44,
-                    height: 44,
+                    width: 46,
+                    height: 46,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.2), width: 1.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: primaryColor.withValues(alpha: isDark ? 0.25 : 0.15),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                      border: Border.all(color: primaryColor.withValues(alpha: 0.3), width: 2),
                       image: const DecorationImage(
                         image: NetworkImage('https://lh3.googleusercontent.com/aida-public/AB6AXuDFatqCXii6QXM23ITxI_J4L-gdJ3kpvJv3DVnywZap9XQDhFpegBVGt_Sj_kClmsz_lg-7ld9TAuw-ynUMnTURqFRfYSBK5X86Qu7tT9zDN4XKNsxFubjQfu50sy9M_AAL57qfJKz2WL0TDKAhrkAUpkfbAJAfbaQe5uAcPOkbXgxXEjRC_iKVXAJ2hTohysOQA6Is60PVERp8yHLsNF4sjZmQ0YrvcZevc91XzzHhwknnfHTk1eUvO_jq-vhKTqWhWFNQd1yHXpMb'),
                         fit: BoxFit.cover,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 14),
                   Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          centerName,
-                          style: GoogleFonts.manrope(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary,
-                            letterSpacing: -0.5,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          'ADMINISTRATOR',
-                          style: GoogleFonts.inter(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.5,
-                            color: AppColors.textTertiary,
-                          ),
-                        ),
-                      ],
+                    child: Consumer(
+                      builder: (context, ref, _) {
+                        final settings = ref.watch(settingsProvider).value;
+                        final centerName = (settings?.centerName.trim().isNotEmpty ?? false)
+                            ? settings!.centerName.trim()
+                            : 'FeeSync';
+
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              centerName,
+                              style: GoogleFonts.manrope(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                color: textPrimaryColor,
+                                letterSpacing: -0.5,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Row(
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF10B981),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  'ADMINISTRATOR',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 1.2,
+                                    color: textTertiaryColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ),
-                  IconButton(
-                    onPressed: () {},
-                    icon: Icon(Icons.search_rounded, color: AppColors.textPrimary, size: 24),
+                  Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: IconButton(
+                      onPressed: () {},
+                      constraints: const BoxConstraints(minHeight: 40, minWidth: 40),
+                      padding: EdgeInsets.zero,
+                      icon: Icon(Icons.search_rounded, color: textPrimaryColor, size: 20),
+                    ),
                   ),
                   Stack(
                     children: [
-                      IconButton(
-                        onPressed: () => context.push('/notifications'),
-                        icon: Icon(Icons.notifications_none_rounded, color: AppColors.textPrimary, size: 24),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: IconButton(
+                          onPressed: () => context.push('/notifications'),
+                          constraints: const BoxConstraints(minHeight: 40, minWidth: 40),
+                          padding: EdgeInsets.zero,
+                          icon: Icon(Icons.notifications_none_rounded, color: textPrimaryColor, size: 20),
+                        ),
                       ),
                       Positioned(
-                        right: 8,
-                        top: 8,
+                        right: 4,
+                        top: 4,
                         child: Container(
                           width: 8,
                           height: 8,
-                          decoration: BoxDecoration(color: AppColors.error, shape: BoxShape.circle),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFB4AB),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: surfaceContainerColor,
+                              width: 1.5,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -215,8 +277,8 @@ class _DashboardTopBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
@@ -229,32 +291,63 @@ class _GreetingHeader extends StatelessWidget {
     final now = DateTime.now();
     final hour = now.hour;
     String greeting = 'Good evening';
+    IconData timeIcon = Icons.nights_stay_rounded;
+    Color timeIconColor = const Color(0xFFFFB596);
+    
     if (hour < 12) {
       greeting = 'Good morning';
+      timeIcon = Icons.wb_sunny_rounded;
+      timeIconColor = const Color(0xFFFBBF24);
     } else if (hour < 17) {
       greeting = 'Good afternoon';
+      timeIcon = Icons.wb_twilight_rounded;
+      timeIconColor = const Color(0xFFF59E0B);
     }
     final dateFormatted = DateFormat('EEEE, MMMM d').format(now);
+    final bool isDark = AppColors.isDarkMode;
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
     
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          '$greeting, Admin 👋',
-          style: GoogleFonts.manrope(
-            fontSize: 24,
-            fontWeight: FontWeight.w800,
-            color: AppColors.textPrimary,
-            letterSpacing: -0.5,
-          ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '$greeting, Admin 👋',
+              style: GoogleFonts.manrope(
+                fontSize: 26,
+                fontWeight: FontWeight.w800,
+                color: textPrimaryColor,
+                letterSpacing: -0.6,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              dateFormatted,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: textTertiaryColor,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 4),
-        Text(
-          dateFormatted,
-          style: GoogleFonts.inter(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textTertiary,
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04),
+              width: 1,
+            ),
+          ),
+          child: Icon(
+            timeIcon,
+            color: timeIconColor,
+            size: 24,
           ),
         ),
       ],
@@ -270,28 +363,177 @@ class _BentoStatsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = AppColors.isDarkMode;
+    final rate = stats.collectionRate;
+    final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
+    final secondaryColor = isDark ? const Color(0xFFD0BCFF) : const Color(0xFF7C3AED);
+    final primaryDarkColor = isDark ? const Color(0xFF2563EB) : const Color(0xFF1D4ED8);
+
     return Column(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: StatCard(
-                title: 'Total Collected',
-                value: currencyFormatter.format(stats.totalFeesCollected),
-                icon: Icons.account_balance_wallet_rounded,
-                showTrend: true,
-                trendPercent: 12.5,
-                trendUp: true,
-                iconColor: AppColors.primary,
-                iconBackgroundColor: AppColors.primaryContainer,
-                isGradient: true,
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark 
+                  ? [primaryColor, secondaryColor.withValues(alpha: 0.85)]
+                  : [primaryDarkColor, primaryColor],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: primaryColor.withValues(alpha: isDark ? 0.3 : 0.15),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _CollectionRateGaugeCard(rate: stats.collectionRate),
-            ),
-          ],
+            ],
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                right: -30,
+                bottom: -30,
+                child: Container(
+                  width: 160,
+                  height: 160,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.08),
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 30,
+                top: -60,
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.05),
+                  ),
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'TOTAL COLLECTIONS',
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white.withValues(alpha: 0.7),
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.trending_up_rounded,
+                              color: Colors.white,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '12.5%',
+                              style: GoogleFonts.inter(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    currencyFormatter.format(stats.totalFeesCollected),
+                    style: GoogleFonts.outfit(
+                      fontSize: 34,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      letterSpacing: -1.0,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Collection Efficiency Rate',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                '${rate.toStringAsFixed(1)}% Collected',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        SizedBox(
+                          width: 48,
+                          height: 48,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              CircularProgressIndicator(
+                                value: rate / 100.0,
+                                strokeWidth: 4.5,
+                                backgroundColor: Colors.white.withValues(alpha: 0.15),
+                                valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                              const Icon(
+                                Icons.percent_rounded,
+                                size: 14,
+                                color: Colors.white,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 16),
         Row(
@@ -301,8 +543,8 @@ class _BentoStatsGrid extends StatelessWidget {
                 title: 'Pending Fees',
                 value: currencyFormatter.format(stats.pendingFees),
                 icon: Icons.pending_actions_rounded,
-                iconColor: AppColors.error,
-                iconBackgroundColor: AppColors.errorContainer,
+                iconColor: const Color(0xFFFFB4AB),
+                iconBackgroundColor: const Color(0xFF93000A),
               ),
             ),
             const SizedBox(width: 16),
@@ -311,8 +553,8 @@ class _BentoStatsGrid extends StatelessWidget {
                 title: 'Active Students',
                 value: stats.totalStudents.toString(),
                 icon: Icons.group_rounded,
-                iconColor: AppColors.secondary,
-                iconBackgroundColor: AppColors.secondaryContainer,
+                iconColor: secondaryColor,
+                iconBackgroundColor: const Color(0xFF571BC1),
               ),
             ),
           ],
@@ -322,111 +564,29 @@ class _BentoStatsGrid extends StatelessWidget {
   }
 }
 
-class _CollectionRateGaugeCard extends StatelessWidget {
-  final double rate;
-
-  const _CollectionRateGaugeCard({required this.rate});
-
-  @override
-  Widget build(BuildContext context) {
-    final bool isDark = AppColors.isDarkMode;
-    return Container(
-      height: 160,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.darkCard.withOpacity(0.85),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.05),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.01),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Collection Rate',
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textTertiary,
-                ),
-              ),
-              Icon(Icons.percent_rounded, size: 14, color: AppColors.primary),
-            ],
-          ),
-          const Spacer(),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  '${rate.toStringAsFixed(1)}%',
-                  style: GoogleFonts.outfit(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              SizedBox(
-                width: 48,
-                height: 48,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    CircularProgressIndicator(
-                      value: rate / 100.0,
-                      strokeWidth: 5,
-                      backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
-                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-                    ),
-                    Icon(
-                      Icons.trending_up_rounded,
-                      size: 16,
-                      color: AppColors.primary,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _QuickActionsRow extends StatelessWidget {
   const _QuickActionsRow();
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = AppColors.isDarkMode;
+    final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
+    final secondaryColor = isDark ? const Color(0xFFD0BCFF) : const Color(0xFF7C3AED);
+
     return Row(
       children: [
         _QuickAction(
           label: 'Batches',
           icon: Icons.layers_rounded,
           onTap: () => context.go('/batches'),
-          actionColor: AppColors.primary,
+          actionColor: primaryColor,
         ),
         const SizedBox(width: 12),
         _QuickAction(
           label: 'Add Student',
           icon: Icons.person_add_rounded,
           onTap: () => context.push('/students/add'),
-          actionColor: AppColors.secondary,
+          actionColor: secondaryColor,
         ),
         const SizedBox(width: 12),
         _QuickAction(
@@ -456,23 +616,26 @@ class _QuickAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isDark = AppColors.isDarkMode;
+    final surfaceColor = isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF);
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          height: 96,
+          height: 104,
           decoration: BoxDecoration(
-            color: AppColors.darkCard.withOpacity(0.85),
+            color: surfaceColor.withValues(alpha: isDark ? 0.75 : 0.9),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.05),
+              color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.1 : 0.01),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+                color: Colors.black.withValues(alpha: isDark ? 0.12 : 0.02),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
               )
             ],
           ),
@@ -480,21 +643,26 @@ class _QuickAction extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: actionColor.withValues(alpha: 0.1),
+                  color: actionColor.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
+                  border: Border.all(
+                    color: actionColor.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
                 ),
-                child: Icon(icon, color: actionColor, size: 24),
+                child: Icon(icon, color: actionColor, size: 22),
               ),
               const SizedBox(height: 10),
               Text(
                 label,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: textPrimaryColor,
+                  letterSpacing: -0.1,
                 ),
               ),
             ],
@@ -507,13 +675,17 @@ class _QuickAction extends StatelessWidget {
 
 class _LoadingPlaceholder extends StatelessWidget {
   final double height;
-  const _LoadingPlaceholder({required this.height});
+  final bool isDark;
+  const _LoadingPlaceholder({required this.height, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       height: height,
-      decoration: BoxDecoration(color: AppColors.darkCard, borderRadius: BorderRadius.circular(28)),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF),
+        borderRadius: BorderRadius.circular(28),
+      ),
       child: const Center(child: CircularProgressIndicator()),
     );
   }
@@ -521,15 +693,19 @@ class _LoadingPlaceholder extends StatelessWidget {
 
 class _ErrorPlaceholder extends StatelessWidget {
   final String message;
-  const _ErrorPlaceholder({required this.message});
+  final bool isDark;
+  const _ErrorPlaceholder({required this.message, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       height: 100,
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: AppColors.errorContainer.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(28)),
-      child: Center(child: Text(message, style: TextStyle(color: AppColors.error))),
+      decoration: BoxDecoration(
+        color: const Color(0xFFDC2626).withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(28),
+      ),
+      child: Center(child: Text(message, style: const TextStyle(color: Color(0xFFDC2626)))),
     );
   }
 }

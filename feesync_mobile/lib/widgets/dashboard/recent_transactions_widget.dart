@@ -19,6 +19,9 @@ class RecentTransactionsWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isDark = AppColors.isDarkMode;
+    final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
+    final cardColor = isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF);
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -31,7 +34,7 @@ class RecentTransactionsWidget extends StatelessWidget {
               style: GoogleFonts.manrope(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
+                color: textPrimaryColor,
                 letterSpacing: -0.3,
               ),
             ),
@@ -40,16 +43,16 @@ class RecentTransactionsWidget extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.08),
+                  color: primaryColor.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.primary.withOpacity(0.15)),
+                  border: Border.all(color: primaryColor.withValues(alpha: 0.15)),
                 ),
                 child: Text(
                   'View All',
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
+                    color: primaryColor,
                   ),
                 ),
               ),
@@ -63,15 +66,15 @@ class RecentTransactionsWidget extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.darkCard.withOpacity(0.85),
+              color: cardColor.withValues(alpha: isDark ? 0.75 : 0.9),
               borderRadius: BorderRadius.circular(28),
               border: Border.all(
-                color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.04),
+                color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04),
                 width: 1.5,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(isDark ? 0.15 : 0.01),
+                  color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.01),
                   blurRadius: 16,
                   offset: const Offset(0, 8),
                 ),
@@ -83,7 +86,7 @@ class RecentTransactionsWidget extends StatelessWidget {
               physics: const NeverScrollableScrollPhysics(),
               itemCount: transactions.length,
               separatorBuilder: (context, index) => Divider(
-                color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.04),
+                color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04),
                 height: 16,
                 indent: 12,
                 endIndent: 12,
@@ -99,14 +102,16 @@ class RecentTransactionsWidget extends StatelessWidget {
   }
 
   Widget _emptyState(bool isDark) {
+    final cardColor = isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 48),
       decoration: BoxDecoration(
-        color: AppColors.darkCard.withOpacity(0.5),
+        color: cardColor.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.04),
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04),
           width: 1.5,
         ),
       ),
@@ -116,13 +121,13 @@ class RecentTransactionsWidget extends StatelessWidget {
           Icon(
             Icons.receipt_long_rounded,
             size: 40,
-            color: AppColors.textTertiary.withOpacity(0.5),
+            color: textTertiaryColor.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 12),
           Text(
             'No transactions recorded today',
             style: GoogleFonts.inter(
-              color: AppColors.textTertiary,
+              color: textTertiaryColor,
               fontSize: 13,
               fontWeight: FontWeight.w500,
             ),
@@ -139,38 +144,75 @@ class _TransactionTile extends StatelessWidget {
 
   const _TransactionTile({required this.transaction, required this.currencyFormatter});
 
+  String _getInitials(String name) {
+    if (name.isEmpty) return 'S';
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.length > 1) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return parts[0][0].toUpperCase();
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isDark = AppColors.isDarkMode;
+    final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+    final successColor = isDark ? const Color(0xFFB4F0C5) : const Color(0xFF16A34A);
 
     // Resolve color code for payment methods
-    Color methodColor = AppColors.primary;
+    Color methodColor = primaryColor;
     if (transaction.paymentMethod.toUpperCase() == 'CASH') {
       methodColor = const Color(0xFF10B981);
     } else if (transaction.paymentMethod.toUpperCase() == 'UPI' || transaction.paymentMethod.toUpperCase() == 'ONLINE') {
       methodColor = const Color(0xFF8B5CF6);
     }
 
+    // Dynamic gradient background for initials avatar based on student name hash
+    final initials = _getInitials(transaction.studentName);
+    final nameHash = transaction.studentName.hashCode;
+    final List<Color> avatarColors = [
+      [const Color(0xFF2563EB), const Color(0xFF7C3AED)],
+      [const Color(0xFF10B981), const Color(0xFF059669)],
+      [const Color(0xFFF59E0B), const Color(0xFFD97706)],
+      [const Color(0xFFEC4899), const Color(0xFFBE185D)],
+      [const Color(0xFF8B5CF6), const Color(0xFF6D28D9)],
+      [const Color(0xFF3B82F6), const Color(0xFF1D4ED8)],
+    ][nameHash.abs() % 6];
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
       child: Row(
         children: [
-          // Styled Icon Block
+          // Premium Colored Initials Avatar
           Container(
             width: 52,
             height: 52,
+            alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: isDark ? AppColors.surfaceContainerLow : const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.03),
-                width: 1,
+              gradient: LinearGradient(
+                colors: avatarColors,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: avatarColors[0].withValues(alpha: isDark ? 0.25 : 0.12),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-            child: Icon(
-              Icons.check_circle_outline_rounded,
-              color: AppColors.success,
-              size: 24,
+            child: Text(
+              initials,
+              style: GoogleFonts.inter(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+                letterSpacing: 0.5,
+              ),
             ),
           ),
           const SizedBox(width: 16),
@@ -184,7 +226,7 @@ class _TransactionTile extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                    color: textPrimaryColor,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -196,7 +238,7 @@ class _TransactionTile extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.08),
+                        color: primaryColor.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -204,26 +246,29 @@ class _TransactionTile extends StatelessWidget {
                         style: GoogleFonts.inter(
                           fontSize: 9,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
+                          color: primaryColor,
                         ),
                       ),
                     ),
                     const SizedBox(width: 6),
-                    Text(
-                      '•  ${transaction.feeType}',
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textTertiary,
+                    Expanded(
+                      child: Text(
+                        '•  ${transaction.feeType}',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: textTertiaryColor,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ],
             ),
           ),
+          const SizedBox(width: 8),
           // Amount & Date
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -233,7 +278,7 @@ class _TransactionTile extends StatelessWidget {
                 style: GoogleFonts.outfit(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.success,
+                  color: successColor,
                 ),
               ),
               const SizedBox(height: 4),
@@ -253,7 +298,7 @@ class _TransactionTile extends StatelessWidget {
                     style: GoogleFonts.inter(
                       fontSize: 9,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textTertiary,
+                      color: textTertiaryColor,
                     ),
                   ),
                   const SizedBox(width: 4),
@@ -262,7 +307,7 @@ class _TransactionTile extends StatelessWidget {
                     style: GoogleFonts.inter(
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.textTertiary,
+                      color: textTertiaryColor,
                     ),
                   ),
                 ],
