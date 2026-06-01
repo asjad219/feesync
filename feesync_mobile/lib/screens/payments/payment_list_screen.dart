@@ -95,7 +95,7 @@ class _PaymentListScreenState extends ConsumerState<PaymentListScreen> {
                 style: GoogleFonts.inter(color: Colors.white, fontSize: 16),
                 decoration: InputDecoration(
                   hintText: 'Search payments...',
-                  hintStyle: GoogleFonts.inter(color: Colors.white.withOpacity(0.5), fontSize: 16),
+                  hintStyle: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.5), fontSize: 16),
                   border: InputBorder.none,
                 ),
                 onChanged: (value) => ref.read(paymentSearchProvider.notifier).state = value,
@@ -251,7 +251,7 @@ class _PaymentListScreenState extends ConsumerState<PaymentListScreen> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.4),
+            color: AppColors.primary.withValues(alpha: 0.4),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -286,12 +286,23 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = AppColors.isDarkMode;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: isDark ? color.withValues(alpha: 0.1) : Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: color.withOpacity(0.2), width: 1.5),
+        border: Border.all(
+          color: isDark ? color.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.08), 
+          width: 1.5,
+        ),
+        boxShadow: isDark ? null : [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          )
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -308,7 +319,7 @@ class _StatCard extends StatelessWidget {
                   color: color,
                 ),
               ),
-              Icon(icon, size: 16, color: color.withOpacity(0.5)),
+              Icon(icon, size: 16, color: color.withValues(alpha: 0.5)),
             ],
           ),
           const SizedBox(height: 12),
@@ -375,11 +386,22 @@ class _PaymentTransactionCard extends StatelessWidget {
         methodIcon = Icons.receipt_long_rounded;
     }
 
+    final bool isDark = AppColors.isDarkMode;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainer.withOpacity(0.5),
+        color: isDark ? AppColors.surfaceContainer.withValues(alpha: 0.5) : Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.08),
+          width: 1.5,
+        ),
+        boxShadow: isDark ? null : [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          )
+        ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -431,7 +453,7 @@ class _PaymentTransactionCard extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: statusColor.withOpacity(0.1),
+                              color: statusColor.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -512,7 +534,9 @@ class _EmptyPaymentsState extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: AppColors.surfaceContainer.withOpacity(0.5),
+              color: AppColors.isDarkMode 
+                  ? AppColors.surfaceContainer.withValues(alpha: 0.5) 
+                  : Colors.black.withValues(alpha: 0.03),
               shape: BoxShape.circle,
             ),
             child: Icon(

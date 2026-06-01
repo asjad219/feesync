@@ -30,24 +30,29 @@ class GlassCard extends StatelessWidget {
     final radius = borderRadius ?? BorderRadius.circular(24);
     
     final Color bgCol = isDark 
-        ? Colors.white.withOpacity(opacity) 
-        : Colors.white.withOpacity(0.9);
+        ? Colors.white.withValues(alpha: opacity) 
+        : Colors.white.withValues(alpha: 0.9);
         
     final Color borderCol = borderColor ?? (isDark 
-        ? Colors.white.withOpacity(0.1) 
-        : Colors.black.withOpacity(0.06));
+        ? Colors.white.withValues(alpha: 0.1) 
+        : Colors.black.withValues(alpha: 0.08));
 
     final List<BoxShadow>? shadows = isDark ? null : [
       BoxShadow(
-        color: Colors.black.withOpacity(0.03),
-        blurRadius: 16,
-        offset: const Offset(0, 8),
+        color: Colors.black.withValues(alpha: 0.04),
+        blurRadius: 12,
+        offset: const Offset(0, 4),
+      ),
+      BoxShadow(
+        color: Colors.black.withValues(alpha: 0.02),
+        blurRadius: 24,
+        offset: const Offset(0, 12),
       ),
     ];
 
     final List<Color> gradColors = gradientColors ?? (isDark 
-        ? [Colors.white.withOpacity(0.1), Colors.white.withOpacity(0.01)]
-        : [Colors.white, Colors.white.withOpacity(0.85)]);
+        ? [Colors.white.withValues(alpha: 0.1), Colors.white.withValues(alpha: 0.01)]
+        : [Colors.white, Colors.white.withValues(alpha: 0.85)]);
 
     return Container(
       margin: margin,

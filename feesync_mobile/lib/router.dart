@@ -220,7 +220,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Full-screen routes (Outside Shell)
       GoRoute(
         path: '/batches/create',
-        builder: (context, state) => const BatchCreationScreen(),
+        builder: (context, state) => BatchCreationScreen(
+          batchId: state.uri.queryParameters['batchId'],
+        ),
       ),
       GoRoute(
         path: '/batches/:id',

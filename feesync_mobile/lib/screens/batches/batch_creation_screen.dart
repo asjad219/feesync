@@ -8,7 +8,8 @@ import '../../../providers/batch_provider.dart';
 import '../../../providers/user_provider.dart';
 
 class BatchCreationScreen extends ConsumerStatefulWidget {
-  const BatchCreationScreen({super.key});
+  final String? batchId;
+  const BatchCreationScreen({super.key, this.batchId});
 
   @override
   ConsumerState<BatchCreationScreen> createState() => _BatchCreationScreenState();
@@ -17,6 +18,43 @@ class BatchCreationScreen extends ConsumerStatefulWidget {
 class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
   final PageController _pageController = PageController();
   int _currentStep = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.batchId != null) {
+        _loadBatchData();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _subjectController.dispose();
+    _teacherController.dispose();
+    _capacityController.dispose();
+    _feeController.dispose();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _loadBatchData() {
+    final batches = ref.read(batchNotifierProvider).value ?? [];
+    try {
+      final batch = batches.firstWhere((b) => b.id == widget.batchId);
+      _nameController.text = batch.name;
+      _subjectController.text = batch.subject;
+      _teacherController.text = batch.teacherName;
+      _capacityController.text = batch.maxCapacity.toString();
+      _feeController.text = batch.monthlyFee.toString();
+      _selectedColor = batch.colorHex ?? '#2563EB';
+      setState(() {});
+    } catch (_) {
+      // batch not found
+    }
+  }
 
   // Form Data
   final _nameController = TextEditingController();
@@ -99,25 +137,46 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
       return;
     }
 
-    final newBatch = {
-      'account_id': userProfile.accountId,
-      'name': _nameController.text,
-      'subject': _subjectController.text,
-      'teacher_name': _teacherController.text,
-      'max_capacity': int.tryParse(_capacityController.text) ?? 20,
-      'monthly_fee': double.tryParse(_feeController.text) ?? 1000.0,
-      'color_hex': _selectedColor,
-      'status': 'active',
-      'created_at': DateTime.now().toIso8601String(),
-    };
-
     try {
-      await ref.read(batchNotifierProvider.notifier).createBatch(newBatch);
-      if (mounted) context.pop();
+      if (widget.batchId == null) {
+        final newBatch = {
+          'account_id': userProfile.accountId,
+          'name': _nameController.text,
+          'subject': _subjectController.text,
+          'teacher_name': _teacherController.text,
+          'max_capacity': int.tryParse(_capacityController.text) ?? 20,
+          'monthly_fee': double.tryParse(_feeController.text) ?? 1000.0,
+          'color_hex': _selectedColor,
+          'status': 'active',
+          'created_at': DateTime.now().toIso8601String(),
+        };
+        await ref.read(batchNotifierProvider.notifier).createBatch(newBatch);
+      } else {
+        final updatedData = {
+          'name': _nameController.text,
+          'subject': _subjectController.text,
+          'teacher_name': _teacherController.text,
+          'max_capacity': int.tryParse(_capacityController.text) ?? 20,
+          'monthly_fee': double.tryParse(_feeController.text) ?? 1000.0,
+          'color_hex': _selectedColor,
+        };
+        await ref.read(batchNotifierProvider.notifier).updateBatch(widget.batchId!, updatedData);
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(widget.batchId == null ? 'Batch created successfully' : 'Batch updated successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        context.pop();
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
     }
   }
 
@@ -131,7 +190,7 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
     return Scaffold(
       backgroundColor: scaffoldBgColor,
       appBar: AppBar(
-        title: Text('New Batch', style: GoogleFonts.manrope(fontWeight: FontWeight.w800, color: textPrimaryColor)),
+        title: Text(widget.batchId == null ? 'New Batch' : 'Edit Batch', style: GoogleFonts.manrope(fontWeight: FontWeight.w800, color: textPrimaryColor)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -557,7 +616,7 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
                 minimumSize: const Size.fromHeight(50),
               ),
               child: Text(
-                _currentStep == 4 ? 'Create Batch' : 'Next Step',
+                _currentStep == 4 ? (widget.batchId == null ? 'Create Batch' : 'Save Changes') : 'Next Step',
                 style: GoogleFonts.inter(fontWeight: FontWeight.w700),
               ),
             ),

@@ -64,11 +64,7 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
             onAttendanceTap: () => _tabController.animateTo(2),
             onAddStudentTap: () => context.push('/students/add?batchId=${batch.id}'),
             onRemindersTap: () => context.push('/notifications'),
-            onEditTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Edit Batch coming soon')),
-              );
-            },
+            onEditTap: () => context.push('/batches/create?batchId=${batch.id}'),
           ),
           _StudentsTab(batchId: batch.id),
           _AttendanceTab(batchId: batch.id),
@@ -136,13 +132,29 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  Text(
-                    '${batch.subject} • ${batch.teacherName}',
-                    style: GoogleFonts.inter(
-                      color: textSecondaryColor,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          '${batch.subject} • ${batch.teacherName}',
+                          style: GoogleFonts.inter(
+                            color: textSecondaryColor,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      StatusBadge(
+                        status: batch.status.name.toUpperCase(),
+                        color: batch.status == BatchStatus.active 
+                            ? const Color(0xFF10B981) 
+                            : (batch.status == BatchStatus.upcoming ? const Color(0xFF2563EB) : const Color(0xFF64748B)),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 24),
                   Row(
@@ -215,19 +227,58 @@ class _AiHealthScore extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isDark = AppColors.isDarkMode;
-    final Color healthColor = isDark ? const Color(0xFF10B981) : const Color(0xFF059669);
+    final Color healthColor = score >= 80 
+        ? (isDark ? const Color(0xFF10B981) : const Color(0xFF059669))
+        : (score >= 50 ? const Color(0xFFF59E0B) : const Color(0xFFEF4444));
+        
+    final String statusText = score >= 80 ? 'Excellent' : (score >= 50 ? 'Average' : 'Critical');
+
     return GlassCard(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      borderRadius: BorderRadius.circular(12),
-      child: Column(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      borderRadius: BorderRadius.circular(16),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            '$score',
-            style: GoogleFonts.manrope(color: healthColor, fontSize: 18, fontWeight: FontWeight.w800),
-          ),
-          Text(
-            'HEALTH',
-            style: GoogleFonts.inter(color: healthColor.withOpacity(0.6), fontSize: 8, fontWeight: FontWeight.w700),
+          Icon(Icons.auto_awesome, color: healthColor, size: 16),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'AI BATCH HEALTH',
+                style: GoogleFonts.inter(
+                  color: isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B),
+                  fontSize: 8,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    '$score%',
+                    style: GoogleFonts.manrope(
+                      color: healthColor,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '($statusText)',
+                    style: GoogleFonts.inter(
+                      color: healthColor.withValues(alpha: 0.8),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ],
       ),
@@ -298,16 +349,112 @@ class _OverviewTab extends StatelessWidget {
     required this.onEditTap,
   });
 
+  List<DateTime> _generateUpcomingDates() {
+    final List<DateTime> dates = [];
+    DateTime current = DateTime.now();
+    while (dates.length < 3) {
+      if (current.weekday != DateTime.sunday) {
+        dates.add(DateTime(current.year, current.month, current.day));
+      }
+      current = current.add(const Duration(days: 1));
+    }
+    return dates;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final bool isDark = AppColors.isDarkMode;
+    final dates = _generateUpcomingDates();
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final textSecondaryColor = isDark ? const Color(0xFFC3C6D7) : const Color(0xFF475569);
+    final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildQuickActions(context),
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
           _buildSectionHeader('Upcoming Schedule'),
-          // ... more overview items
+          const SizedBox(height: 12),
+          ...dates.map((date) {
+            final isToday = date.day == DateTime.now().day && date.month == DateTime.now().month;
+            
+            return GlassCard(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isToday 
+                          ? primaryColor.withValues(alpha: 0.15) 
+                          : (isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03)),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isToday 
+                            ? primaryColor 
+                            : (isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.06)),
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          DateFormat('dd').format(date),
+                          style: GoogleFonts.outfit(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: isToday ? primaryColor : textPrimaryColor,
+                          ),
+                        ),
+                        Text(
+                          DateFormat('EEE').format(date).toUpperCase(),
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: isToday ? primaryColor : textSecondaryColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isToday ? 'Today\'s Session' : 'Scheduled Session',
+                          style: GoogleFonts.manrope(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: isToday ? primaryColor : textPrimaryColor,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '04:00 PM - 05:30 PM • Room 101',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: textSecondaryColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.how_to_reg_rounded, color: primaryColor),
+                    tooltip: 'Mark Attendance',
+                    onPressed: onAttendanceTap,
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );
@@ -505,8 +652,18 @@ class _AttendanceTabState extends ConsumerState<_AttendanceTab> {
       margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: surfaceContainerColor.withOpacity(0.5),
+        color: isDark ? surfaceContainerColor.withValues(alpha: 0.5) : surfaceContainerColor,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.06),
+        ),
+        boxShadow: isDark ? null : [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          )
+        ],
       ),
       child: Row(
         children: [
@@ -917,18 +1074,25 @@ class _AttendanceRosterTile extends ConsumerWidget {
     final bool isDark = AppColors.isDarkMode;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+    final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
 
-    return Container(
+    return GlassCard(
       margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
       child: Row(
         children: [
+          CircleAvatar(
+            backgroundColor: primaryColor.withValues(alpha: 0.2),
+            child: Text(student.firstName[0], style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
+          ),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   '${student.firstName} ${student.lastName}',
-                  style: TextStyle(color: textPrimaryColor, fontWeight: FontWeight.w500),
+                  style: TextStyle(color: textPrimaryColor, fontWeight: FontWeight.bold),
                 ),
                 if (student.rollNumber != null && student.rollNumber!.isNotEmpty)
                   Text(
@@ -1065,9 +1229,34 @@ class _FeesTab extends ConsumerWidget {
                 ),
                 const SizedBox(height: 12),
                 if (defaulters.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 40),
-                    child: Center(child: Text('Great job! No pending dues.', style: TextStyle(color: Color(0xFF10B981)))),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    child: GlassCard(
+                      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+                      child: Center(
+                        child: Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.check_circle_outline_rounded, color: Color(0xFF10B981), size: 32),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Great job! No pending dues.',
+                              style: GoogleFonts.inter(
+                                color: const Color(0xFF10B981),
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   )
                 else
                   Column(

@@ -289,10 +289,10 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
             decoration: BoxDecoration(
-              color: surfaceColor.withOpacity(0.5),
+              color: isDark ? surfaceColor.withValues(alpha: 0.5) : Colors.white,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.08)
+                color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.1)
               ),
             ),
             child: Row(
@@ -331,10 +331,10 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             height: 50,
             decoration: BoxDecoration(
-              color: surfaceColor.withOpacity(0.5),
+              color: isDark ? surfaceColor.withValues(alpha: 0.5) : Colors.white,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.08)
+                color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.1)
               ),
             ),
             child: DropdownButtonHideUnderline(
@@ -382,19 +382,19 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
           decoration: InputDecoration(
             hintText: hint,
             prefixIcon: Icon(icon, size: 20, color: textTertiaryColor),
-            fillColor: surfaceColor.withOpacity(0.5),
+            fillColor: isDark ? surfaceColor.withValues(alpha: 0.5) : Colors.white,
             filled: true,
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: BorderSide(
-                color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.08)
+                color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.1)
               ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: BorderSide(
-                color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.08)
+                color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.1)
               ),
             ),
             focusedBorder: OutlineInputBorder(
@@ -405,7 +405,7 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
               ),
             ),
             hintStyle: TextStyle(
-              color: textTertiaryColor.withOpacity(0.5),
+              color: textTertiaryColor.withValues(alpha: 0.5),
               fontSize: 14,
             ),
           ),

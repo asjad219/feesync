@@ -71,10 +71,14 @@ class StudentCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppColors.surfaceContainer.withOpacity(0.5),
+          color: AppColors.isDarkMode 
+              ? AppColors.surfaceContainer.withValues(alpha: 0.5) 
+              : Colors.white,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: AppColors.isDarkMode ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.08)
+            color: AppColors.isDarkMode 
+                ? Colors.white.withValues(alpha: 0.05) 
+                : Colors.black.withValues(alpha: 0.1)
           ),
         ),
         child: Row(
@@ -166,7 +170,9 @@ class FilterChipButton extends StatelessWidget {
           color: isSelected ? AppColors.primaryContainer : AppColors.surfaceContainer,
           borderRadius: BorderRadius.circular(99),
           border: isSelected ? null : Border.all(
-            color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.08)
+            color: isDark 
+                ? Colors.white.withValues(alpha: 0.05) 
+                : Colors.black.withValues(alpha: 0.1)
           ),
         ),
         child: Text(

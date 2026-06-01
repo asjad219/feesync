@@ -12,6 +12,7 @@ import '../../models/payment.dart';
 import '../../models/batch.dart';
 import '../../providers/providers.dart';
 import '../../core/utils/receipt_service.dart';
+import '../../core/widgets/glass/glass_card.dart';
 
 class StudentDetailsScreen extends ConsumerWidget {
   final String studentId;
@@ -128,23 +129,42 @@ class _ProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasBalance = balance != null && balance!.balance > 0;
-    return Container(
+    final String initials = student.fullName.split(' ').map((e) => e.isNotEmpty ? e[0].toUpperCase() : '').take(2).join();
+
+    return GlassCard(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainer.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
-      ),
       child: Row(
         children: [
           Container(
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: AppColors.surfaceContainerLow,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.primary,
+                  AppColors.secondary.withValues(alpha: 0.8),
+                ],
+              ),
               borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.2),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-            child: const Icon(Icons.person_rounded, size: 40, color: AppColors.textTertiary),
+            alignment: Alignment.center,
+            child: Text(
+              initials,
+              style: GoogleFonts.manrope(
+                fontSize: 26,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
+            ),
           ),
           const SizedBox(width: 20),
           Expanded(
@@ -160,11 +180,13 @@ class _ProfileHeader extends StatelessWidget {
                   '${student.studentClass} • ID: ${student.admissionNumber}',
                   style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textTertiary),
                 ),
-                if (student.rollNumber != null)
+                if (student.rollNumber != null) ...[
+                  const SizedBox(height: 4),
                   Text(
                     'Roll No: ${student.rollNumber}',
                     style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primary),
                   ),
+                ],
                 const SizedBox(height: 12),
                 StatusBadge(status: hasBalance ? 'OVERDUE' : 'PAID'),
               ],
@@ -195,20 +217,40 @@ class _MetricsSection extends StatelessWidget {
       children: [
         Row(
           children: [
-            _MetricCard(label: 'TOTAL FEE', value: currencyFormatter.format(balance!.totalFeeAmount), color: AppColors.textPrimary),
+            _MetricCard(
+              label: 'TOTAL FEE', 
+              value: currencyFormatter.format(balance!.totalFeeAmount), 
+              color: AppColors.textPrimary,
+              icon: Icons.receipt_long_rounded,
+              iconBgColor: AppColors.textPrimary,
+            ),
             const SizedBox(width: 16),
-            _MetricCard(label: 'PAID', value: currencyFormatter.format(balance!.totalPaidAmount), color: AppColors.primary),
+            _MetricCard(
+              label: 'PAID', 
+              value: currencyFormatter.format(balance!.totalPaidAmount), 
+              color: AppColors.success,
+              icon: Icons.check_circle_rounded,
+              iconBgColor: AppColors.success,
+            ),
           ],
         ),
         const SizedBox(height: 16),
         Row(
           children: [
-            _MetricCard(label: 'DISCOUNT', value: currencyFormatter.format(discountAmount), color: Colors.orangeAccent),
+            _MetricCard(
+              label: 'DISCOUNT', 
+              value: currencyFormatter.format(discountAmount), 
+              color: Colors.orangeAccent,
+              icon: Icons.local_offer_rounded,
+              iconBgColor: Colors.orangeAccent,
+            ),
             const SizedBox(width: 16),
             _MetricCard(
               label: 'OUTSTANDING',
               value: currencyFormatter.format(balance!.balance),
-              color: balance!.balance > 0 ? AppColors.error : AppColors.primary,
+              color: balance!.balance > 0 ? AppColors.error : AppColors.success,
+              icon: balance!.balance > 0 ? Icons.warning_amber_rounded : Icons.verified_rounded,
+              iconBgColor: balance!.balance > 0 ? AppColors.error : AppColors.success,
             ),
           ],
         ),
@@ -221,25 +263,60 @@ class _MetricCard extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
+  final IconData icon;
+  final Color iconBgColor;
 
-  const _MetricCard({required this.label, required this.value, required this.color});
+  const _MetricCard({
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.icon,
+    required this.iconBgColor,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceContainer.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-        ),
+      child: GlassCard(
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: AppColors.textTertiary)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    label, 
+                    style: GoogleFonts.inter(
+                      fontSize: 10, 
+                      fontWeight: FontWeight.w700, 
+                      letterSpacing: 1.1, 
+                      color: AppColors.textTertiary
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: iconBgColor.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: iconBgColor, size: 16),
+                ),
+              ],
+            ),
             const SizedBox(height: 12),
-            Text(value, style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w800, color: color)),
+            Text(
+              value, 
+              style: GoogleFonts.inter(
+                fontSize: 18, 
+                fontWeight: FontWeight.w800, 
+                color: color
+              )
+            ),
           ],
         ),
       ),
@@ -302,19 +379,15 @@ class _BatchTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GlassCard(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainer.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: batch.color.withOpacity(0.2)),
-      ),
+      borderColor: batch.color.withValues(alpha: 0.2),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: batch.color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(color: batch.color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
             child: Icon(Icons.school_rounded, color: batch.color, size: 20),
           ),
           const SizedBox(width: 16),
@@ -327,9 +400,11 @@ class _BatchTile extends StatelessWidget {
               ],
             ),
           ),
-          InkWell(
-            onTap: () => context.push('/batches/${batch.id}'),
-            child: const Icon(Icons.chevron_right_rounded, color: AppColors.textTertiary),
+          IconButton(
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            onPressed: () => context.push('/batches/${batch.id}'),
+            icon: const Icon(Icons.chevron_right_rounded, color: AppColors.textTertiary),
           ),
         ],
       ),
@@ -461,20 +536,18 @@ class _PaymentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GlassCard(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainer.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
-      ),
       child: Row(
         children: [
           Container(
             width: 44,
             height: 44,
-            decoration: BoxDecoration(color: AppColors.surfaceContainerLow, borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1), 
+              borderRadius: BorderRadius.circular(12)
+            ),
             child: const Icon(Icons.receipt_rounded, color: AppColors.primary, size: 20),
           ),
           const SizedBox(width: 16),
@@ -537,22 +610,17 @@ class _ContactInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GlassCard(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainer.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Contact Details', style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
           const SizedBox(height: 20),
-          _InfoRow(label: 'Parent Name', value: student.parentName ?? '--'),
-          _InfoRow(label: 'Phone Number', value: student.parentPhone ?? '--'),
-          _InfoRow(label: 'Email', value: student.parentEmail ?? '--'),
-          _InfoRow(label: 'Address', value: student.address ?? '--', isLast: true),
+          _InfoRow(label: 'Parent Name', value: student.parentName ?? '--', icon: Icons.person_outline_rounded),
+          _InfoRow(label: 'Phone Number', value: student.parentPhone ?? '--', icon: Icons.phone_outlined),
+          _InfoRow(label: 'Email', value: student.parentEmail ?? '--', icon: Icons.mail_outline_rounded),
+          _InfoRow(label: 'Address', value: student.address ?? '--', icon: Icons.map_outlined, isLast: true),
         ],
       ),
     );
@@ -562,21 +630,33 @@ class _ContactInfoCard extends StatelessWidget {
 class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
+  final IconData icon;
   final bool isLast;
 
-  const _InfoRow({required this.label, required this.value, this.isLast = false});
+  const _InfoRow({
+    required this.label,
+    required this.value,
+    required this.icon,
+    this.isLast = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(bottom: isLast ? 0 : 16),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(label, style: GoogleFonts.inter(fontSize: 13, color: AppColors.textTertiary)),
+          Icon(icon, size: 18, color: AppColors.textTertiary),
+          const SizedBox(width: 12),
+          Text(label, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textTertiary)),
           const SizedBox(width: 16),
           Expanded(
-            child: Text(value, textAlign: TextAlign.right, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
+            child: Text(
+              value, 
+              textAlign: TextAlign.right, 
+              style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)
+            ),
           ),
         ],
       ),
@@ -643,7 +723,11 @@ class _CircleIconButton extends StatelessWidget {
       child: Container(
         width: 56,
         height: 56,
-        decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle, border: Border.all(color: color.withOpacity(0.2))),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1), 
+          shape: BoxShape.circle, 
+          border: Border.all(color: color.withValues(alpha: 0.2))
+        ),
         child: Icon(icon, color: color, size: 24),
       ),
     );

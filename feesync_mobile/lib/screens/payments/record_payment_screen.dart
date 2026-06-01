@@ -162,7 +162,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(color: Colors.greenAccent.withOpacity(0.1), shape: BoxShape.circle),
+              decoration: BoxDecoration(color: Colors.greenAccent.withValues(alpha: 0.1), shape: BoxShape.circle),
               child: const Icon(Icons.check_circle_rounded, color: Colors.greenAccent, size: 64),
             ),
             const SizedBox(height: 24),
@@ -247,7 +247,6 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
         : const AsyncValue<List<Due>>.data([]);
     final currencyCode = ref.watch(settingsProvider).value?.currency;
     final currencySymbol = CurrencyFormatter.symbolFor(currencyCode);
-    final currencyFormatter = CurrencyFormatter.numberFormat(currencyCode, decimalDigits: 0);
 
     return Scaffold(
       backgroundColor: AppColors.darkBg,
@@ -336,19 +335,20 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
   Widget _buildLabel(String text) => Text(text, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: AppColors.textTertiary));
 
   Widget _buildStudentPicker(List<StudentBalance> balances) {
+    final bool isDark = AppColors.isDarkMode;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainer.withOpacity(0.5),
+        color: isDark ? AppColors.surfaceContainer.withValues(alpha: 0.5) : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.1)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           isExpanded: true,
           value: _selectedStudent?.id,
           hint: const Text('Select a student'),
-          dropdownColor: AppColors.surfaceContainer,
+          dropdownColor: isDark ? const Color(0xFF1E1E2C) : Colors.white,
           icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textTertiary),
           items: balances.map((b) => DropdownMenuItem(value: b.id, child: Text('${b.fullName} (${b.studentClass})'))).toList(),
           onChanged: (value) {
@@ -382,11 +382,12 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
       return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.05), borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(20)),
       child: Center(child: Text('No pending dues for this student', style: GoogleFonts.inter(color: AppColors.primary, fontWeight: FontWeight.w600))),
     );
     }
     
+    final bool isDark = AppColors.isDarkMode;
     final currencyCode = ref.read(settingsProvider).value?.currency;
     final currencyFormatter = CurrencyFormatter.numberFormat(currencyCode, decimalDigits: 0);
 
@@ -412,9 +413,22 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary.withOpacity(0.1) : AppColors.surfaceContainer.withOpacity(0.5),
+                color: isSelected 
+                    ? AppColors.primary.withValues(alpha: 0.1) 
+                    : (isDark ? AppColors.surfaceContainer.withValues(alpha: 0.5) : Colors.white),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: isSelected ? AppColors.primary.withOpacity(0.3) : Colors.white.withOpacity(0.05)),
+                border: Border.all(
+                  color: isSelected 
+                      ? AppColors.primary.withValues(alpha: 0.3) 
+                      : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.1)),
+                ),
+                boxShadow: isSelected ? null : (isDark ? null : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.01),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ]),
               ),
               child: Row(
                 children: [
@@ -440,6 +454,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
   }
 
   Widget _buildField({required String label, required TextEditingController controller, required String hint, required IconData icon, int maxLines = 1, TextInputType? keyboardType}) {
+    final bool isDark = AppColors.isDarkMode;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -453,7 +468,27 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
           decoration: InputDecoration(
             hintText: hint,
             prefixIcon: Icon(icon, size: 20, color: AppColors.textTertiary),
-            fillColor: AppColors.surfaceContainer.withOpacity(0.5),
+            fillColor: isDark ? AppColors.surfaceContainer.withValues(alpha: 0.5) : Colors.white,
+            filled: true,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(
+                color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.1),
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(
+                color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.1),
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(
+                color: AppColors.primary,
+                width: 1.5,
+              ),
+            ),
           ),
           validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
         ),
@@ -462,6 +497,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
   }
 
   Widget _buildDatePicker() {
+    final bool isDark = AppColors.isDarkMode;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -472,9 +508,11 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             decoration: BoxDecoration(
-              color: AppColors.surfaceContainer.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withOpacity(0.05)),
+              color: isDark ? AppColors.surfaceContainer.withValues(alpha: 0.5) : Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.1),
+              ),
             ),
             child: Row(
               children: [
@@ -491,15 +529,22 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
 
   Widget _buildModeToggle(String value, IconData icon, String label) {
     final isSelected = _paymentMode == value;
+    final bool isDark = AppColors.isDarkMode;
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() => _paymentMode = value),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.primary.withOpacity(0.1) : AppColors.surfaceContainer.withOpacity(0.5),
+            color: isSelected 
+                ? AppColors.primary.withValues(alpha: 0.1) 
+                : (isDark ? AppColors.surfaceContainer.withValues(alpha: 0.5) : Colors.white),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: isSelected ? AppColors.primary.withOpacity(0.3) : Colors.white.withOpacity(0.05)),
+            border: Border.all(
+              color: isSelected 
+                  ? AppColors.primary.withValues(alpha: 0.3) 
+                  : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.1)),
+            ),
           ),
           child: Column(
             children: [
@@ -519,7 +564,13 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
       decoration: BoxDecoration(
         gradient: AppGradients.primary,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: AppColors.primaryContainer.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 8))],
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryContainer.withValues(alpha: 0.3), 
+            blurRadius: 20, 
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: ElevatedButton(
         onPressed: _isLoading || _selectedStudent == null ? null : () => _savePayment(availableDues),
