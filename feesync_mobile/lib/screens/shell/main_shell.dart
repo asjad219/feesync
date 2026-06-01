@@ -94,9 +94,9 @@ class _StyledBottomNav extends StatelessWidget {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Container(
-            color: bg,
             padding: EdgeInsets.fromLTRB(12, 10, 12, 10 + bottomPadding),
             decoration: BoxDecoration(
+              color: bg,
               border: Border(
                 top: BorderSide(color: borderColor, width: 1.0),
               ),
