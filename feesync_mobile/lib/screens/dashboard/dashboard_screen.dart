@@ -291,63 +291,36 @@ class _GreetingHeader extends StatelessWidget {
     final now = DateTime.now();
     final hour = now.hour;
     String greeting = 'Good evening';
-    IconData timeIcon = Icons.nights_stay_rounded;
-    Color timeIconColor = const Color(0xFFFFB596);
     
     if (hour < 12) {
       greeting = 'Good morning';
-      timeIcon = Icons.wb_sunny_rounded;
-      timeIconColor = const Color(0xFFFBBF24);
     } else if (hour < 17) {
       greeting = 'Good afternoon';
-      timeIcon = Icons.wb_twilight_rounded;
-      timeIconColor = const Color(0xFFF59E0B);
     }
     final dateFormatted = DateFormat('EEEE, MMMM d').format(now);
     final bool isDark = AppColors.isDarkMode;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
     
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '$greeting, Admin 👋',
-              style: GoogleFonts.manrope(
-                fontSize: 26,
-                fontWeight: FontWeight.w800,
-                color: textPrimaryColor,
-                letterSpacing: -0.6,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              dateFormatted,
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: textTertiaryColor,
-              ),
-            ),
-          ],
-        ),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04),
-              width: 1,
-            ),
+        Text(
+          '$greeting, Admin 👋',
+          style: GoogleFonts.manrope(
+            fontSize: 26,
+            fontWeight: FontWeight.w800,
+            color: textPrimaryColor,
+            letterSpacing: -0.6,
           ),
-          child: Icon(
-            timeIcon,
-            color: timeIconColor,
-            size: 24,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          dateFormatted,
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: textTertiaryColor,
           ),
         ),
       ],

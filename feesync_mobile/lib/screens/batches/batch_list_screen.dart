@@ -1,10 +1,10 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/glass/glass_card.dart';
-import '../../../core/widgets/glass/kpi_card.dart';
+import '../../widgets/dashboard/stat_card.dart';
 import '../../../providers/batch_provider.dart';
 import '../../../models/batch.dart';
 import 'widgets/batch_card.dart';
@@ -18,146 +18,92 @@ class BatchListScreen extends ConsumerWidget {
     final search = ref.watch(batchSearchProvider);
     final statusFilter = ref.watch(batchStatusFilterProvider);
 
+    final bool isDark = AppColors.isDarkMode;
+    final Color primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
+    final Color scaffoldBgColor = isDark ? const Color(0xFF0D0D1A) : const Color(0xFFF8FAFC);
+    final Color textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final Color surfaceColor = isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF);
+
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppColors.darkBg,
-              AppColors.darkBg.withBlue(40).withOpacity(0.8),
-            ],
-          ),
-        ),
-        child: RefreshIndicator(
-          onRefresh: () => ref.read(batchNotifierProvider.notifier).loadBatches(),
-          color: AppColors.primary,
-          backgroundColor: AppColors.surfaceContainer,
-          child: CustomScrollView(
-            physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-            slivers: [
-              _buildAppBar(context, ref),
-              
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 0, 10),
-                  child: _buildKpiSection(),
-                ),
-              ),
+      backgroundColor: scaffoldBgColor,
+      extendBodyBehindAppBar: true,
+      appBar: const _BatchesTopBar(),
+      body: RefreshIndicator(
+        onRefresh: () => ref.read(batchNotifierProvider.notifier).loadBatches(),
+        color: primaryColor,
+        backgroundColor: isDark ? const Color(0xFF12121F) : const Color(0xFFFFFFFF),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 128, 20, 32),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildAiInsightChip(isDark, primaryColor),
+                const SizedBox(height: 20),
+                _buildKpiSection(isDark, primaryColor),
+                const SizedBox(height: 24),
+                _buildSearchAndFilters(context, ref, search, isDark, primaryColor, surfaceColor, textPrimaryColor),
+                const SizedBox(height: 20),
+                batchesAsync.when(
+                  data: (batches) {
+                    final filteredBatches = batches.where((b) {
+                      final matchesSearch = search.isEmpty || 
+                          b.name.toLowerCase().contains(search.toLowerCase()) ||
+                          b.subject.toLowerCase().contains(search.toLowerCase());
+                      final matchesStatus = statusFilter == null || b.status == statusFilter;
+                      return matchesSearch && matchesStatus;
+                    }).toList();
 
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  child: _buildSearchAndFilters(context, ref, search),
-                ),
-              ),
+                    if (filteredBatches.isEmpty) {
+                      return _buildEmptyState(isDark);
+                    }
 
-              batchesAsync.when(
-                data: (batches) {
-                  final filteredBatches = batches.where((b) {
-                    final matchesSearch = search.isEmpty || 
-                        b.name.toLowerCase().contains(search.toLowerCase()) ||
-                        b.subject.toLowerCase().contains(search.toLowerCase());
-                    final matchesStatus = statusFilter == null || b.status == statusFilter;
-                    return matchesSearch && matchesStatus;
-                  }).toList();
-
-                  return filteredBatches.isEmpty
-                      ? _buildEmptyState()
-                      : SliverPadding(
-                          padding: const EdgeInsets.all(20),
-                          sliver: SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                                final batch = filteredBatches[index];
-                                return BatchCard(
-                                  batch: batch,
-                                  onView: () => context.push('/batches/${batch.id}'),
-                                  onMarkAttendance: () => context.push('/batches/${batch.id}?tab=2'),
-                                  onAddStudent: () => context.push('/students/add?batchId=${batch.id}'),
-                                );
-                              },
-                              childCount: filteredBatches.length,
-                            ),
-                          ),
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: EdgeInsets.zero,
+                      itemCount: filteredBatches.length,
+                      itemBuilder: (context, index) {
+                        final batch = filteredBatches[index];
+                        return BatchCard(
+                          batch: batch,
+                          onView: () => context.push('/batches/${batch.id}'),
+                          onMarkAttendance: () => context.push('/batches/${batch.id}?tab=2'),
+                          onAddStudent: () => context.push('/students/add?batchId=${batch.id}'),
                         );
-                },
-                loading: () => _buildLoadingState(),
-                error: (err, stack) => _buildErrorState(err.toString()),
-              ),
-
-              // Bottom padding for FAB
-              const SliverToBoxAdapter(child: SizedBox(height: 32)),
-            ],
+                      },
+                    );
+                  },
+                  loading: () => _buildLoadingState(primaryColor),
+                  error: (err, stack) => _buildErrorState(err.toString()),
+                ),
+              ],
+            ),
           ),
         ),
       ),
-      floatingActionButton: _buildPremiumFab(context),
+      floatingActionButton: _buildPremiumFab(context, primaryColor, isDark),
     );
   }
 
-  Widget _buildAppBar(BuildContext context, WidgetRef ref) {
-    return SliverAppBar(
-      expandedHeight: 120,
-      floating: true,
-      pinned: true,
-      backgroundColor: AppColors.darkBg.withOpacity(0.8),
-      elevation: 0,
-      flexibleSpace: FlexibleSpaceBar(
-        background: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 60, 20, 0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Coaching Batches',
-                    style: GoogleFonts.manrope(
-                      color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -1,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  _buildAiInsightChip(),
-                ],
-              ),
-              Row(
-                children: [
-                  _AppBarIcon(icon: Icons.notifications_none_outlined, onPressed: () {}),
-                  const SizedBox(width: 12),
-                  _AppBarIcon(icon: Icons.settings_outlined, onPressed: () {}),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAiInsightChip() {
+  Widget _buildAiInsightChip(bool isDark, Color primaryColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.1),
+        color: primaryColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+        border: Border.all(color: primaryColor.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.auto_awesome, color: AppColors.primary, size: 14),
+          Icon(Icons.auto_awesome, color: primaryColor, size: 14),
           const SizedBox(width: 6),
           Text(
             '3 batches nearing capacity',
             style: GoogleFonts.inter(
-              color: AppColors.primary,
+              color: primaryColor,
               fontSize: 11,
               fontWeight: FontWeight.w600,
             ),
@@ -167,62 +113,108 @@ class BatchListScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildKpiSection() {
+  Widget _buildKpiSection(bool isDark, Color primaryColor) {
+    final secondaryColor = isDark ? const Color(0xFFD0BCFF) : const Color(0xFF7C3AED);
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
       child: Row(
-        children: const [
-          KpiCard(
-            title: 'Active Batches',
-            value: '12',
-            icon: Icons.layers_outlined,
-            color: Colors.blueAccent,
-            trend: 0.08,
+        children: [
+          SizedBox(
+            width: 160,
+            child: StatCard(
+              title: 'Active Batches',
+              value: '12',
+              icon: Icons.layers_rounded,
+              iconColor: primaryColor,
+              iconBackgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
+              showTrend: true,
+              trendPercent: 8.0,
+              trendUp: true,
+            ),
           ),
-          KpiCard(
-            title: 'Total Students',
-            value: '248',
-            icon: Icons.people_outline,
-            color: Colors.purpleAccent,
-            trend: 0.12,
+          const SizedBox(width: 16),
+          SizedBox(
+            width: 160,
+            child: StatCard(
+              title: 'Total Students',
+              value: '248',
+              icon: Icons.group_rounded,
+              iconColor: secondaryColor,
+              iconBackgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFF3E8FF),
+              showTrend: true,
+              trendPercent: 12.0,
+              trendUp: true,
+            ),
           ),
-          KpiCard(
-            title: 'Attendance Health',
-            value: '94%',
-            icon: Icons.analytics_outlined,
-            color: Colors.greenAccent,
-            trend: -0.02,
+          const SizedBox(width: 16),
+          SizedBox(
+            width: 160,
+            child: StatCard(
+              title: 'Attendance Health',
+              value: '94%',
+              icon: Icons.analytics_rounded,
+              iconColor: const Color(0xFF10B981),
+              iconBackgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFECFDF5),
+              showTrend: true,
+              trendPercent: 2.0,
+              trendUp: false,
+            ),
           ),
-          KpiCard(
-            title: 'Monthly Revenue',
-            value: '₹1.2L',
-            icon: Icons.account_balance_wallet_outlined,
-            color: Colors.orangeAccent,
-            trend: 0.15,
+          const SizedBox(width: 16),
+          SizedBox(
+            width: 160,
+            child: StatCard(
+              title: 'Monthly Revenue',
+              value: '₹1.2L',
+              icon: Icons.account_balance_wallet_rounded,
+              iconColor: const Color(0xFFF59E0B),
+              iconBackgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFFEF3C7),
+              showTrend: true,
+              trendPercent: 15.0,
+              trendUp: true,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSearchAndFilters(BuildContext context, WidgetRef ref, String search) {
+  Widget _buildSearchAndFilters(
+    BuildContext context, 
+    WidgetRef ref, 
+    String search, 
+    bool isDark, 
+    Color primaryColor, 
+    Color surfaceColor,
+    Color textPrimaryColor,
+  ) {
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+    
     return Column(
       children: [
-        GlassCard(
+        Container(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          borderRadius: BorderRadius.circular(16),
+          decoration: BoxDecoration(
+            color: surfaceColor.withValues(alpha: isDark ? 0.75 : 0.9),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
+              width: 1.5,
+            ),
+          ),
           child: TextField(
             onChanged: (val) => ref.read(batchSearchProvider.notifier).state = val,
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(color: textPrimaryColor),
             decoration: InputDecoration(
               hintText: 'Search batches...',
-              prefixIcon: const Icon(Icons.search, color: Colors.white54),
+              prefixIcon: Icon(Icons.search_rounded, color: textTertiaryColor),
               border: InputBorder.none,
               enabledBorder: InputBorder.none,
               focusedBorder: InputBorder.none,
               fillColor: Colors.transparent,
-              hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+              hintStyle: TextStyle(color: textTertiaryColor.withValues(alpha: 0.5)),
             ),
           ),
         ),
@@ -258,18 +250,20 @@ class BatchListScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState() {
-    return SliverFillRemaining(
+  Widget _buildEmptyState(bool isDark) {
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 48),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.layers_clear_outlined, size: 64, color: Colors.white.withOpacity(0.1)),
+            Icon(Icons.layers_clear_rounded, size: 64, color: textTertiaryColor.withValues(alpha: 0.2)),
             const SizedBox(height: 16),
             Text(
               'No batches found',
               style: GoogleFonts.manrope(
-                color: Colors.white.withOpacity(0.5),
+                color: textTertiaryColor,
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
               ),
@@ -280,14 +274,16 @@ class BatchListScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildLoadingState() {
-    return const SliverFillRemaining(
-      child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+  Widget _buildLoadingState(Color primaryColor) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 48),
+      child: Center(child: CircularProgressIndicator(color: primaryColor)),
     );
   }
 
   Widget _buildErrorState(String error) {
-    return SliverFillRemaining(
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 48),
       child: Center(
         child: Text(
           'Error: $error',
@@ -297,14 +293,18 @@ class BatchListScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildPremiumFab(BuildContext context) {
+  Widget _buildPremiumFab(BuildContext context, Color primaryColor, bool isDark) {
     return Container(
       decoration: BoxDecoration(
-        gradient: AppGradients.primary,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF2563EB), Color(0xFF7C3AED)],
+        ),
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryContainer.withOpacity(0.3),
+            color: const Color(0xFF2563EB).withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -314,29 +314,85 @@ class BatchListScreen extends ConsumerWidget {
         onPressed: () => context.push('/batches/create'),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        child: const Icon(Icons.add, size: 32, color: Colors.white),
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add_rounded, size: 32, color: Colors.white),
       ),
     );
   }
 }
 
-class _AppBarIcon extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onPressed;
+class _BatchesTopBar extends StatelessWidget implements PreferredSizeWidget {
+  const _BatchesTopBar();
 
-  const _AppBarIcon({required this.icon, required this.onPressed});
+  @override
+  Size get preferredSize => const Size.fromHeight(88);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
-      ),
-      child: IconButton(
-        icon: Icon(icon, color: Colors.white, size: 20),
-        onPressed: onPressed,
+    final bool isDark = AppColors.isDarkMode;
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final surfaceContainerColor = isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF);
+
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          height: 120,
+          decoration: BoxDecoration(
+            color: surfaceContainerColor.withValues(alpha: isDark ? 0.7 : 0.85),
+            border: Border(
+              bottom: BorderSide(
+                color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.05),
+                width: 1,
+              ),
+            ),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Coaching Batches',
+                      style: GoogleFonts.manrope(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: textPrimaryColor,
+                        letterSpacing: -0.6,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: IconButton(
+                      onPressed: () {},
+                      constraints: const BoxConstraints(minHeight: 40, minWidth: 40),
+                      padding: EdgeInsets.zero,
+                      icon: Icon(Icons.notifications_none_rounded, color: textPrimaryColor, size: 20),
+                    ),
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: IconButton(
+                      onPressed: () {},
+                      constraints: const BoxConstraints(minHeight: 40, minWidth: 40),
+                      padding: EdgeInsets.zero,
+                      icon: Icon(Icons.settings_rounded, color: textPrimaryColor, size: 20),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -355,22 +411,33 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = AppColors.isDarkMode;
+    final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(right: 12),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.white.withOpacity(0.05),
+          color: isSelected 
+              ? primaryColor 
+              : (isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03)),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppColors.primary : Colors.white.withOpacity(0.1),
+            color: isSelected 
+                ? primaryColor 
+                : (isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04)),
+            width: 1.0,
           ),
         ),
         child: Text(
           label,
           style: GoogleFonts.inter(
-            color: isSelected ? Colors.black : Colors.white.withOpacity(0.6),
+            color: isSelected 
+                ? (isDark ? const Color(0xFF0F172A) : Colors.white) 
+                : textTertiaryColor,
             fontSize: 13,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
           ),
