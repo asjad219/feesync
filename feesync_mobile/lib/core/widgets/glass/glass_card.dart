@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 
 class GlassCard extends StatelessWidget {
   final Widget child;
@@ -25,30 +26,52 @@ class GlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = AppColors.isDarkMode;
     final radius = borderRadius ?? BorderRadius.circular(24);
     
+    final Color bgCol = isDark 
+        ? Colors.white.withOpacity(opacity) 
+        : Colors.white.withOpacity(0.9);
+        
+    final Color borderCol = borderColor ?? (isDark 
+        ? Colors.white.withOpacity(0.1) 
+        : Colors.black.withOpacity(0.06));
+
+    final List<BoxShadow>? shadows = isDark ? null : [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.03),
+        blurRadius: 16,
+        offset: const Offset(0, 8),
+      ),
+    ];
+
+    final List<Color> gradColors = gradientColors ?? (isDark 
+        ? [Colors.white.withOpacity(0.1), Colors.white.withOpacity(0.01)]
+        : [Colors.white, Colors.white.withOpacity(0.85)]);
+
     return Container(
       margin: margin,
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        boxShadow: shadows,
+      ),
       child: ClipRRect(
         borderRadius: radius,
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+          filter: ImageFilter.blur(sigmaX: isDark ? blur : 0, sigmaY: isDark ? blur : 0),
           child: Container(
             padding: padding,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(opacity),
+              color: bgCol,
               borderRadius: radius,
               border: Border.all(
-                color: borderColor ?? Colors.white.withOpacity(0.1),
+                color: borderCol,
                 width: 1.5,
               ),
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: gradientColors ?? [
-                  Colors.white.withOpacity(0.1),
-                  Colors.white.withOpacity(0.01),
-                ],
+                colors: gradColors,
               ),
             ),
             child: child,
