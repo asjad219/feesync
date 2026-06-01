@@ -7,3 +7,6 @@ export 'account_profile.dart';
 export 'batch.dart';
 export 'attendance.dart';
 export 'schedule.dart';
+export 'local_settings.dart';
+export 'app_settings.dart';
+export 'notification_settings.dart';

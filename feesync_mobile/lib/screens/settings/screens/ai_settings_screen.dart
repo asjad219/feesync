@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../providers/settings_provider.dart';
+import '../../../providers/local_settings_provider.dart';
 import '../../../core/widgets/glass/glass_card.dart';
 import '../../../models/app_settings.dart';
 
@@ -28,6 +29,10 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
     _aiReminders = settings.aiRemindersEnabled;
     _aiPredictions = settings.aiPredictionsEnabled;
     _ocrEnabled = settings.ocrEnabled;
+    
+    final localSettings = ref.read(localSettingsProvider);
+    _confidenceThreshold = localSettings.aiConfidenceThreshold;
+    
     _isInitialized = true;
   }
 
@@ -41,6 +46,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
       };
 
       await ref.read(settingsProvider.notifier).updateMultipleSettings(updatedData);
+      await ref.read(localSettingsProvider.notifier).updateAiConfidenceThreshold(_confidenceThreshold);
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

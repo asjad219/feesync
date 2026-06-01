@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../models/user_profile.dart';
+import '../../models/app_settings.dart';
 import '../../core/widgets/glass/glass_card.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -24,6 +25,30 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to update theme: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    }
+  }
+
+  Future<void> _updateDashboardLayout(String layout) async {
+    try {
+      await ref.read(settingsProvider.notifier).updateSetting('dashboard_layout', layout);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update layout: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    }
+  }
+
+  Future<void> _updateGlassEffects(bool enabled) async {
+    try {
+      await ref.read(settingsProvider.notifier).updateSetting('glass_effects_enabled', enabled);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update glass effects: $e'), backgroundColor: AppColors.error),
         );
       }
     }
@@ -62,9 +87,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               data: (user) => _buildProfileHeader(user),
             ),
             const SizedBox(height: 24),
-            
-            _buildThemeSelector(settingsAsync.value?.themeMode ?? 'dark_luxury'),
-            const SizedBox(height: 24),
+            if (settingsAsync.value != null) ...[
+              _buildAppearanceSettings(settingsAsync.value!),
+              const SizedBox(height: 24),
+            ],
             
             _buildSectionHeader('Operational Settings'),
             const SizedBox(height: 12),
@@ -191,22 +217,142 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _buildThemeSelector(String currentTheme) {
-    final cleanTheme = currentTheme.toLowerCase();
-    
+  Widget _buildAppearanceSettings(AppSettings settings) {
+    final currentTheme = settings.themeMode.toLowerCase();
+    final currentLayout = settings.dashboardLayout.toLowerCase();
+    final glassEnabled = settings.glassEffectsEnabled;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Appearance Theme'),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            _buildThemeOption('dark_luxury', 'Dark Luxury', cleanTheme == 'dark_luxury'),
-            const SizedBox(width: 12),
-            _buildThemeOption('light', 'Light Mode', cleanTheme == 'light'),
-          ],
+        _buildSectionHeader('Appearance & Interface'),
+        const SizedBox(height: 12),
+        GlassCard(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Theme Mode',
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  _buildThemeOption('dark_luxury', 'Dark Luxury', currentTheme == 'dark_luxury'),
+                  const SizedBox(width: 12),
+                  _buildThemeOption('light', 'Light Mode', currentTheme == 'light'),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Divider(color: AppColors.outline.withValues(alpha: 0.1), height: 1),
+              const SizedBox(height: 16),
+              
+              // Dashboard Layout
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Dashboard Layout',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        'Choose home screen visual structure',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          color: AppColors.textTertiary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  _buildLayoutDropdown(currentLayout),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Divider(color: AppColors.outline.withValues(alpha: 0.1), height: 1),
+              const SizedBox(height: 8),
+
+              // Glassmorphism toggle
+              SwitchListTile.adaptive(
+                value: glassEnabled,
+                title: Text(
+                  'Glassmorphism Effects',
+                  style: GoogleFonts.inter(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+                subtitle: Text(
+                  'Enable blur and glass reflections on cards',
+                  style: GoogleFonts.inter(
+                    color: AppColors.textTertiary,
+                    fontSize: 11,
+                  ),
+                ),
+                activeThumbColor: AppColors.primary,
+                contentPadding: EdgeInsets.zero,
+                onChanged: _updateGlassEffects,
+              ),
+            ],
+          ),
         ),
       ],
+    );
+  }
+
+  Widget _buildLayoutDropdown(String currentLayout) {
+    final Map<String, String> layouts = {
+      'bento': 'Bento Grid',
+      'classic_list': 'Classic List',
+      'modern_grid': 'Modern Grid',
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainer.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.outline.withValues(alpha: 0.1),
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: layouts.containsKey(currentLayout) ? currentLayout : 'bento',
+          items: layouts.entries.map((e) {
+            return DropdownMenuItem<String>(
+              value: e.key,
+              child: Text(
+                e.value,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            );
+          }).toList(),
+          onChanged: (val) {
+            if (val != null) {
+              _updateDashboardLayout(val);
+            }
+          },
+          dropdownColor: AppColors.darkSurface,
+          icon: Icon(Icons.arrow_drop_down_rounded, color: AppColors.textSecondary),
+        ),
+      ),
     );
   }
 

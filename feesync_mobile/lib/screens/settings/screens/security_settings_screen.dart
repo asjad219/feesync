@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../providers/user_provider.dart';
+import '../../../providers/local_settings_provider.dart';
 import '../../../core/widgets/glass/glass_card.dart';
 
 class SecuritySettingsScreen extends ConsumerStatefulWidget {
@@ -14,10 +15,49 @@ class SecuritySettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SecuritySettingsScreenState extends ConsumerState<SecuritySettingsScreen> {
-  bool _biometricEnabled = true;
-  bool _pinLockEnabled = false;
-  bool _sessionAlerts = true;
   bool _isWipingCache = false;
+  bool _chromeSessionRevoked = false;
+
+  void _showRevokeDialog(String deviceName) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.darkSurface,
+        title: Text(
+          'Revoke Session',
+          style: GoogleFonts.manrope(color: AppColors.textPrimary, fontWeight: FontWeight.w800),
+        ),
+        content: Text(
+          'Are you sure you want to terminate the session on "$deviceName"? The user will be signed out immediately.',
+          style: GoogleFonts.inter(color: AppColors.textSecondary, fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: GoogleFonts.inter(color: AppColors.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() => _chromeSessionRevoked = true);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Session revoked successfully.', style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppColors.onSuccess)),
+                  backgroundColor: AppColors.success,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.errorContainer,
+              foregroundColor: AppColors.onErrorContainer,
+            ),
+            child: Text('Revoke', style: GoogleFonts.inter()),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _showDeleteAccountDialog(String accountId, String userId) {
     final reasonController = TextEditingController();
@@ -91,6 +131,7 @@ class _SecuritySettingsScreenState extends ConsumerState<SecuritySettingsScreen>
   void _wipeOfflineCache() async {
     setState(() => _isWipingCache = true);
     await Future.delayed(const Duration(seconds: 1)); // Simulate local file cache wiping
+    await ref.read(localSettingsProvider.notifier).resetAll();
     if (mounted) {
       setState(() => _isWipingCache = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -106,6 +147,7 @@ class _SecuritySettingsScreenState extends ConsumerState<SecuritySettingsScreen>
   @override
   Widget build(BuildContext context) {
     final userProfileAsync = ref.watch(currentUserProfileProvider);
+    final localSettings = ref.watch(localSettingsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.darkBg,
@@ -137,23 +179,23 @@ class _SecuritySettingsScreenState extends ConsumerState<SecuritySettingsScreen>
               child: Column(
                 children: [
                   SwitchListTile.adaptive(
-                    value: _biometricEnabled,
+                    value: localSettings.biometricEnabled,
                     title: Text('Biometric Authentication', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
                     subtitle: Text('Use FaceID/Fingerprint for fast secure logins', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
                     secondary: Icon(Icons.fingerprint_rounded, color: AppColors.primary),
                     activeThumbColor: AppColors.primary,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                    onChanged: (val) => setState(() => _biometricEnabled = val),
+                    onChanged: (val) => ref.read(localSettingsProvider.notifier).updateBiometricEnabled(val),
                   ),
                   Divider(color: AppColors.outline.withValues(alpha: 0.1), height: 1),
                   SwitchListTile.adaptive(
-                    value: _pinLockEnabled,
+                    value: localSettings.pinLockEnabled,
                     title: Text('App Lock PIN', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
                     subtitle: Text('Require a 4-digit PIN access lock upon startup', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
                     secondary: Icon(Icons.password_rounded, color: AppColors.primary),
                     activeThumbColor: AppColors.primary,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                    onChanged: (val) => setState(() => _pinLockEnabled = val),
+                    onChanged: (val) => ref.read(localSettingsProvider.notifier).updatePinLockEnabled(val),
                   ),
                 ],
               ),
@@ -167,16 +209,18 @@ class _SecuritySettingsScreenState extends ConsumerState<SecuritySettingsScreen>
               child: Column(
                 children: [
                   _buildDeviceTile('Android Mobile (This Device)', 'Active Session • New Delhi, India', true),
-                  Divider(color: AppColors.outline.withValues(alpha: 0.1), height: 16),
-                  _buildDeviceTile('Chrome Web Application', 'Active Session • California, USA', false),
+                  if (!_chromeSessionRevoked) ...[
+                    Divider(color: AppColors.outline.withValues(alpha: 0.1), height: 16),
+                    _buildDeviceTile('Chrome Web Application', 'Active Session • California, USA', false),
+                  ],
                   const SizedBox(height: 8),
                   SwitchListTile.adaptive(
-                    value: _sessionAlerts,
+                    value: localSettings.sessionAlertsEnabled,
                     title: Text('Unknown Device Login Alerts', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 13)),
                     subtitle: Text('Push alert when account is signed in on a new host', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
                     activeThumbColor: AppColors.primary,
                     contentPadding: EdgeInsets.zero,
-                    onChanged: (val) => setState(() => _sessionAlerts = val),
+                    onChanged: (val) => ref.read(localSettingsProvider.notifier).updateSessionAlertsEnabled(val),
                   ),
                 ],
               ),
@@ -301,7 +345,7 @@ class _SecuritySettingsScreenState extends ConsumerState<SecuritySettingsScreen>
         ),
         if (!current)
           TextButton(
-            onPressed: () {},
+            onPressed: () => _showRevokeDialog(name),
             style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(60, 30)),
             child: Text('Revoke', style: GoogleFonts.inter(color: AppColors.error, fontSize: 12, fontWeight: FontWeight.w600)),
           )
