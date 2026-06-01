@@ -152,15 +152,29 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
     final isEdit = widget.studentId != null;
     final batchesAsync = ref.watch(batchNotifierProvider);
 
+    final bool isDark = AppColors.isDarkMode;
+    final Color scaffoldBgColor = isDark ? const Color(0xFF0D0D1A) : const Color(0xFFF8FAFC);
+    final Color textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final Color primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
+
     return Scaffold(
-      backgroundColor: AppColors.darkBg,
+      backgroundColor: scaffoldBgColor,
       appBar: AppBar(
-        title: Text(isEdit ? 'Edit Student' : 'Add New Student', style: GoogleFonts.manrope(fontWeight: FontWeight.w800)),
+        backgroundColor: scaffoldBgColor,
+        elevation: 0,
+        iconTheme: IconThemeData(color: textPrimaryColor),
+        title: Text(
+          isEdit ? 'Edit Student' : 'Add New Student', 
+          style: GoogleFonts.manrope(fontWeight: FontWeight.w800, color: textPrimaryColor)
+        ),
         actions: [
           if (_isLoading)
-            const Center(child: Padding(padding: EdgeInsets.all(16), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))))
+            Center(child: Padding(padding: const EdgeInsets.all(16), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: primaryColor))))
           else
-            IconButton(onPressed: _saveStudent, icon: const Icon(Icons.check_rounded)),
+            IconButton(
+              onPressed: _saveStudent, 
+              icon: Icon(Icons.check_rounded, color: textPrimaryColor)
+            ),
         ],
       ),
       body: SingleChildScrollView(
@@ -221,6 +235,7 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
   }
 
   Future<void> _selectJoiningDate() async {
+    final bool isDark = AppColors.isDarkMode;
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _joiningDate,
@@ -229,12 +244,19 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: AppColors.primary,
-              onPrimary: Colors.black,
-              surface: AppColors.surfaceContainerHigh,
-              onSurface: Colors.white,
-            ),
+            colorScheme: isDark 
+                ? const ColorScheme.dark(
+                    primary: AppColors.primary,
+                    onPrimary: Colors.black,
+                    surface: Color(0xFF1E1E2C),
+                    onSurface: Colors.white,
+                  )
+                : const ColorScheme.light(
+                    primary: AppColors.primary,
+                    onPrimary: Colors.white,
+                    surface: Color(0xFFFFFFFF),
+                    onSurface: Colors.black,
+                  ),
           ),
           child: child!,
         );
@@ -248,27 +270,38 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
   }
 
   Widget _buildDatePicker({required String label, required DateTime date, required VoidCallback onTap}) {
+    final bool isDark = AppColors.isDarkMode;
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+    final surfaceColor = isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: AppColors.textTertiary)),
+        Text(
+          label, 
+          style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: textTertiaryColor)
+        ),
         const SizedBox(height: 8),
         InkWell(
           onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 15),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
             decoration: BoxDecoration(
-              color: AppColors.surfaceContainer.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withOpacity(0.1)),
+              color: surfaceColor.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.08)
+              ),
             ),
             child: Row(
               children: [
-                const Icon(Icons.calendar_today_rounded, size: 18, color: AppColors.textTertiary),
+                Icon(Icons.calendar_today_rounded, size: 18, color: textTertiaryColor),
                 const SizedBox(width: 12),
                 Text(
                   "${date.day}/${date.month}/${date.year}",
-                  style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w500, color: AppColors.textPrimary),
+                  style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w500, color: textPrimaryColor),
                 ),
               ],
             ),
@@ -279,34 +312,47 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
   }
 
   Widget _buildBatchDropdown(AsyncValue<List<Batch>> batchesAsync) {
+    final bool isDark = AppColors.isDarkMode;
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+    final surfaceColor = isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF);
+    final dropdownBgColor = isDark ? const Color(0xFF292937) : const Color(0xFFFFFFFF);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('BATCH / CLASS', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: AppColors.textTertiary)),
+        Text(
+          'BATCH / CLASS', 
+          style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: textTertiaryColor)
+        ),
         const SizedBox(height: 8),
         batchesAsync.when(
           data: (batches) => Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            height: 50,
             decoration: BoxDecoration(
-              color: AppColors.surfaceContainer.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withOpacity(0.1)),
+              color: surfaceColor.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.08)
+              ),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: _selectedBatchId,
-                hint: Text('Select Batch', style: TextStyle(color: AppColors.textTertiary, fontSize: 14)),
+                hint: Text('Select Batch', style: TextStyle(color: textTertiaryColor.withOpacity(0.5), fontSize: 14)),
                 isExpanded: true,
-                dropdownColor: AppColors.surfaceContainerHigh,
+                dropdownColor: dropdownBgColor,
+                icon: Icon(Icons.arrow_drop_down_rounded, color: textTertiaryColor),
                 items: batches.map((b) => DropdownMenuItem(
                   value: b.id.toString(),
-                  child: Text(b.name, style: const TextStyle(color: Colors.white, fontSize: 15)),
+                  child: Text(b.name, style: TextStyle(color: textPrimaryColor, fontSize: 15)),
                 )).toList(),
                 onChanged: (val) => setState(() => _selectedBatchId = val),
               ),
             ),
           ),
-          loading: () => const LinearProgressIndicator(),
+          loading: () => const SizedBox(height: 50, child: Center(child: LinearProgressIndicator())),
           error: (_, _) => const Text('Error loading batches', style: TextStyle(color: Colors.red)),
         ),
       ],
@@ -314,20 +360,54 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
   }
 
   Widget _buildField({required String label, required TextEditingController controller, required String hint, required IconData icon, int maxLines = 1, TextInputType? keyboardType}) {
+    final bool isDark = AppColors.isDarkMode;
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+    final surfaceColor = isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF);
+    final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: AppColors.textTertiary)),
+        Text(
+          label, 
+          style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: textTertiaryColor)
+        ),
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
           maxLines: maxLines,
           keyboardType: keyboardType,
-          style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w500, color: AppColors.textPrimary),
+          style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w500, color: textPrimaryColor),
           decoration: InputDecoration(
             hintText: hint,
-            prefixIcon: Icon(icon, size: 20, color: AppColors.textTertiary),
-            fillColor: AppColors.surfaceContainer.withOpacity(0.5),
+            prefixIcon: Icon(icon, size: 20, color: textTertiaryColor),
+            fillColor: surfaceColor.withOpacity(0.5),
+            filled: true,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(
+                color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.08)
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(
+                color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.08)
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(
+                color: primaryColor,
+                width: 1.5,
+              ),
+            ),
+            hintStyle: TextStyle(
+              color: textTertiaryColor.withOpacity(0.5),
+              fontSize: 14,
+            ),
           ),
           validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
         ),
@@ -336,10 +416,16 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
   }
 
   Widget _buildGenderPicker() {
+    final bool isDark = AppColors.isDarkMode;
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('GENDER', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: AppColors.textTertiary)),
+        Text(
+          'GENDER', 
+          style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: textTertiaryColor)
+        ),
         const SizedBox(height: 12),
         Row(
           children: Gender.values.map((g) => Padding(
@@ -358,11 +444,33 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
   Widget _buildSaveButton() {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(gradient: AppGradients.primary, borderRadius: BorderRadius.circular(24), boxShadow: [BoxShadow(color: AppColors.primaryContainer.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 8))]),
+      height: 56,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF2563EB), Color(0xFF7C3AED)],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF2563EB).withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
       child: ElevatedButton(
         onPressed: _isLoading ? null : _saveStudent,
-        style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent),
-        child: Text(_isLoading ? 'SAVING...' : (widget.studentId == null ? 'CREATE STUDENT' : 'SAVE CHANGES')),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent, 
+          shadowColor: Colors.transparent,
+          foregroundColor: Colors.white,
+        ),
+        child: Text(
+          _isLoading ? 'SAVING...' : (widget.studentId == null ? 'CREATE STUDENT' : 'SAVE CHANGES'),
+          style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+        ),
       ),
     );
   }
@@ -375,12 +483,16 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = AppColors.isDarkMode;
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+        Text(title, style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w800, color: textPrimaryColor)),
         const SizedBox(height: 4),
-        Text(subtitle, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textTertiary)),
+        Text(subtitle, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500, color: textTertiaryColor)),
       ],
     );
   }

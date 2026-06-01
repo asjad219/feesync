@@ -73,7 +73,9 @@ class StudentCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surfaceContainer.withOpacity(0.5),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withOpacity(0.05)),
+          border: Border.all(
+            color: AppColors.isDarkMode ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.08)
+          ),
         ),
         child: Row(
           children: [
@@ -154,6 +156,7 @@ class FilterChipButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = AppColors.isDarkMode;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -162,7 +165,9 @@ class FilterChipButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primaryContainer : AppColors.surfaceContainer,
           borderRadius: BorderRadius.circular(99),
-          border: isSelected ? null : Border.all(color: Colors.white.withOpacity(0.05)),
+          border: isSelected ? null : Border.all(
+            color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.08)
+          ),
         ),
         child: Text(
           label,

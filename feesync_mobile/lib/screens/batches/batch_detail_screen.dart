@@ -35,9 +35,11 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
   @override
   Widget build(BuildContext context) {
     final batchAsync = ref.watch(batchByIdProvider(widget.batchId));
+    final bool isDark = AppColors.isDarkMode;
+    final Color scaffoldBgColor = isDark ? const Color(0xFF0D0D1A) : const Color(0xFFF8FAFC);
 
     return Scaffold(
-      backgroundColor: AppColors.darkBg,
+      backgroundColor: scaffoldBgColor,
       body: batchAsync.when(
         data: (batch) => batch == null 
             ? const Center(child: Text('Batch not found')) 
@@ -78,10 +80,16 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
   }
 
   Widget _buildHeroHeader(Batch batch) {
+    final bool isDark = AppColors.isDarkMode;
+    final scaffoldBgColor = isDark ? const Color(0xFF0D0D1A) : const Color(0xFFF8FAFC);
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final textSecondaryColor = isDark ? const Color(0xFFC3C6D7) : const Color(0xFF475569);
+
     return SliverAppBar(
       expandedHeight: 340,
       pinned: true,
-      backgroundColor: AppColors.darkBg,
+      backgroundColor: scaffoldBgColor,
+      iconTheme: IconThemeData(color: textPrimaryColor),
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
           fit: StackFit.expand,
@@ -95,7 +103,7 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
                 height: 300,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: batch.color.withOpacity(0.2),
+                  color: batch.color.withOpacity(isDark ? 0.2 : 0.15),
                 ),
               ),
             ),
@@ -123,7 +131,7 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
                   Text(
                     batch.name,
                     style: GoogleFonts.manrope(
-                      color: Colors.white,
+                      color: textPrimaryColor,
                       fontSize: 32,
                       fontWeight: FontWeight.w800,
                     ),
@@ -131,7 +139,7 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
                   Text(
                     '${batch.subject} • ${batch.teacherName}',
                     style: GoogleFonts.inter(
-                      color: Colors.white.withOpacity(0.5),
+                      color: textSecondaryColor,
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                     ),
@@ -156,6 +164,8 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
   }
 
   Widget _buildStickyTabBar(Color accentColor) {
+    final bool isDark = AppColors.isDarkMode;
+    final Color unselectedLabelColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
     return SliverPersistentHeader(
       pinned: true,
       delegate: _SliverAppBarDelegate(
@@ -167,7 +177,7 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
           labelPadding: const EdgeInsets.symmetric(horizontal: 20),
           indicatorColor: accentColor,
           labelColor: accentColor,
-          unselectedLabelColor: Colors.white.withOpacity(0.4),
+          unselectedLabelColor: unselectedLabelColor,
           indicatorSize: TabBarIndicatorSize.label,
           dividerColor: Colors.transparent,
           indicator: UnderlineTabIndicator(
@@ -204,6 +214,8 @@ class _AiHealthScore extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = AppColors.isDarkMode;
+    final Color healthColor = isDark ? const Color(0xFF10B981) : const Color(0xFF059669);
     return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       borderRadius: BorderRadius.circular(12),
@@ -211,11 +223,11 @@ class _AiHealthScore extends StatelessWidget {
         children: [
           Text(
             '$score',
-            style: GoogleFonts.manrope(color: Colors.greenAccent, fontSize: 18, fontWeight: FontWeight.w800),
+            style: GoogleFonts.manrope(color: healthColor, fontSize: 18, fontWeight: FontWeight.w800),
           ),
           Text(
             'HEALTH',
-            style: GoogleFonts.inter(color: Colors.greenAccent.withOpacity(0.6), fontSize: 8, fontWeight: FontWeight.w700),
+            style: GoogleFonts.inter(color: healthColor.withOpacity(0.6), fontSize: 8, fontWeight: FontWeight.w700),
           ),
         ],
       ),
@@ -230,11 +242,15 @@ class _HeaderStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = AppColors.isDarkMode;
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: GoogleFonts.inter(color: Colors.white.withOpacity(0.4), fontSize: 12)),
-        Text(value, style: GoogleFonts.manrope(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+        Text(label, style: GoogleFonts.inter(color: textTertiaryColor, fontSize: 12)),
+        Text(value, style: GoogleFonts.manrope(color: textPrimaryColor, fontSize: 18, fontWeight: FontWeight.w700)),
       ],
     );
   }
@@ -252,8 +268,10 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    final bool isDark = AppColors.isDarkMode;
+    final scaffoldBgColor = isDark ? const Color(0xFF0D0D1A) : const Color(0xFFF8FAFC);
     return Container(
-      color: AppColors.darkBg,
+      color: scaffoldBgColor,
       child: _tabBar,
     );
   }
@@ -328,10 +346,12 @@ class _OverviewTab extends StatelessWidget {
   }
 
   Widget _buildSectionHeader(String title) {
+    final bool isDark = AppColors.isDarkMode;
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title, style: GoogleFonts.manrope(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+        Text(title, style: GoogleFonts.manrope(color: textPrimaryColor, fontSize: 18, fontWeight: FontWeight.w700)),
         TextButton(
           onPressed: () {}, 
           style: TextButton.styleFrom(foregroundColor: batch.color),
@@ -357,6 +377,8 @@ class _QuickAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = AppColors.isDarkMode;
+    final textSecondaryColor = isDark ? const Color(0xFFC3C6D7) : const Color(0xFF475569);
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -372,7 +394,7 @@ class _QuickAction extends StatelessWidget {
             child: Icon(icon, color: color),
           ),
           const SizedBox(height: 8),
-          Text(label, style: GoogleFonts.inter(color: Colors.white70, fontSize: 11)),
+          Text(label, style: GoogleFonts.inter(color: textSecondaryColor, fontSize: 11)),
         ],
       ),
     );
@@ -386,13 +408,16 @@ class _StudentsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final studentsAsync = ref.watch(batchStudentsProvider(batchId));
+    final bool isDark = AppColors.isDarkMode;
+    final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
+
     return studentsAsync.when(
       data: (students) => ListView.builder(
         padding: const EdgeInsets.all(20),
         itemCount: students.length,
         itemBuilder: (context, index) => _StudentListTile(student: students[index]),
       ),
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => Center(child: CircularProgressIndicator(color: primaryColor)),
       error: (err, _) => Center(child: Text('Error: $err')),
     );
   }
@@ -404,6 +429,11 @@ class _StudentListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = AppColors.isDarkMode;
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+    final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
+
     return InkWell(
       onTap: () => context.push('/students/${student.id}'),
       borderRadius: BorderRadius.circular(16),
@@ -413,22 +443,29 @@ class _StudentListTile extends StatelessWidget {
         child: Row(
           children: [
             CircleAvatar(
-              backgroundColor: AppColors.primary.withOpacity(0.2),
-              child: Text(student.firstName[0], style: const TextStyle(color: AppColors.primary)),
+              backgroundColor: primaryColor.withOpacity(0.2),
+              child: Text(student.firstName[0], style: TextStyle(color: primaryColor)),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${student.firstName} ${student.lastName}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  Text('${student.firstName} ${student.lastName}', style: TextStyle(color: textPrimaryColor, fontWeight: FontWeight.bold)),
                   if (student.rollNumber != null && student.rollNumber!.isNotEmpty)
-                    Text('Roll No: ${student.rollNumber}', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 11)),
-                  Text('Dues: ₹${student.balance}', style: TextStyle(color: student.balance > 0 ? Colors.redAccent : Colors.greenAccent, fontSize: 12)),
+                    Text('Roll No: ${student.rollNumber}', style: TextStyle(color: textTertiaryColor, fontSize: 11)),
+                  Text(
+                    'Dues: ₹${student.balance}', 
+                    style: TextStyle(
+                      color: student.balance > 0 ? const Color(0xFFEF4444) : const Color(0xFF10B981), 
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: Colors.white24),
+            Icon(Icons.chevron_right, color: textTertiaryColor),
           ],
         ),
       ),
@@ -462,11 +499,13 @@ class _AttendanceTabState extends ConsumerState<_AttendanceTab> {
   }
 
   Widget _buildViewToggle() {
+    final bool isDark = AppColors.isDarkMode;
+    final surfaceContainerColor = isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF);
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainer.withOpacity(0.5),
+        color: surfaceContainerColor.withOpacity(0.5),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -496,15 +535,19 @@ class _ToggleItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = AppColors.isDarkMode;
+    final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
+            color: isSelected ? primaryColor.withOpacity(0.1) : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
-            border: isSelected ? Border.all(color: AppColors.primary.withOpacity(0.3)) : null,
+            border: isSelected ? Border.all(color: primaryColor.withOpacity(0.3)) : null,
           ),
           child: Text(
             label,
@@ -512,7 +555,7 @@ class _ToggleItem extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              color: isSelected ? AppColors.primary : AppColors.textTertiary,
+              color: isSelected ? primaryColor : textTertiaryColor,
             ),
           ),
         ),
@@ -529,6 +572,8 @@ class _MarkAttendanceView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final studentsAsync = ref.watch(batchStudentsProvider(batchId));
     final attendanceState = ref.watch(dailyAttendanceProvider(batchId));
+    final bool isDark = AppColors.isDarkMode;
+    final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
 
     return Column(
       children: [
@@ -579,7 +624,7 @@ class _MarkAttendanceView extends ConsumerWidget {
                 batchId: batchId,
               ),
             ),
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => Center(child: CircularProgressIndicator(color: primaryColor)),
             error: (err, _) => Center(child: Text('Error: $err')),
           ),
         ),
@@ -588,6 +633,10 @@ class _MarkAttendanceView extends ConsumerWidget {
   }
 
   Widget _buildAttendanceHeader(BuildContext context, WidgetRef ref, List<StudentBalance> students) {
+    final bool isDark = AppColors.isDarkMode;
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+
     return Padding(
       padding: const EdgeInsets.all(20),
       child: GlassCard(
@@ -600,9 +649,9 @@ class _MarkAttendanceView extends ConsumerWidget {
               children: [
                 Text(
                   DateFormat('EEEE, MMM d').format(DateTime.now()),
-                  style: GoogleFonts.manrope(color: Colors.white, fontWeight: FontWeight.bold),
+                  style: GoogleFonts.manrope(color: textPrimaryColor, fontWeight: FontWeight.bold),
                 ),
-                Text('Daily Roster', style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
+                Text('Daily Roster', style: GoogleFonts.inter(color: textTertiaryColor, fontSize: 12)),
               ],
             ),
             ElevatedButton.icon(
@@ -632,6 +681,9 @@ class _AttendanceHistoryView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final historyAsync = ref.watch(batchAttendanceProvider(batchId));
+    final studentsAsync = ref.watch(batchStudentsProvider(batchId));
+    final bool isDark = AppColors.isDarkMode;
+    final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
 
     return historyAsync.when(
       data: (records) {
@@ -645,6 +697,10 @@ class _AttendanceHistoryView extends ConsumerWidget {
         }
 
         final sortedDates = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
+        final students = studentsAsync.value ?? [];
+        final Map<String, String> studentNames = {
+          for (var s in students) s.id: '${s.firstName} ${s.lastName}'
+        };
 
         return ListView.builder(
           padding: const EdgeInsets.all(20),
@@ -659,36 +715,38 @@ class _AttendanceHistoryView extends ConsumerWidget {
               date: date,
               presentCount: presentCount,
               totalCount: dayRecords.length,
-              onTap: () => _showSessionDetails(context, date, dayRecords),
+              onTap: () => _showSessionDetails(context, date, dayRecords, studentNames),
             );
           },
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => Center(child: CircularProgressIndicator(color: primaryColor)),
       error: (e, _) => Center(child: Text('Error: $e')),
     );
   }
 
   Widget _buildEmptyHistory() {
+    final bool isDark = AppColors.isDarkMode;
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.history_rounded, size: 48, color: AppColors.textTertiary.withOpacity(0.2)),
+          Icon(Icons.history_rounded, size: 48, color: textTertiaryColor.withOpacity(0.2)),
           const SizedBox(height: 16),
-          Text('No history records yet', style: GoogleFonts.inter(color: AppColors.textTertiary)),
+          Text('No history records yet', style: GoogleFonts.inter(color: textTertiaryColor)),
         ],
       ),
     );
   }
 
-  void _showSessionDetails(BuildContext context, DateTime date, List<AttendanceRecord> records) {
+  void _showSessionDetails(BuildContext context, DateTime date, List<AttendanceRecord> records, Map<String, String> studentNames) {
     final bool isDark = AppColors.isDarkMode;
     showModalBottomSheet(
       context: context,
       backgroundColor: isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (context) => _SessionDetailsSheet(date: date, records: records),
+      builder: (context) => _SessionDetailsSheet(date: date, records: records, studentNames: studentNames),
     );
   }
 }
@@ -709,7 +767,12 @@ class _HistoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final percentage = (presentCount / totalCount * 100).toInt();
-    final healthColor = percentage > 80 ? Colors.greenAccent : (percentage > 50 ? Colors.orangeAccent : Colors.redAccent);
+    final bool isDark = AppColors.isDarkMode;
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+    final healthColor = percentage > 80 
+        ? const Color(0xFF10B981) 
+        : (percentage > 50 ? const Color(0xFFF59E0B) : const Color(0xFFEF4444));
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -730,7 +793,11 @@ class _HistoryCard extends StatelessWidget {
                 child: Center(
                   child: Text(
                     '$percentage%',
-                    style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w800, color: healthColor),
+                    style: GoogleFonts.inter(
+                      fontSize: 12, 
+                      fontWeight: FontWeight.w800, 
+                      color: healthColor,
+                    ),
                   ),
                 ),
               ),
@@ -741,16 +808,16 @@ class _HistoryCard extends StatelessWidget {
                   children: [
                     Text(
                       DateFormat('EEEE, MMM d').format(date),
-                      style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: textPrimaryColor),
                     ),
                     Text(
                       '$presentCount Present • ${totalCount - presentCount} Absent',
-                      style: GoogleFonts.inter(fontSize: 12, color: AppColors.textTertiary),
+                      style: GoogleFonts.inter(fontSize: 12, color: textTertiaryColor),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded, color: AppColors.textTertiary),
+              Icon(Icons.chevron_right_rounded, color: textTertiaryColor),
             ],
           ),
         ),
@@ -762,8 +829,13 @@ class _HistoryCard extends StatelessWidget {
 class _SessionDetailsSheet extends StatelessWidget {
   final DateTime date;
   final List<AttendanceRecord> records;
+  final Map<String, String> studentNames;
 
-  const _SessionDetailsSheet({required this.date, required this.records});
+  const _SessionDetailsSheet({
+    required this.date,
+    required this.records,
+    required this.studentNames,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -798,6 +870,7 @@ class _SessionDetailsSheet extends StatelessWidget {
               itemBuilder: (context, index) {
                 final r = records[index];
                 final isPresent = r.status == AttendanceStatus.present;
+                final studentName = studentNames[r.studentId] ?? 'Student';
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Row(
@@ -813,7 +886,7 @@ class _SessionDetailsSheet extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Student', // Ideally fetch name from a map or student repository
+                              studentName,
                               style: TextStyle(color: textPrimaryColor),
                             ),
                           ],
@@ -841,6 +914,9 @@ class _AttendanceRosterTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final status = ref.watch(dailyAttendanceProvider(batchId).select((s) => s.statuses[student.id]));
+    final bool isDark = AppColors.isDarkMode;
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -852,12 +928,12 @@ class _AttendanceRosterTile extends ConsumerWidget {
               children: [
                 Text(
                   '${student.firstName} ${student.lastName}',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                  style: TextStyle(color: textPrimaryColor, fontWeight: FontWeight.w500),
                 ),
                 if (student.rollNumber != null && student.rollNumber!.isNotEmpty)
                   Text(
                     'Roll No: ${student.rollNumber}',
-                    style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 11),
+                    style: TextStyle(color: textTertiaryColor, fontSize: 11),
                   ),
               ],
             ),
@@ -867,14 +943,14 @@ class _AttendanceRosterTile extends ConsumerWidget {
               _StatusToggle(
                 label: 'P',
                 isSelected: status == AttendanceStatus.present,
-                activeColor: Colors.greenAccent,
+                activeColor: const Color(0xFF10B981),
                 onTap: () => ref.read(dailyAttendanceProvider(batchId).notifier).setStatus(student.id, AttendanceStatus.present),
               ),
               const SizedBox(width: 8),
               _StatusToggle(
                 label: 'A',
                 isSelected: status == AttendanceStatus.absent,
-                activeColor: Colors.redAccent,
+                activeColor: const Color(0xFFEF4444),
                 onTap: () => ref.read(dailyAttendanceProvider(batchId).notifier).setStatus(student.id, AttendanceStatus.absent),
               ),
             ],
@@ -900,6 +976,7 @@ class _StatusToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = AppColors.isDarkMode;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -908,14 +985,16 @@ class _StatusToggle extends StatelessWidget {
         height: 36,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isSelected ? activeColor : Colors.white.withOpacity(0.05),
+          color: isSelected ? activeColor : (isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.04)),
           shape: BoxShape.circle,
-          border: Border.all(color: isSelected ? activeColor : Colors.white.withOpacity(0.1)),
+          border: Border.all(
+            color: isSelected ? activeColor : (isDark ? Colors.white.withOpacity(0.1) : Colors.black.withValues(alpha: 0.08)),
+          ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.black : Colors.white54,
+            color: isSelected ? (isDark ? Colors.black : Colors.white) : (isDark ? Colors.white54 : Colors.black54),
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -931,11 +1010,15 @@ class _FeesTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final studentsAsync = ref.watch(batchStudentsProvider(batchId));
+    final bool isDark = AppColors.isDarkMode;
+    final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
 
     return studentsAsync.when(
       data: (students) {
         if (students.isEmpty) {
-          return const Center(child: Text('No students in this batch', style: TextStyle(color: AppColors.textTertiary)));
+          return Center(child: Text('No students in this batch', style: TextStyle(color: textTertiaryColor)));
         }
 
         // Calculate Stats
@@ -959,6 +1042,7 @@ class _FeesTab extends ConsumerWidget {
 
         return RefreshIndicator(
           onRefresh: () async => ref.invalidate(batchStudentsProvider(batchId)),
+          color: primaryColor,
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             physics: const AlwaysScrollableScrollPhysics(),
@@ -970,10 +1054,11 @@ class _FeesTab extends ConsumerWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Defaulters', style: GoogleFonts.manrope(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+                    Text('Defaulters', style: GoogleFonts.manrope(color: textPrimaryColor, fontSize: 18, fontWeight: FontWeight.w700)),
                     if (defaulters.isNotEmpty)
                       TextButton(
                         onPressed: () => _sendBulkReminders(context, defaulters),
+                        style: TextButton.styleFrom(foregroundColor: primaryColor),
                         child: const Text('Send All Reminders'),
                       ),
                   ],
@@ -982,7 +1067,7 @@ class _FeesTab extends ConsumerWidget {
                 if (defaulters.isEmpty)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 40),
-                    child: Center(child: Text('Great job! No pending dues.', style: TextStyle(color: Colors.greenAccent))),
+                    child: Center(child: Text('Great job! No pending dues.', style: TextStyle(color: Color(0xFF10B981)))),
                   )
                 else
                   Column(
@@ -993,7 +1078,7 @@ class _FeesTab extends ConsumerWidget {
           ),
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => Center(child: CircularProgressIndicator(color: primaryColor)),
       error: (e, _) => Center(child: Text('Error: $e')),
     );
   }
@@ -1004,9 +1089,9 @@ class _FeesTab extends ConsumerWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _CircleProgress(value: collection, label: 'Collection', color: Colors.blueAccent),
-          _CircleProgress(value: defaulters, label: 'Defaulters', color: Colors.redAccent),
-          _CircleProgress(value: pending, label: 'Pending', color: Colors.orangeAccent),
+          _CircleProgress(value: collection, label: 'Collection', color: const Color(0xFF2563EB)),
+          _CircleProgress(value: defaulters, label: 'Defaulters', color: const Color(0xFFEF4444)),
+          _CircleProgress(value: pending, label: 'Pending', color: const Color(0xFFF59E0B)),
         ],
       ),
     );
@@ -1059,6 +1144,10 @@ class _CircleProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = AppColors.isDarkMode;
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+
     return Column(
       children: [
         SizedBox(
@@ -1073,12 +1162,21 @@ class _CircleProgress extends StatelessWidget {
                 backgroundColor: color.withOpacity(0.1),
                 valueColor: AlwaysStoppedAnimation(color),
               ),
-              Center(child: Text('${(value * 100).toInt()}%', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Colors.white))),
+              Center(
+                child: Text(
+                  '${(value * 100).toInt()}%', 
+                  style: TextStyle(
+                    fontSize: 14, 
+                    fontWeight: FontWeight.w800, 
+                    color: textPrimaryColor,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
         const SizedBox(height: 8),
-        Text(label, style: GoogleFonts.inter(fontSize: 11, color: AppColors.textTertiary, fontWeight: FontWeight.w500)),
+        Text(label, style: GoogleFonts.inter(fontSize: 11, color: textTertiaryColor, fontWeight: FontWeight.w500)),
       ],
     );
   }
@@ -1090,6 +1188,11 @@ class _DefaulterTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = AppColors.isDarkMode;
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+    final surfaceContainerLowColor = isDark ? const Color(0xFF1A1A28) : const Color(0xFFF8FAFC);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
@@ -1101,23 +1204,23 @@ class _DefaulterTile extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 18,
-                backgroundColor: AppColors.surfaceContainerLow,
-                child: Text(student.firstName[0], style: const TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+                backgroundColor: surfaceContainerLowColor,
+                child: Text(student.firstName[0], style: TextStyle(fontSize: 12, color: textTertiaryColor)),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   student.fullName,
-                  style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Colors.white),
+                  style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: textPrimaryColor),
                 ),
               ),
               Text(
                 '₹${NumberFormat('#,###').format(student.balance)}',
-                style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w800),
+                style: const TextStyle(color: Color(0xFFEF4444), fontWeight: FontWeight.w800),
               ),
               const SizedBox(width: 12),
               IconButton(
-                icon: const Icon(Icons.send_rounded, size: 20, color: Colors.blueAccent),
+                icon: const Icon(Icons.send_rounded, size: 20, color: Color(0xFF2563EB)),
                 onPressed: () => _showSingleReminder(context),
               ),
             ],
@@ -1242,10 +1345,13 @@ class _AnalyticsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final analyticsAsync = ref.watch(batchAnalyticsProvider(batchId));
+    final bool isDark = AppColors.isDarkMode;
+    final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
 
     return analyticsAsync.when(
       data: (analytics) => RefreshIndicator(
         onRefresh: () async => ref.invalidate(batchAnalyticsProvider(batchId)),
+        color: primaryColor,
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           physics: const AlwaysScrollableScrollPhysics(),
@@ -1263,18 +1369,22 @@ class _AnalyticsTab extends ConsumerWidget {
           ),
         ),
       ),
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => Center(child: CircularProgressIndicator(color: primaryColor)),
       error: (e, _) => Center(child: Text('Error: $e')),
     );
   }
 
   Widget _buildAttendanceTrend(BatchAnalytics data) {
+    final bool isDark = AppColors.isDarkMode;
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+
     return GlassCard(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Attendance Trend', style: GoogleFonts.manrope(fontWeight: FontWeight.bold, color: Colors.white)),
+          Text('Attendance Trend', style: GoogleFonts.manrope(fontWeight: FontWeight.bold, color: textPrimaryColor)),
           const SizedBox(height: 24),
           if (data.attendanceTrend.isEmpty)
             _buildEmptyState('No attendance recorded yet')
@@ -1298,13 +1408,13 @@ class _AnalyticsTab extends ConsumerWidget {
                             gradient: LinearGradient(
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
-                              colors: [Colors.greenAccent, Colors.greenAccent.withOpacity(0.3)],
+                              colors: [const Color(0xFF10B981), const Color(0xFF10B981).withOpacity(0.3)],
                             ),
                             borderRadius: BorderRadius.circular(6),
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Text(DateFormat('E').format(e.key), style: const TextStyle(fontSize: 9, color: Colors.white38)),
+                        Text(DateFormat('E').format(e.key), style: TextStyle(fontSize: 9, color: textTertiaryColor)),
                       ],
                     ),
                   );
@@ -1317,12 +1427,16 @@ class _AnalyticsTab extends ConsumerWidget {
   }
 
   Widget _buildCollectionTrend(BatchAnalytics data) {
+    final bool isDark = AppColors.isDarkMode;
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+
     return GlassCard(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Collection Trend', style: GoogleFonts.manrope(fontWeight: FontWeight.bold, color: Colors.white)),
+          Text('Collection Trend', style: GoogleFonts.manrope(fontWeight: FontWeight.bold, color: textPrimaryColor)),
           const SizedBox(height: 24),
           if (data.collectionTrend.isEmpty)
             _buildEmptyState('No collections recorded yet')
@@ -1349,13 +1463,13 @@ class _AnalyticsTab extends ConsumerWidget {
                             gradient: LinearGradient(
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
-                              colors: [Colors.blueAccent, Colors.blueAccent.withOpacity(0.3)],
+                              colors: [const Color(0xFF2563EB), const Color(0xFF2563EB).withOpacity(0.3)],
                             ),
                             borderRadius: BorderRadius.circular(6),
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Text(e.key, style: const TextStyle(fontSize: 9, color: Colors.white38)),
+                        Text(e.key, style: TextStyle(fontSize: 9, color: textTertiaryColor)),
                       ],
                     ),
                   );
@@ -1368,6 +1482,10 @@ class _AnalyticsTab extends ConsumerWidget {
   }
 
   Widget _buildStudentMetrics(BatchAnalytics data) {
+    final bool isDark = AppColors.isDarkMode;
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final textSecondaryColor = isDark ? const Color(0xFFC3C6D7) : const Color(0xFF475569);
+
     return Row(
       children: [
         Expanded(
@@ -1376,9 +1494,9 @@ class _AnalyticsTab extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Total Students', style: GoogleFonts.inter(fontSize: 10, color: Colors.white54, fontWeight: FontWeight.bold)),
+                Text('Total Students', style: GoogleFonts.inter(fontSize: 10, color: textSecondaryColor, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                Text('${data.genderDistribution.values.fold(0, (a, b) => a + b)}', style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white)),
+                Text('${data.genderDistribution.values.fold(0, (a, b) => a + b)}', style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w800, color: textPrimaryColor)),
               ],
             ),
           ),
@@ -1390,15 +1508,15 @@ class _AnalyticsTab extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Gender Ratio', style: GoogleFonts.inter(fontSize: 10, color: Colors.white54, fontWeight: FontWeight.bold)),
+                Text('Gender Ratio', style: GoogleFonts.inter(fontSize: 10, color: textSecondaryColor, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Icon(Icons.male, size: 14, color: Colors.blueAccent),
-                    Text('${data.genderDistribution['Male'] ?? 0}', style: const TextStyle(fontSize: 14, color: Colors.white)),
+                    const Icon(Icons.male, size: 14, color: Color(0xFF2563EB)),
+                    Text('${data.genderDistribution['Male'] ?? 0}', style: TextStyle(fontSize: 14, color: textPrimaryColor)),
                     const SizedBox(width: 8),
-                    const Icon(Icons.female, size: 14, color: Colors.pinkAccent),
-                    Text('${data.genderDistribution['Female'] ?? 0}', style: const TextStyle(fontSize: 14, color: Colors.white)),
+                    const Icon(Icons.female, size: 14, color: Color(0xFFEC4899)),
+                    Text('${data.genderDistribution['Female'] ?? 0}', style: TextStyle(fontSize: 14, color: textPrimaryColor)),
                   ],
                 ),
               ],
@@ -1431,23 +1549,27 @@ class _AnalyticsTab extends ConsumerWidget {
   }
 
   Widget _InsightRow(String text) {
+    final bool isDark = AppColors.isDarkMode;
+    final textSecondaryColor = isDark ? const Color(0xFFC3C6D7) : const Color(0xFF475569);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('• ', style: TextStyle(color: accentColor, fontWeight: FontWeight.bold)),
-          Expanded(child: Text(text, style: const TextStyle(fontSize: 13, color: Colors.white70, height: 1.4))),
+          Expanded(child: Text(text, style: TextStyle(fontSize: 13, color: textSecondaryColor, height: 1.4))),
         ],
       ),
     );
   }
 
   Widget _buildEmptyState(String msg) {
+    final bool isDark = AppColors.isDarkMode;
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Text(msg, style: const TextStyle(color: Colors.white24, fontSize: 12)),
+        child: Text(msg, style: TextStyle(color: textTertiaryColor.withOpacity(0.5), fontSize: 12)),
       ),
     );
   }
