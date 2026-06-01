@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/glass/glass_card.dart';
 import '../../../providers/batch_provider.dart';
 import '../../../providers/user_provider.dart';
 
@@ -38,6 +37,7 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
   }
 
   Future<void> _selectTime(bool isStart) async {
+    final bool isDark = AppColors.isDarkMode;
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: isStart ? _startTime : _endTime,
@@ -45,12 +45,12 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             timePickerTheme: TimePickerThemeData(
-              backgroundColor: AppColors.surfaceContainerHigh,
-              hourMinuteColor: AppColors.surfaceContainerLow,
-              hourMinuteTextColor: Colors.white,
-              dialBackgroundColor: AppColors.surfaceContainerLow,
-              dialHandColor: AppColors.primary,
-              dialTextColor: Colors.white,
+              backgroundColor: isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF),
+              hourMinuteColor: isDark ? const Color(0xFF12121F) : const Color(0xFFF1F5F9),
+              hourMinuteTextColor: isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A),
+              dialBackgroundColor: isDark ? const Color(0xFF12121F) : const Color(0xFFF1F5F9),
+              dialHandColor: isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB),
+              dialTextColor: isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A),
             ),
           ),
           child: child!,
@@ -99,7 +99,6 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
       return;
     }
 
-    // Implement creation logic
     final newBatch = {
       'account_id': userProfile.accountId,
       'name': _nameController.text,
@@ -124,40 +123,46 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = AppColors.isDarkMode;
+    final Color scaffoldBgColor = isDark ? const Color(0xFF0D0D1A) : const Color(0xFFF8FAFC);
+    final Color textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final Color primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
+
     return Scaffold(
-      backgroundColor: AppColors.darkBg,
+      backgroundColor: scaffoldBgColor,
       appBar: AppBar(
-        title: const Text('New Batch'),
+        title: Text('New Batch', style: GoogleFonts.manrope(fontWeight: FontWeight.w800, color: textPrimaryColor)),
         backgroundColor: Colors.transparent,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close),
+          icon: Icon(Icons.close_rounded, color: textPrimaryColor),
           onPressed: () => context.pop(),
         ),
       ),
       body: Column(
         children: [
-          _buildProgressIndicator(),
+          _buildProgressIndicator(isDark, primaryColor),
           Expanded(
             child: PageView(
               controller: _pageController,
               onPageChanged: (idx) => setState(() => _currentStep = idx),
               physics: const NeverScrollableScrollPhysics(),
               children: [
-                _buildBasicInfoStep(),
-                _buildScheduleStep(),
-                _buildCapacityFeeStep(),
-                _buildVisualsStep(),
-                _buildConfirmationStep(),
+                _buildBasicInfoStep(isDark, textPrimaryColor, primaryColor),
+                _buildScheduleStep(isDark, textPrimaryColor, primaryColor),
+                _buildCapacityFeeStep(isDark, textPrimaryColor, primaryColor),
+                _buildVisualsStep(isDark, textPrimaryColor),
+                _buildConfirmationStep(isDark, textPrimaryColor),
               ],
             ),
           ),
-          _buildBottomNav(),
+          _buildBottomNav(isDark, primaryColor),
         ],
       ),
     );
   }
 
-  Widget _buildProgressIndicator() {
+  Widget _buildProgressIndicator(bool isDark, Color primaryColor) {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Row(
@@ -168,11 +173,11 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
               height: 4,
               margin: const EdgeInsets.symmetric(horizontal: 2),
               decoration: BoxDecoration(
-                color: isActive ? AppColors.primary : Colors.white.withOpacity(0.1),
+                color: isActive ? primaryColor : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05)),
                 borderRadius: BorderRadius.circular(2),
                 boxShadow: isActive ? [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.4),
+                    color: primaryColor.withValues(alpha: 0.4),
                     blurRadius: 8,
                     spreadRadius: 1,
                   ),
@@ -185,39 +190,57 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
     );
   }
 
-  Widget _buildBasicInfoStep() {
+  Widget _buildBasicInfoStep(bool isDark, Color textPrimaryColor, Color primaryColor) {
     return _StepWrapper(
       title: 'Basic Information',
       subtitle: 'Identify your coaching batch with a name and teacher.',
       child: Column(
         children: [
-          _buildTextField('Batch Name', _nameController, Icons.layers_outlined),
+          _buildTextField('Batch Name', _nameController, Icons.layers_outlined, isDark, textPrimaryColor, primaryColor),
           const SizedBox(height: 20),
-          _buildTextField('Subject / Course', _subjectController, Icons.book_outlined),
+          _buildTextField('Subject / Course', _subjectController, Icons.book_outlined, isDark, textPrimaryColor, primaryColor),
           const SizedBox(height: 20),
-          _buildTextField('Teacher Name', _teacherController, Icons.person_outline),
+          _buildTextField('Teacher Name', _teacherController, Icons.person_outline, isDark, textPrimaryColor, primaryColor),
         ],
       ),
     );
   }
 
-  Widget _buildScheduleStep() {
+  Widget _buildScheduleStep(bool isDark, Color textPrimaryColor, Color primaryColor) {
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+    final surfaceColor = isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF);
+
     return _StepWrapper(
       title: 'Schedule Setup',
       subtitle: 'Define when classes will be held.',
       child: Column(
         children: [
-          GlassCard(
+          Container(
             padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: surfaceColor.withValues(alpha: isDark ? 0.75 : 0.9),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.12 : 0.02),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
+                )
+              ],
+            ),
             child: Column(
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.calendar_month, color: AppColors.primary),
+                    Icon(Icons.calendar_month_rounded, color: primaryColor),
                     const SizedBox(width: 12),
                     Text(
                       'Select Days',
-                      style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: textPrimaryColor),
                     ),
                   ],
                 ),
@@ -242,14 +265,14 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
                         height: 40,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: isSelected ? AppColors.primary : Colors.white.withOpacity(0.05),
+                          color: isSelected ? primaryColor : (isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03)),
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: isSelected ? AppColors.primary : Colors.white.withOpacity(0.1),
+                            color: isSelected ? primaryColor : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04)),
                           ),
                           boxShadow: isSelected ? [
                             BoxShadow(
-                              color: AppColors.primary.withOpacity(0.3),
+                              color: primaryColor.withValues(alpha: 0.3),
                               blurRadius: 8,
                               spreadRadius: 1,
                             )
@@ -259,7 +282,9 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
                           days[index],
                           style: TextStyle(
                             fontSize: 12,
-                            color: isSelected ? Colors.black : Colors.white,
+                            color: isSelected 
+                                ? (isDark ? const Color(0xFF0F172A) : Colors.white) 
+                                : textTertiaryColor,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                           ),
                         ),
@@ -273,43 +298,45 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
           const SizedBox(height: 20),
           GestureDetector(
             onTap: () => _selectTime(true),
-            child: _buildTimePicker('Start Time', _formatTime(_startTime)),
+            child: _buildTimePicker('Start Time', _formatTime(_startTime), isDark, textPrimaryColor, surfaceColor),
           ),
           const SizedBox(height: 12),
           GestureDetector(
             onTap: () => _selectTime(false),
-            child: _buildTimePicker('End Time', _formatTime(_endTime)),
+            child: _buildTimePicker('End Time', _formatTime(_endTime), isDark, textPrimaryColor, surfaceColor),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCapacityFeeStep() {
+  Widget _buildCapacityFeeStep(bool isDark, Color textPrimaryColor, Color primaryColor) {
+    final textSecondaryColor = isDark ? const Color(0xFFC3C6D7) : const Color(0xFF475569);
+
     return _StepWrapper(
       title: 'Capacity & Fees',
       subtitle: 'Set enrollment limits and fee structure.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildTypableNumberInput('Maximum Students', _capacityController, Icons.group_outlined),
+          _buildTypableNumberInput('Maximum Students', _capacityController, Icons.group_outlined, isDark, textPrimaryColor, primaryColor),
           const SizedBox(height: 24),
-          _buildTypableNumberInput('Fee Amount (₹)', _feeController, Icons.payments_outlined),
+          _buildTypableNumberInput('Fee Amount (₹)', _feeController, Icons.payments_outlined, isDark, textPrimaryColor, primaryColor),
           const SizedBox(height: 24),
           Text(
             'Fee Frequency',
             style: GoogleFonts.inter(
-              color: Colors.white70,
+              color: textSecondaryColor,
               fontSize: 13,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 12),
           Row(
             children: [
-              _buildChoiceChip('Monthly', _feeType == 'monthly', () => setState(() => _feeType = 'monthly')),
+              _buildChoiceChip('Monthly', _feeType == 'monthly', () => setState(() => _feeType = 'monthly'), isDark, primaryColor),
               const SizedBox(width: 12),
-              _buildChoiceChip('Course Wise', _feeType == 'course_wise', () => setState(() => _feeType = 'course_wise')),
+              _buildChoiceChip('Course Wise', _feeType == 'course_wise', () => setState(() => _feeType = 'course_wise'), isDark, primaryColor),
             ],
           ),
         ],
@@ -317,7 +344,9 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
     );
   }
 
-  Widget _buildChoiceChip(String label, bool isSelected, VoidCallback onTap) {
+  Widget _buildChoiceChip(String label, bool isSelected, VoidCallback onTap, bool isDark, Color primaryColor) {
+    final textSecondaryColor = isDark ? const Color(0xFFC3C6D7) : const Color(0xFF475569);
+
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
@@ -325,16 +354,18 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
           height: 48,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.primary : Colors.white.withOpacity(0.05),
+            color: isSelected ? primaryColor : (isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03)),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected ? AppColors.primary : Colors.white.withOpacity(0.1),
+              color: isSelected ? primaryColor : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04)),
             ),
           ),
           child: Text(
             label,
             style: GoogleFonts.inter(
-              color: isSelected ? Colors.black : Colors.white70,
+              color: isSelected 
+                  ? (isDark ? const Color(0xFF0F172A) : Colors.white) 
+                  : textSecondaryColor,
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             ),
           ),
@@ -343,102 +374,143 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
     );
   }
 
-  Widget _buildTypableNumberInput(String label, TextEditingController controller, IconData icon) {
+  Widget _buildTypableNumberInput(String label, TextEditingController controller, IconData icon, bool isDark, Color textPrimaryColor, Color primaryColor) {
+    final textSecondaryColor = isDark ? const Color(0xFFC3C6D7) : const Color(0xFF475569);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
           style: GoogleFonts.inter(
-            color: Colors.white70,
+            color: textSecondaryColor,
             fontSize: 13,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
           keyboardType: TextInputType.number,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(color: textPrimaryColor, fontWeight: FontWeight.bold, fontSize: 15),
           decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: Colors.white54, size: 20),
+            prefixIcon: Icon(icon, color: textTertiaryColor, size: 20),
             hintText: 'Enter value',
+            hintStyle: TextStyle(color: textTertiaryColor.withValues(alpha: 0.5)),
+            filled: true,
+            fillColor: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(
+                color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(
+                color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: primaryColor, width: 1.5),
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildVisualsStep() {
+  Widget _buildVisualsStep(bool isDark, Color textPrimaryColor) {
     return _StepWrapper(
       title: 'Visual Identity',
       subtitle: 'Pick a theme color for the batch card.',
       child: Column(
         children: [
-          Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            children: [
-              '#2563EB', '#7C3AED', '#DB2777', '#EA580C', '#16A34A', '#0891B2'
-            ].map((color) {
-              final isSelected = _selectedColor == color;
-              return GestureDetector(
-                onTap: () => setState(() => _selectedColor = color),
-                child: Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: Color(int.parse(color.replaceFirst('#', '0xFF'))),
-                    shape: BoxShape.circle,
-                    border: isSelected ? Border.all(color: Colors.white, width: 3) : null,
-                    boxShadow: isSelected ? [
-                      BoxShadow(
-                        color: Color(int.parse(color.replaceFirst('#', '0xFF'))).withOpacity(0.5),
-                        blurRadius: 15,
-                        spreadRadius: 2,
-                      ),
-                    ] : null,
+          Center(
+            child: Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: [
+                '#2563EB', '#7C3AED', '#DB2777', '#EA580C', '#16A34A', '#0891B2'
+              ].map((color) {
+                final isSelected = _selectedColor == color;
+                return GestureDetector(
+                  onTap: () => setState(() => _selectedColor = color),
+                  child: Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: Color(int.parse(color.replaceFirst('#', '0xFF'))),
+                      shape: BoxShape.circle,
+                      border: isSelected ? Border.all(color: textPrimaryColor, width: 3) : null,
+                      boxShadow: isSelected ? [
+                        BoxShadow(
+                          color: Color(int.parse(color.replaceFirst('#', '0xFF'))).withValues(alpha: 0.5),
+                          blurRadius: 15,
+                          spreadRadius: 2,
+                        ),
+                      ] : null,
+                    ),
                   ),
-                ),
-              );
-            }).toList(),
+                );
+              }).toList(),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildConfirmationStep() {
+  Widget _buildConfirmationStep(bool isDark, Color textPrimaryColor) {
+    final surfaceColor = isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF);
+
     return _StepWrapper(
       title: 'Review & Confirm',
       subtitle: 'Verify the batch details before creating.',
-      child: GlassCard(
+      child: Container(
         padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: surfaceColor.withValues(alpha: isDark ? 0.75 : 0.9),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.12 : 0.02),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+            )
+          ],
+        ),
         child: Column(
           children: [
-            _buildReviewRow('Batch', _nameController.text),
-            _buildReviewRow('Subject', _subjectController.text),
-            _buildReviewRow('Teacher', _teacherController.text),
+            _buildReviewRow('Batch', _nameController.text, isDark, textPrimaryColor),
+            _buildReviewRow('Subject', _subjectController.text, isDark, textPrimaryColor),
+            _buildReviewRow('Teacher', _teacherController.text, isDark, textPrimaryColor),
             _buildReviewRow('Schedule', _selectedDays.isEmpty 
               ? 'Not set' 
-              : '${_selectedDays.length} days (${_formatTime(_startTime)} - ${_formatTime(_endTime)})'),
-            _buildReviewRow('Capacity', '${_capacityController.text} Students'),
-            _buildReviewRow('Fee', '₹${_feeController.text} (${_feeType == 'monthly' ? 'Monthly' : 'Course-wise'})'),
+              : '${_selectedDays.length} days (${_formatTime(_startTime)} - ${_formatTime(_endTime)})', isDark, textPrimaryColor),
+            _buildReviewRow('Capacity', '${_capacityController.text} Students', isDark, textPrimaryColor),
+            _buildReviewRow('Fee', '₹${_feeController.text} (${_feeType == 'monthly' ? 'Monthly' : 'Course-wise'})', isDark, textPrimaryColor),
             const SizedBox(height: 20),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.greenAccent.withOpacity(0.1),
+                color: const Color(0xFF10B981).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.check_circle_outline, color: Colors.greenAccent, size: 20),
+                  const Icon(Icons.check_circle_outline_rounded, color: Color(0xFF10B981), size: 20),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       'AI: No schedule clashes detected.',
-                      style: GoogleFonts.inter(color: Colors.greenAccent, fontSize: 12, fontWeight: FontWeight.w600),
+                      style: GoogleFonts.inter(color: const Color(0xFF10B981), fontSize: 12, fontWeight: FontWeight.w700),
                     ),
                   ),
                 ],
@@ -450,7 +522,9 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
     );
   }
 
-  Widget _buildBottomNav() {
+  Widget _buildBottomNav(bool isDark, Color primaryColor) {
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Row(
@@ -459,7 +533,13 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
             Expanded(
               child: TextButton(
                 onPressed: _prevStep,
-                child: const Text('Back'),
+                style: TextButton.styleFrom(
+                  foregroundColor: textTertiaryColor,
+                ),
+                child: Text(
+                  'Back',
+                  style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+                ),
               ),
             ),
           const SizedBox(width: 12),
@@ -467,7 +547,19 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
             flex: 2,
             child: ElevatedButton(
               onPressed: _nextStep,
-              child: Text(_currentStep == 4 ? 'Create Batch' : 'Next Step'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2563EB),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                minimumSize: const Size.fromHeight(50),
+              ),
+              child: Text(
+                _currentStep == 4 ? 'Create Batch' : 'Next Step',
+                style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+              ),
             ),
           ),
         ],
@@ -475,34 +567,70 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, IconData icon) {
+  Widget _buildTextField(String label, TextEditingController controller, IconData icon, bool isDark, Color textPrimaryColor, Color primaryColor) {
+    final textSecondaryColor = isDark ? const Color(0xFFC3C6D7) : const Color(0xFF475569);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: GoogleFonts.inter(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
+        Text(
+          label, 
+          style: GoogleFonts.inter(color: textSecondaryColor, fontSize: 13, fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(color: textPrimaryColor, fontSize: 15, fontWeight: FontWeight.w500),
           decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: Colors.white54, size: 20),
+            prefixIcon: Icon(icon, color: textTertiaryColor, size: 20),
+            filled: true,
+            fillColor: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(
+                color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(
+                color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: primaryColor, width: 1.5),
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildTimePicker(String label, String time) {
-    return GlassCard(
+  Widget _buildTimePicker(String label, String time, bool isDark, Color textPrimaryColor, Color surfaceColor) {
+    final textSecondaryColor = isDark ? const Color(0xFFC3C6D7) : const Color(0xFF475569);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+
+    return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      margin: const EdgeInsets.only(top: 12),
+      decoration: BoxDecoration(
+        color: surfaceColor.withValues(alpha: isDark ? 0.75 : 0.9),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
+          width: 1.5,
+        ),
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Colors.white70)),
+          Text(label, style: TextStyle(color: textSecondaryColor, fontWeight: FontWeight.w600)),
           Row(
             children: [
-              Text(time, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              const Icon(Icons.arrow_drop_down, color: Colors.white54),
+              Text(time, style: TextStyle(color: textPrimaryColor, fontWeight: FontWeight.bold)),
+              Icon(Icons.arrow_drop_down_rounded, color: textTertiaryColor),
             ],
           ),
         ],
@@ -510,14 +638,16 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
     );
   }
 
-  Widget _buildReviewRow(String label, String value) {
+  Widget _buildReviewRow(String label, String value, bool isDark, Color textPrimaryColor) {
+    final textSecondaryColor = isDark ? const Color(0xFFC3C6D7) : const Color(0xFF475569);
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Colors.white54)),
-          Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+          Text(label, style: TextStyle(color: textSecondaryColor, fontWeight: FontWeight.w500)),
+          Text(value, style: TextStyle(color: textPrimaryColor, fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -537,6 +667,10 @@ class _StepWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = AppColors.isDarkMode;
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final textSecondaryColor = isDark ? const Color(0xFFC3C6D7) : const Color(0xFF475569);
+
     return Padding(
       padding: const EdgeInsets.all(24),
       child: SingleChildScrollView(
@@ -546,7 +680,7 @@ class _StepWrapper extends StatelessWidget {
             Text(
               title,
               style: GoogleFonts.manrope(
-                color: Colors.white,
+                color: textPrimaryColor,
                 fontSize: 24,
                 fontWeight: FontWeight.w800,
               ),
@@ -555,7 +689,7 @@ class _StepWrapper extends StatelessWidget {
             Text(
               subtitle,
               style: GoogleFonts.inter(
-                color: Colors.white.withOpacity(0.5),
+                color: textSecondaryColor,
                 fontSize: 14,
               ),
             ),

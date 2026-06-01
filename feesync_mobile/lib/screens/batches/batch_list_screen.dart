@@ -195,26 +195,27 @@ class BatchListScreen extends ConsumerWidget {
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
             color: surfaceColor.withValues(alpha: isDark ? 0.75 : 0.9),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
-              width: 1.5,
+              width: 1.0,
             ),
           ),
           child: TextField(
             onChanged: (val) => ref.read(batchSearchProvider.notifier).state = val,
-            style: TextStyle(color: textPrimaryColor),
+            style: TextStyle(color: textPrimaryColor, fontSize: 14),
             decoration: InputDecoration(
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(vertical: 12),
               hintText: 'Search batches...',
-              prefixIcon: Icon(Icons.search_rounded, color: textTertiaryColor),
+              prefixIcon: Icon(Icons.search_rounded, color: textTertiaryColor, size: 18),
               border: InputBorder.none,
               enabledBorder: InputBorder.none,
               focusedBorder: InputBorder.none,
               fillColor: Colors.transparent,
-              hintStyle: TextStyle(color: textTertiaryColor.withValues(alpha: 0.5)),
+              hintStyle: TextStyle(color: textTertiaryColor.withValues(alpha: 0.5), fontSize: 14),
             ),
           ),
         ),
@@ -315,7 +316,7 @@ class BatchListScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         shape: const CircleBorder(),
-        child: const Icon(Icons.add_rounded, size: 32, color: Colors.white),
+        child: Icon(Icons.add_rounded, size: 32, color: isDark ? const Color(0xFFDBEAFE) : Colors.white),
       ),
     );
   }
@@ -354,7 +355,7 @@ class _BatchesTopBar extends StatelessWidget implements PreferredSizeWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      'Coaching Batches',
+                      'Batches',
                       style: GoogleFonts.manrope(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,

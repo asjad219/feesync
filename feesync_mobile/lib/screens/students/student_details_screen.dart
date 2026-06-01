@@ -286,9 +286,10 @@ class _BatchEnrollmentSection extends ConsumerWidget {
   }
 
   void _showEnrollmentSheet(BuildContext context, WidgetRef ref) {
+    final bool isDark = AppColors.isDarkMode;
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.darkBg,
+      backgroundColor: isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) => _EnrollmentSheet(studentId: studentId),
     );
@@ -344,6 +345,11 @@ class _EnrollmentSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final allBatchesAsync = ref.watch(filteredBatchesProvider);
     final userProfileAsync = ref.watch(currentUserProfileProvider);
+    
+    final bool isDark = AppColors.isDarkMode;
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+    final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
 
     return Padding(
       padding: const EdgeInsets.all(24),
@@ -351,7 +357,7 @@ class _EnrollmentSheet extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Enroll in Batch', style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+          Text('Enroll in Batch', style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w800, color: textPrimaryColor)),
           const SizedBox(height: 20),
           allBatchesAsync.when(
             data: (batches) => Flexible(
@@ -362,10 +368,13 @@ class _EnrollmentSheet extends ConsumerWidget {
                   final batch = batches[index];
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: CircleAvatar(backgroundColor: batch.color.withOpacity(0.1), child: Icon(Icons.school, color: batch.color)),
-                    title: Text(batch.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                    subtitle: Text(batch.subject, style: const TextStyle(color: Colors.white54)),
-                    trailing: const Icon(Icons.add, color: AppColors.primary),
+                    leading: CircleAvatar(
+                      backgroundColor: batch.color.withValues(alpha: 0.1),
+                      child: Icon(Icons.school_rounded, color: batch.color),
+                    ),
+                    title: Text(batch.name, style: TextStyle(color: textPrimaryColor, fontWeight: FontWeight.bold)),
+                    subtitle: Text(batch.subject, style: TextStyle(color: textTertiaryColor)),
+                    trailing: Icon(Icons.add_rounded, color: primaryColor),
                     onTap: () async {
                       final accountId = userProfileAsync.value?.accountId;
                       if (accountId != null) {

@@ -683,9 +683,10 @@ class _AttendanceHistoryView extends ConsumerWidget {
   }
 
   void _showSessionDetails(BuildContext context, DateTime date, List<AttendanceRecord> records) {
+    final bool isDark = AppColors.isDarkMode;
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.darkBg,
+      backgroundColor: isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) => _SessionDetailsSheet(date: date, records: records),
     );
@@ -766,6 +767,10 @@ class _SessionDetailsSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = AppColors.isDarkMode;
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -778,11 +783,11 @@ class _SessionDetailsSheet extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Session Details', style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
-                  Text(DateFormat('MMMM d, yyyy').format(date), style: GoogleFonts.inter(fontSize: 14, color: AppColors.textTertiary)),
+                  Text('Session Details', style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w800, color: textPrimaryColor)),
+                  Text(DateFormat('MMMM d, yyyy').format(date), style: GoogleFonts.inter(fontSize: 14, color: textTertiaryColor)),
                 ],
               ),
-              IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded, color: AppColors.textTertiary)),
+              IconButton(onPressed: () => Navigator.pop(context), icon: Icon(Icons.close_rounded, color: textTertiaryColor)),
             ],
           ),
           const SizedBox(height: 24),
@@ -797,21 +802,20 @@ class _SessionDetailsSheet extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Row(
                     children: [
-                      const CircleAvatar(
+                      CircleAvatar(
                         radius: 16,
-                        backgroundColor: AppColors.surfaceContainerLow,
-                        child: Icon(Icons.person_rounded, size: 16, color: AppColors.textTertiary),
+                        backgroundColor: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
+                        child: Icon(Icons.person_rounded, size: 16, color: textTertiaryColor),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Student', // Ideally fetch name from a map or student repository
-                              style: TextStyle(color: AppColors.textPrimary),
+                              style: TextStyle(color: textPrimaryColor),
                             ),
-                            // Roll no display would go here if name was available
                           ],
                         ),
                       ),
@@ -1009,9 +1013,10 @@ class _FeesTab extends ConsumerWidget {
   }
 
   void _sendBulkReminders(BuildContext context, List<StudentBalance> defaulters) {
+    final bool isDark = AppColors.isDarkMode;
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.darkBg,
+      backgroundColor: isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) => _ReminderPreviewSheet(
@@ -1123,9 +1128,10 @@ class _DefaulterTile extends StatelessWidget {
   }
 
   void _showSingleReminder(BuildContext context) {
+    final bool isDark = AppColors.isDarkMode;
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.darkBg,
+      backgroundColor: isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) => _ReminderPreviewSheet(
         title: 'Send Reminder',
@@ -1158,6 +1164,10 @@ class _ReminderPreviewSheet extends StatelessWidget {
     final s = students.first;
     final message = "Dear Parent, this is a reminder regarding the pending fee of ₹${s.balance.toStringAsFixed(0)} for ${s.firstName}. Kindly clear it at the earliest. Thank you!";
 
+    final bool isDark = AppColors.isDarkMode;
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
       child: Column(
@@ -1170,29 +1180,31 @@ class _ReminderPreviewSheet extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                  Text(title, style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w800, color: textPrimaryColor)),
                   const SizedBox(height: 4),
-                  Text(subtitle, style: GoogleFonts.inter(fontSize: 13, color: AppColors.textTertiary)),
+                  Text(subtitle, style: GoogleFonts.inter(fontSize: 13, color: textTertiaryColor)),
                 ],
               ),
-              IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded)),
+              IconButton(onPressed: () => Navigator.pop(context), icon: Icon(Icons.close_rounded, color: textTertiaryColor)),
             ],
           ),
           const SizedBox(height: 32),
-          Text('MESSAGE PREVIEW', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: AppColors.textTertiary)),
+          Text('MESSAGE PREVIEW', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: textTertiaryColor)),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.surfaceContainer.withOpacity(0.5),
+              color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.05)),
+              border: Border.all(
+                color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
+              ),
             ),
             child: Text(
               students.length > 1 
                 ? 'Multiple personalized messages will be sent...'
                 : message,
-              style: GoogleFonts.inter(fontSize: 14, color: AppColors.textPrimary, height: 1.5),
+              style: GoogleFonts.inter(fontSize: 14, color: textPrimaryColor, height: 1.5),
             ),
           ),
           const SizedBox(height: 32),
@@ -1200,8 +1212,20 @@ class _ReminderPreviewSheet extends StatelessWidget {
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: onConfirm,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2563EB),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                minimumSize: const Size.fromHeight(50),
+              ),
               icon: const Icon(Icons.chat_rounded, size: 18),
-              label: Text(students.length > 1 ? 'SEND ALL VIA WHATSAPP' : 'SEND VIA WHATSAPP'),
+              label: Text(
+                students.length > 1 ? 'SEND ALL VIA WHATSAPP' : 'SEND VIA WHATSAPP',
+                style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+              ),
             ),
           ),
         ],
