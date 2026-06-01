@@ -90,7 +90,7 @@ class StudentCard extends StatelessWidget {
                 color: AppColors.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(Icons.person_rounded, color: AppColors.textTertiary, size: 28),
+              child: Icon(Icons.person_rounded, color: AppColors.textTertiary, size: 28),
             ),
             const SizedBox(width: 16),
             Expanded(

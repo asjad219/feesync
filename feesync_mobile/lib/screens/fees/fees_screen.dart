@@ -134,7 +134,7 @@ class _FeeItemCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(color: AppColors.surfaceContainerLow, borderRadius: BorderRadius.circular(12)),
-            child: const Icon(Icons.payments_outlined, color: AppColors.primary, size: 20),
+            child: Icon(Icons.payments_outlined, color: AppColors.primary, size: 20),
           ),
           const SizedBox(width: 16),
           Expanded(

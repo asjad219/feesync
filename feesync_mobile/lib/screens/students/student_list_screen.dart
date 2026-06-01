@@ -75,7 +75,7 @@ class _StudentListScreenState extends ConsumerState<StudentListScreen> {
         actions: [
           IconButton(
             onPressed: () {},
-            icon: const Icon(Icons.tune_rounded, color: AppColors.textPrimary),
+            icon: Icon(Icons.tune_rounded, color: AppColors.textPrimary),
           ),
         ],
       ),
@@ -89,11 +89,11 @@ class _StudentListScreenState extends ConsumerState<StudentListScreen> {
               style: GoogleFonts.inter(color: AppColors.textPrimary),
               decoration: InputDecoration(
                 hintText: 'Search students...',
-                prefixIcon: const Icon(Icons.search_rounded, color: AppColors.textTertiary),
+                prefixIcon: Icon(Icons.search_rounded, color: AppColors.textTertiary),
                 fillColor: AppColors.surfaceContainer.withOpacity(0.5),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.close_rounded, color: AppColors.textTertiary),
+                        icon: Icon(Icons.close_rounded, color: AppColors.textTertiary),
                         onPressed: () {
                           _searchController.clear();
                           ref.read(studentSearchProvider.notifier).state = '';
@@ -179,7 +179,7 @@ class _EmptyState extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(color: AppColors.surfaceContainer.withOpacity(0.5), shape: BoxShape.circle),
-            child: const Icon(Icons.group_off_rounded, size: 64, color: AppColors.textTertiary),
+            child: Icon(Icons.group_off_rounded, size: 64, color: AppColors.textTertiary),
           ),
           const SizedBox(height: 24),
           Text(

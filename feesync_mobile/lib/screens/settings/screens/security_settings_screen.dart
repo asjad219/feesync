@@ -113,7 +113,7 @@ class _SecuritySettingsScreenState extends ConsumerState<SecuritySettingsScreen>
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -140,7 +140,7 @@ class _SecuritySettingsScreenState extends ConsumerState<SecuritySettingsScreen>
                     value: _biometricEnabled,
                     title: Text('Biometric Authentication', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
                     subtitle: Text('Use FaceID/Fingerprint for fast secure logins', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
-                    secondary: const Icon(Icons.fingerprint_rounded, color: AppColors.primary),
+                    secondary: Icon(Icons.fingerprint_rounded, color: AppColors.primary),
                     activeThumbColor: AppColors.primary,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                     onChanged: (val) => setState(() => _biometricEnabled = val),
@@ -150,7 +150,7 @@ class _SecuritySettingsScreenState extends ConsumerState<SecuritySettingsScreen>
                     value: _pinLockEnabled,
                     title: Text('App Lock PIN', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
                     subtitle: Text('Require a 4-digit PIN access lock upon startup', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
-                    secondary: const Icon(Icons.password_rounded, color: AppColors.primary),
+                    secondary: Icon(Icons.password_rounded, color: AppColors.primary),
                     activeThumbColor: AppColors.primary,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                     onChanged: (val) => setState(() => _pinLockEnabled = val),
@@ -205,7 +205,7 @@ class _SecuritySettingsScreenState extends ConsumerState<SecuritySettingsScreen>
                       minimumSize: const Size(double.infinity, 44),
                     ),
                     child: _isWipingCache
-                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: AppColors.textPrimary, strokeWidth: 2))
+                        ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: AppColors.textPrimary, strokeWidth: 2))
                         : Text('Wipe Offline Database Cache', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600)),
                   ),
                 ],
@@ -288,7 +288,7 @@ class _SecuritySettingsScreenState extends ConsumerState<SecuritySettingsScreen>
       children: [
         Row(
           children: [
-            const Icon(Icons.devices_rounded, color: AppColors.textSecondary, size: 20),
+            Icon(Icons.devices_rounded, color: AppColors.textSecondary, size: 20),
             const SizedBox(width: 12),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,

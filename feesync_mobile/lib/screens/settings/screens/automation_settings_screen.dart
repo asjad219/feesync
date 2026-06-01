@@ -80,7 +80,7 @@ class _AutomationSettingsScreenState extends ConsumerState<AutomationSettingsScr
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -94,7 +94,7 @@ class _AutomationSettingsScreenState extends ConsumerState<AutomationSettingsScr
       ),
       body: settingsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error loading settings: $err', style: const TextStyle(color: AppColors.error))),
+        error: (err, stack) => Center(child: Text('Error loading settings: $err', style: TextStyle(color: AppColors.error))),
         data: (settings) {
           _initFields(settings);
           return SingleChildScrollView(
@@ -188,7 +188,7 @@ class _AutomationSettingsScreenState extends ConsumerState<AutomationSettingsScr
                         value: _smsFallbackEnabled,
                         title: Text('SMS Fallback Delivery', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
                         subtitle: Text('Auto-route via transactional SMS if WhatsApp delivery fails', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
-                        secondary: const Icon(Icons.sms_rounded, color: AppColors.primary),
+                        secondary: Icon(Icons.sms_rounded, color: AppColors.primary),
                         activeThumbColor: AppColors.primary,
                         contentPadding: EdgeInsets.zero,
                         onChanged: (val) => setState(() => _smsFallbackEnabled = val),
@@ -200,7 +200,7 @@ class _AutomationSettingsScreenState extends ConsumerState<AutomationSettingsScr
                         value: _autoReceiptEnabled,
                         title: Text('Auto Receipt Sharing', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
                         subtitle: Text('Instantly issue & share PDF receipts on payment success', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
-                        secondary: const Icon(Icons.receipt_long_rounded, color: AppColors.primary),
+                        secondary: Icon(Icons.receipt_long_rounded, color: AppColors.primary),
                         activeThumbColor: AppColors.primary,
                         contentPadding: EdgeInsets.zero,
                         onChanged: (val) => setState(() => _autoReceiptEnabled = val),
@@ -280,7 +280,7 @@ class _AutomationSettingsScreenState extends ConsumerState<AutomationSettingsScr
           overflow: TextOverflow.ellipsis,
         ),
       ),
-      leading: const Icon(Icons.description_rounded, color: AppColors.textTertiary),
+      leading: Icon(Icons.description_rounded, color: AppColors.textTertiary),
     );
   }
 
@@ -295,7 +295,7 @@ class _AutomationSettingsScreenState extends ConsumerState<AutomationSettingsScr
         elevation: 0,
       ),
       child: _isSaving
-          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: AppColors.onPrimaryContainer, strokeWidth: 2))
+          ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: AppColors.onPrimaryContainer, strokeWidth: 2))
           : Text(
               'Save Changes',
               style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700),

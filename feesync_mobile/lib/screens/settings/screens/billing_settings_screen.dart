@@ -104,7 +104,7 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -118,7 +118,7 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
       ),
       body: settingsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error loading settings: $err', style: const TextStyle(color: AppColors.error))),
+        error: (err, stack) => Center(child: Text('Error loading settings: $err', style: TextStyle(color: AppColors.error))),
         data: (settings) {
           _initFields(settings);
           return Form(
@@ -146,7 +146,7 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
                           value: _autoDueGeneration,
                           title: Text('Auto Due Generation', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
                           subtitle: Text('Generate monthly fee dues automatically on rollover day', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
-                          secondary: const Icon(Icons.autorenew_rounded, color: AppColors.primary),
+                          secondary: Icon(Icons.autorenew_rounded, color: AppColors.primary),
                           activeThumbColor: AppColors.primary,
                           contentPadding: EdgeInsets.zero,
                           onChanged: (val) => setState(() => _autoDueGeneration = val),
@@ -158,7 +158,7 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
                           value: _partialPaymentsAllowed,
                           title: Text('Allow Partial Payments', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
                           subtitle: Text('Allow parents to pay dues in multiple installments', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
-                          secondary: const Icon(Icons.pie_chart_rounded, color: AppColors.primary),
+                          secondary: Icon(Icons.pie_chart_rounded, color: AppColors.primary),
                           activeThumbColor: AppColors.primary,
                           contentPadding: EdgeInsets.zero,
                           onChanged: (val) => setState(() => _partialPaymentsAllowed = val),
@@ -178,7 +178,7 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
                           value: _lateFinesEnabled,
                           title: Text('Enable Late Fines', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
                           subtitle: Text('Apply penalty when fee is paid after due date + grace period', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
-                          secondary: const Icon(Icons.money_off_rounded, color: AppColors.primary),
+                          secondary: Icon(Icons.money_off_rounded, color: AppColors.primary),
                           activeThumbColor: AppColors.primary,
                           contentPadding: EdgeInsets.zero,
                           onChanged: (val) => setState(() => _lateFinesEnabled = val),
@@ -313,7 +313,7 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
         elevation: 0,
       ),
       child: _isSaving
-          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: AppColors.onPrimaryContainer, strokeWidth: 2))
+          ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: AppColors.onPrimaryContainer, strokeWidth: 2))
           : Text(
               'Save Changes',
               style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700),

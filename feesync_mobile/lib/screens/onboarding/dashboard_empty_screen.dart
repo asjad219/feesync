@@ -42,7 +42,7 @@ class _DashboardEmptyScreenState extends State<DashboardEmptyScreen> {
           child: Column(
             children: [
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'Your Dashboard Is Ready',
                 style: TextStyle(
                   fontSize: 24,
@@ -52,7 +52,7 @@ class _DashboardEmptyScreenState extends State<DashboardEmptyScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Add your first student to start tracking fees and payments.',
                 style: TextStyle(
                   fontSize: 13,
@@ -71,14 +71,14 @@ class _DashboardEmptyScreenState extends State<DashboardEmptyScreen> {
                         color: AppColors.primary.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.people_alt_outlined,
                         size: 56,
                         color: AppColors.primaryLight,
                       ),
                     ),
                     const SizedBox(height: 20),
-                    const Text(
+                    Text(
                       'No students yet',
                       style: TextStyle(
                         fontSize: 18,
@@ -87,7 +87,7 @@ class _DashboardEmptyScreenState extends State<DashboardEmptyScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       'Create your first student record and generate the first payment in minutes.',
                       style: TextStyle(
                         fontSize: 13,

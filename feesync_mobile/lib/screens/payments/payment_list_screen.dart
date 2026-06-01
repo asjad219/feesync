@@ -95,7 +95,7 @@ class _PaymentListScreenState extends ConsumerState<PaymentListScreen> {
       actions: [
         IconButton(
           onPressed: _refreshData,
-          icon: const Icon(Icons.refresh_rounded, color: AppColors.textPrimary),
+          icon: Icon(Icons.refresh_rounded, color: AppColors.textPrimary),
         ),
         const SizedBox(width: 16),
       ],

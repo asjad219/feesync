@@ -121,12 +121,12 @@ class _DigitalReceipt extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Container(width: 48, height: 48, decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), shape: BoxShape.circle), child: const Icon(Icons.check_rounded, color: AppColors.primary)),
+          Container(width: 48, height: 48, decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), shape: BoxShape.circle), child: Icon(Icons.check_rounded, color: AppColors.primary)),
           const SizedBox(height: 24),
           Text(currencyFormatter.format(args.amount), style: GoogleFonts.manrope(fontSize: 40, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
           Text('SUCCESSFUL PAYMENT', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 2, color: AppColors.primary)),
           const SizedBox(height: 40),
-          const Divider(color: AppColors.outline, thickness: 0.2),
+          Divider(color: AppColors.outline, thickness: 0.2),
           const SizedBox(height: 24),
           _ReceiptRow(label: 'STUDENT', value: args.studentName),
           _ReceiptRow(label: 'PAYMENT ID', value: 'FS-ONB-${DateTime.now().millisecondsSinceEpoch.toString().substring(10)}'),

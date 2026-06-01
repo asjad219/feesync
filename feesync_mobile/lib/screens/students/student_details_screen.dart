@@ -42,7 +42,7 @@ class StudentDetailsScreen extends ConsumerWidget {
           ),
           IconButton(
             onPressed: () => _confirmDelete(context, ref),
-            icon: const Icon(Icons.delete_outline_rounded, color: AppColors.error),
+            icon: Icon(Icons.delete_outline_rounded, color: AppColors.error),
           ),
         ],
       ),
@@ -112,7 +112,7 @@ class StudentDetailsScreen extends ConsumerWidget {
                 context.pop();
               }
             },
-            child: const Text('DELETE', style: TextStyle(color: AppColors.error)),
+            child: Text('DELETE', style: TextStyle(color: AppColors.error)),
           ),
         ],
       ),
@@ -354,7 +354,7 @@ class _BatchEnrollmentSection extends ConsumerWidget {
         const SizedBox(height: 16),
         batchesAsync.when(
           data: (batches) {
-            if (batches.isEmpty) return const Text('No batches assigned yet', style: TextStyle(color: AppColors.textTertiary));
+            if (batches.isEmpty) return Text('No batches assigned yet', style: TextStyle(color: AppColors.textTertiary));
             return Column(
               children: batches.map((batch) => _BatchTile(batch: batch)).toList(),
             );
@@ -407,7 +407,7 @@ class _BatchTile extends StatelessWidget {
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
             onPressed: () => context.push('/batches/${batch.id}'),
-            icon: const Icon(Icons.chevron_right_rounded, color: AppColors.textTertiary),
+            icon: Icon(Icons.chevron_right_rounded, color: AppColors.textTertiary),
           ),
         ],
       ),
@@ -445,9 +445,9 @@ class _EnrollmentSheet extends ConsumerWidget {
                       backgroundColor: batch.color.withValues(alpha: 0.1),
                       child: Icon(Icons.school_rounded, color: batch.color),
                     ),
-                    title: Text(batch.name, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
-                    subtitle: Text(batch.subject, style: const TextStyle(color: AppColors.textTertiary)),
-                    trailing: const Icon(Icons.add_rounded, color: AppColors.primary),
+                    title: Text(batch.name, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+                    subtitle: Text(batch.subject, style: TextStyle(color: AppColors.textTertiary)),
+                    trailing: Icon(Icons.add_rounded, color: AppColors.primary),
                     onTap: () async {
                       final accountId = userProfileAsync.value?.accountId;
                       if (accountId != null) {
@@ -510,7 +510,7 @@ class _RecentPaymentsList extends StatelessWidget {
         const SizedBox(height: 16),
         paymentsAsync.when(
           data: (payments) {
-            if (payments.isEmpty) return const Text('No payments recorded yet', style: TextStyle(color: AppColors.textTertiary));
+            if (payments.isEmpty) return Text('No payments recorded yet', style: TextStyle(color: AppColors.textTertiary));
             return Column(
               children: payments
                   .take(3)
@@ -546,7 +546,7 @@ class _PaymentTile extends StatelessWidget {
               color: AppColors.primary.withValues(alpha: 0.1), 
               borderRadius: BorderRadius.circular(12)
             ),
-            child: const Icon(Icons.receipt_rounded, color: AppColors.primary, size: 20),
+            child: Icon(Icons.receipt_rounded, color: AppColors.primary, size: 20),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -561,7 +561,7 @@ class _PaymentTile extends StatelessWidget {
           ),
           IconButton(
             onPressed: () => _sharePastReceipt(context),
-            icon: const Icon(Icons.share_rounded, size: 20, color: AppColors.primary),
+            icon: Icon(Icons.share_rounded, size: 20, color: AppColors.primary),
             tooltip: 'Share Receipt',
           ),
         ],

@@ -58,7 +58,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(height: 12),
             userProfile.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, _) => Text('Error loading profile: $err', style: const TextStyle(color: AppColors.error)),
+              error: (err, _) => Text('Error loading profile: $err', style: TextStyle(color: AppColors.error)),
               data: (user) => _buildProfileHeader(user),
             ),
             const SizedBox(height: 24),
@@ -324,7 +324,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.logout_rounded, color: AppColors.error, size: 20),
+              Icon(Icons.logout_rounded, color: AppColors.error, size: 20),
               const SizedBox(width: 12),
               Text(
                 'Sign Out Account',
@@ -386,7 +386,7 @@ class _SettingsItem extends StatelessWidget {
           color: AppColors.textTertiary,
         ),
       ),
-      trailing: const Icon(
+      trailing: Icon(
         Icons.chevron_right_rounded,
         color: AppColors.textTertiary,
         size: 20,

@@ -245,13 +245,13 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: isDark 
-                ? const ColorScheme.dark(
+                ? ColorScheme.dark(
                     primary: AppColors.primary,
                     onPrimary: Colors.black,
                     surface: Color(0xFF1E1E2C),
                     onSurface: Colors.white,
                   )
-                : const ColorScheme.light(
+                : ColorScheme.light(
                     primary: AppColors.primary,
                     onPrimary: Colors.white,
                     surface: Color(0xFFFFFFFF),

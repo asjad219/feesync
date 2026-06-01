@@ -27,7 +27,7 @@ class NotificationsScreen extends ConsumerWidget {
         actions: [
           IconButton(
             onPressed: () => ref.read(notificationNotifierProvider.notifier).refresh(),
-            icon: const Icon(Icons.refresh_rounded, color: AppColors.textPrimary),
+            icon: Icon(Icons.refresh_rounded, color: AppColors.textPrimary),
           ),
         ],
       ),
@@ -50,7 +50,7 @@ class NotificationsScreen extends ConsumerWidget {
         error: (e, _) => Center(
           child: Text(
             'Error: $e',
-            style: const TextStyle(color: AppColors.error),
+            style: TextStyle(color: AppColors.error),
           ),
         ),
       ),
@@ -219,7 +219,7 @@ class _NotificationTile extends ConsumerWidget {
             children: [
               if (notification.status == NotificationStatus.pending)
                 ListTile(
-                  leading: const Icon(Icons.done_all_rounded, color: AppColors.success),
+                  leading: Icon(Icons.done_all_rounded, color: AppColors.success),
                   title: const Text('Mark as Sent'),
                   onTap: () {
                     ref.read(notificationNotifierProvider.notifier).markAsSent(notification.id);
@@ -227,7 +227,7 @@ class _NotificationTile extends ConsumerWidget {
                   },
                 ),
               ListTile(
-                leading: const Icon(Icons.delete_outline_rounded, color: AppColors.error),
+                leading: Icon(Icons.delete_outline_rounded, color: AppColors.error),
                 title: const Text('Delete Log Entry'),
                 onTap: () {
                   ref.read(notificationNotifierProvider.notifier).deleteNotification(notification.id);
@@ -249,7 +249,7 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.notifications_none_rounded, size: 64, color: AppColors.textTertiary),
+          Icon(Icons.notifications_none_rounded, size: 64, color: AppColors.textTertiary),
           const SizedBox(height: 24),
           Text(
             'No new activity',

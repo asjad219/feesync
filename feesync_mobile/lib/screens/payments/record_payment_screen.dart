@@ -54,7 +54,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
       lastDate: DateTime.now(),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.dark(
+          colorScheme: ColorScheme.dark(
             primary: AppColors.primary,
             onPrimary: AppColors.onPrimary,
             surface: AppColors.surfaceContainer,
@@ -88,7 +88,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
           content: const Text('No specific fee periods selected. This will be recorded as an advance payment for future dues.'),
           actions: [
             TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('CANCEL')),
-            TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('PROCEED', style: TextStyle(color: AppColors.primary))),
+            TextButton(onPressed: () => Navigator.pop(context, true), child: Text('PROCEED', style: TextStyle(color: AppColors.primary))),
           ],
         ),
       );
@@ -187,7 +187,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
                 Navigator.pop(context);
                 context.pop();
               },
-              child: const Text('DONE', style: TextStyle(color: AppColors.textTertiary, fontWeight: FontWeight.w700)),
+              child: Text('DONE', style: TextStyle(color: AppColors.textTertiary, fontWeight: FontWeight.w700)),
             ),
           ],
         ),
@@ -349,7 +349,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
           value: _selectedStudent?.id,
           hint: const Text('Select a student'),
           dropdownColor: isDark ? const Color(0xFF1E1E2C) : Colors.white,
-          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textTertiary),
+          icon: Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textTertiary),
           items: balances.map((b) => DropdownMenuItem(value: b.id, child: Text('${b.fullName} (${b.studentClass})'))).toList(),
           onChanged: (value) {
             if (value != null) {
@@ -484,7 +484,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(
+              borderSide: BorderSide(
                 color: AppColors.primary,
                 width: 1.5,
               ),
@@ -516,7 +516,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.calendar_month_rounded, size: 20, color: AppColors.textTertiary),
+                Icon(Icons.calendar_month_rounded, size: 20, color: AppColors.textTertiary),
                 const SizedBox(width: 12),
                 Text(DateFormat('MMM d, yyyy').format(_paymentDate), style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
               ],

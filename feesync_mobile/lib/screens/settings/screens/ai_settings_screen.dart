@@ -80,7 +80,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -94,7 +94,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
       ),
       body: settingsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error loading settings: $err', style: const TextStyle(color: AppColors.error))),
+        error: (err, stack) => Center(child: Text('Error loading settings: $err', style: TextStyle(color: AppColors.error))),
         data: (settings) {
           _initFields(settings);
           return SingleChildScrollView(
@@ -112,7 +112,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                         value: _aiReminders,
                         title: Text('Neural Reminders timing', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
                         subtitle: Text('Analyze parent activity pattern to schedule WhatsApp alerts when they are most active', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
-                        secondary: const Icon(Icons.psychology_rounded, color: AppColors.primary),
+                        secondary: Icon(Icons.psychology_rounded, color: AppColors.primary),
                         activeThumbColor: AppColors.primary,
                         contentPadding: EdgeInsets.zero,
                         onChanged: (val) => setState(() => _aiReminders = val),
@@ -124,7 +124,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                         value: _aiPredictions,
                         title: Text('Payment Defaulter Prediction', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
                         subtitle: Text('Generate proactive risk metrics for late payments by scanning invoice delay histories', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
-                        secondary: const Icon(Icons.online_prediction_rounded, color: AppColors.primary),
+                        secondary: Icon(Icons.online_prediction_rounded, color: AppColors.primary),
                         activeThumbColor: AppColors.primary,
                         contentPadding: EdgeInsets.zero,
                         onChanged: (val) => setState(() => _aiPredictions = val),
@@ -144,7 +144,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                         value: _ocrEnabled,
                         title: Text('OCR Bank slip scanner', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
                         subtitle: Text('Extract check numbers, deposit slips & bank logs directly from device camera snapshots', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
-                        secondary: const Icon(Icons.document_scanner_rounded, color: AppColors.primary),
+                        secondary: Icon(Icons.document_scanner_rounded, color: AppColors.primary),
                         activeThumbColor: AppColors.primary,
                         contentPadding: EdgeInsets.zero,
                         onChanged: (val) => setState(() => _ocrEnabled = val),
@@ -238,7 +238,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
         elevation: 0,
       ),
       child: _isSaving
-          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: AppColors.onPrimaryContainer, strokeWidth: 2))
+          ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: AppColors.onPrimaryContainer, strokeWidth: 2))
           : Text(
               'Save Changes',
               style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700),

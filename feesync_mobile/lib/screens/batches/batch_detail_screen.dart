@@ -1528,8 +1528,10 @@ class _ReminderPreviewSheet extends StatelessWidget {
 
 class _AnalyticsTab extends ConsumerWidget {
   final String batchId;
-  final Color accentColor;
-  const _AnalyticsTab({required this.batchId, this.accentColor = AppColors.primary});
+  final Color? accentColor;
+  const _AnalyticsTab({required this.batchId, this.accentColor});
+
+  Color get activeAccentColor => accentColor ?? AppColors.primary;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1719,15 +1721,15 @@ class _AnalyticsTab extends ConsumerWidget {
   Widget _buildAiInsights(BatchAnalytics data) {
     return GlassCard(
       padding: const EdgeInsets.all(20),
-      borderColor: accentColor.withOpacity(0.3),
+      borderColor: activeAccentColor.withOpacity(0.3),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.auto_awesome, color: accentColor, size: 20),
+              Icon(Icons.auto_awesome, color: activeAccentColor, size: 20),
               const SizedBox(width: 8),
-              Text('AI INSIGHTS', style: GoogleFonts.manrope(color: accentColor, fontWeight: FontWeight.w800, fontSize: 12)),
+              Text('AI INSIGHTS', style: GoogleFonts.manrope(color: activeAccentColor, fontWeight: FontWeight.w800, fontSize: 12)),
             ],
           ),
           const SizedBox(height: 16),
@@ -1745,7 +1747,7 @@ class _AnalyticsTab extends ConsumerWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('• ', style: TextStyle(color: accentColor, fontWeight: FontWeight.bold)),
+          Text('• ', style: TextStyle(color: activeAccentColor, fontWeight: FontWeight.bold)),
           Expanded(child: Text(text, style: TextStyle(fontSize: 13, color: textSecondaryColor, height: 1.4))),
         ],
       ),

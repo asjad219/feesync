@@ -28,7 +28,7 @@ class ReportsScreen extends ConsumerWidget {
         actions: [
           IconButton(
             onPressed: () {},
-            icon: const Icon(Icons.share_rounded, color: AppColors.textPrimary),
+            icon: Icon(Icons.share_rounded, color: AppColors.textPrimary),
           ),
         ],
       ),

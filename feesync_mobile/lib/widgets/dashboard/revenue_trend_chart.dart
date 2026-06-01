@@ -91,7 +91,7 @@ class RevenueTrendChart extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(color: AppColors.darkCard, borderRadius: BorderRadius.circular(24)),
-      child: const Center(child: Text('No analytical trend available', style: TextStyle(color: AppColors.textTertiary))),
+      child: Center(child: Text('No analytical trend available', style: TextStyle(color: AppColors.textTertiary))),
     );
   }
 }

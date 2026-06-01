@@ -123,7 +123,7 @@ class _InstitutionSettingsScreenState extends ConsumerState<InstitutionSettingsS
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -137,7 +137,7 @@ class _InstitutionSettingsScreenState extends ConsumerState<InstitutionSettingsS
       ),
       body: settingsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error loading settings: $err', style: const TextStyle(color: AppColors.error))),
+        error: (err, stack) => Center(child: Text('Error loading settings: $err', style: TextStyle(color: AppColors.error))),
         data: (settings) {
           _initFields(settings);
           return Form(
@@ -241,7 +241,7 @@ class _InstitutionSettingsScreenState extends ConsumerState<InstitutionSettingsS
                           value: _gstEnabled,
                           title: Text('Enable GST Calculations', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
                           subtitle: Text('Apply tax on billing receipts automatically', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
-                          secondary: const Icon(Icons.percent_rounded, color: AppColors.primary),
+                          secondary: Icon(Icons.percent_rounded, color: AppColors.primary),
                           activeThumbColor: AppColors.primary,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                           onChanged: (val) => setState(() => _gstEnabled = val),
@@ -251,7 +251,7 @@ class _InstitutionSettingsScreenState extends ConsumerState<InstitutionSettingsS
                           value: _parentPortal,
                           title: Text('Parent Access Portal', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
                           subtitle: Text('Allow parent accounts to view fee cards online', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
-                          secondary: const Icon(Icons.family_restroom_rounded, color: AppColors.primary),
+                          secondary: Icon(Icons.family_restroom_rounded, color: AppColors.primary),
                           activeThumbColor: AppColors.primary,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                           onChanged: (val) => setState(() => _parentPortal = val),
@@ -350,7 +350,7 @@ class _InstitutionSettingsScreenState extends ConsumerState<InstitutionSettingsS
         elevation: 0,
       ),
       child: _isSaving
-          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: AppColors.onPrimaryContainer, strokeWidth: 2))
+          ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: AppColors.onPrimaryContainer, strokeWidth: 2))
           : Text(
               'Save Changes',
               style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700),

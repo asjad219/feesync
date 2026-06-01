@@ -104,7 +104,7 @@ class _OptionalProfileScreenState extends ConsumerState<OptionalProfileScreen> {
               child: Column(
                 children: [
                   const SizedBox(height: 24),
-                  const Text(
+                  Text(
                     'Optional Profile',
                     style: TextStyle(
                       fontSize: 24,
@@ -113,7 +113,7 @@ class _OptionalProfileScreenState extends ConsumerState<OptionalProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Add details that appear on receipts and reports.',
                     style: TextStyle(
                       fontSize: 13,
@@ -166,7 +166,7 @@ class _OptionalProfileScreenState extends ConsumerState<OptionalProfileScreen> {
                           const SizedBox(height: 8),
                           TextButton(
                             onPressed: _isLoading ? null : _skip,
-                            child: const Text(
+                            child: Text(
                               'Skip for now',
                               style: TextStyle(color: AppColors.textSecondary),
                             ),

@@ -91,7 +91,7 @@ class _TotpPromptScreenState extends State<TotpPromptScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.security,
                     size: 48,
                     color: AppColors.primaryLight,
@@ -101,7 +101,7 @@ class _TotpPromptScreenState extends State<TotpPromptScreen> {
                     widget.isMandatory
                         ? 'Enable Two-Factor Security'
                         : 'Secure Your Account',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
@@ -113,7 +113,7 @@ class _TotpPromptScreenState extends State<TotpPromptScreen> {
                     widget.isMandatory
                         ? 'Two-factor authentication is required before you continue.'
                         : 'Add a TOTP authenticator to protect your account. You can skip this once.',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       color: AppColors.textSecondary,
                       height: 1.4,
@@ -138,7 +138,7 @@ class _TotpPromptScreenState extends State<TotpPromptScreen> {
                     const SizedBox(height: 12),
                     TextButton(
                       onPressed: _isLoading ? null : _skipOnce,
-                      child: const Text(
+                      child: Text(
                         'Skip for now',
                         style: TextStyle(color: AppColors.textSecondary),
                       ),

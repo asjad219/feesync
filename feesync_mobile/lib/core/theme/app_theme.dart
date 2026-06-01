@@ -21,55 +21,57 @@ class ThemeColor extends Color {
 class AppColors {
   static bool isDarkMode = true;
 
-  // Brand Colors
-  static const Color primary = ThemeColor(Color(0xFFB4C5FF), Color(0xFF2563EB));
-  static const Color primaryLight = ThemeColor(Color(0xFFEEEFFF), Color(0xFFEBF0FF));
-  static const Color primaryDark = ThemeColor(Color(0xFF2563EB), Color(0xFF1D4ED8));
-  static const Color primaryContainer = ThemeColor(Color(0xFF2563EB), Color(0xFFDBEAFE));
-  static const Color onPrimary = ThemeColor(Color(0xFF002A78), Color(0xFFFFFFFF));
-  static const Color onPrimaryContainer = ThemeColor(Color(0xFFEEEFFF), Color(0xFF1E40AF));
-  
-  static const Color secondary = ThemeColor(Color(0xFFD0BCFF), Color(0xFF7C3AED));
-  static const Color secondaryContainer = ThemeColor(Color(0xFF571BC1), Color(0xFFF3E8FF));
-  static const Color onSecondary = ThemeColor(Color(0xFF3C0091), Color(0xFFFFFFFF));
-  static const Color onSecondaryContainer = ThemeColor(Color(0xFFC4ABFF), Color(0xFF6B21A8));
+  static Color _color(Color dark, Color light) => isDarkMode ? dark : light;
 
-  static const Color tertiary = ThemeColor(Color(0xFFFFB596), Color(0xFFD97706));
-  static const Color tertiaryContainer = ThemeColor(Color(0xFFBC4800), Color(0xFFFEF3C7));
-  static const Color onTertiary = ThemeColor(Color(0xFF581E00), Color(0xFFFFFFFF));
-  static const Color onTertiaryContainer = ThemeColor(Color(0xFFFFEDE6), Color(0xFF92400E));
+  // Brand Colors
+  static Color get primary => _color(const Color(0xFFB4C5FF), const Color(0xFF2563EB));
+  static Color get primaryLight => _color(const Color(0xFFEEEFFF), const Color(0xFFEBF0FF));
+  static Color get primaryDark => _color(const Color(0xFF2563EB), const Color(0xFF1D4ED8));
+  static Color get primaryContainer => _color(const Color(0xFF2563EB), const Color(0xFFDBEAFE));
+  static Color get onPrimary => _color(const Color(0xFF002A78), const Color(0xFFFFFFFF));
+  static Color get onPrimaryContainer => _color(const Color(0xFFEEEFFF), const Color(0xFF1E40AF));
+  
+  static Color get secondary => _color(const Color(0xFFD0BCFF), const Color(0xFF7C3AED));
+  static Color get secondaryContainer => _color(const Color(0xFF571BC1), const Color(0xFFF3E8FF));
+  static Color get onSecondary => _color(const Color(0xFF3C0091), const Color(0xFFFFFFFF));
+  static Color get onSecondaryContainer => _color(const Color(0xFFC4ABFF), const Color(0xFF6B21A8));
+
+  static Color get tertiary => _color(const Color(0xFFFFB596), const Color(0xFFD97706));
+  static Color get tertiaryContainer => _color(const Color(0xFFBC4800), const Color(0xFFFEF3C7));
+  static Color get onTertiary => _color(const Color(0xFF581E00), const Color(0xFFFFFFFF));
+  static Color get onTertiaryContainer => _color(const Color(0xFFFFEDE6), const Color(0xFF92400E));
 
   // Background & Surface
-  static const Color darkBg = ThemeColor(Color(0xFF0D0D1A), Color(0xFFF8FAFC));
-  static const Color darkSurface = ThemeColor(Color(0xFF12121F), Color(0xFFFFFFFF));
-  static const Color darkCard = ThemeColor(Color(0xFF1E1E2C), Color(0xFFFFFFFF));
-  static const Color darkBorder = ThemeColor(Color(0xFF434655), Color(0xFFE2E8F0));
-  static const Color surfaceVariant = ThemeColor(Color(0xFF343342), Color(0xFFF1F5F9));
-  static const Color outline = ThemeColor(Color(0xFF8D90A0), Color(0xFF94A3B8));
+  static Color get darkBg => _color(const Color(0xFF0D0D1A), const Color(0xFFF8FAFC));
+  static Color get darkSurface => _color(const Color(0xFF12121F), const Color(0xFFFFFFFF));
+  static Color get darkCard => _color(const Color(0xFF1E1E2C), const Color(0xFFFFFFFF));
+  static Color get darkBorder => _color(const Color(0xFF434655), const Color(0xFFE2E8F0));
+  static Color get surfaceVariant => _color(const Color(0xFF343342), const Color(0xFFF1F5F9));
+  static Color get outline => _color(const Color(0xFF8D90A0), const Color(0xFF94A3B8));
 
   // Status Colors
-  static const Color overdue = ThemeColor(Color(0xFFFFB4AB), Color(0xFFDC2626));
-  static const Color pending = ThemeColor(Color(0xFFFFB596), Color(0xFFD97706));
-  static const Color paid = ThemeColor(Color(0xFFB4C5FF), Color(0xFF2563EB));
-  static const Color success = ThemeColor(Color(0xFFB4F0C5), Color(0xFF16A34A));
-  static const Color onSuccess = ThemeColor(Color(0xFF00391A), Color(0xFFFFFFFF));
-  static const Color error = ThemeColor(Color(0xFFFFB4AB), Color(0xFFDC2626));
-  static const Color onError = ThemeColor(Color(0xFF690005), Color(0xFFFFFFFF));
-  static const Color errorContainer = ThemeColor(Color(0xFF93000A), Color(0xFFFEE2E2));
-  static const Color onErrorContainer = ThemeColor(Color(0xFFFFDAD6), Color(0xFF991B1B));
+  static Color get overdue => _color(const Color(0xFFFFB4AB), const Color(0xFFDC2626));
+  static Color get pending => _color(const Color(0xFFFFB596), const Color(0xFFD97706));
+  static Color get paid => _color(const Color(0xFFB4C5FF), const Color(0xFF2563EB));
+  static Color get success => _color(const Color(0xFFB4F0C5), const Color(0xFF16A34A));
+  static Color get onSuccess => _color(const Color(0xFF00391A), const Color(0xFFFFFFFF));
+  static Color get error => _color(const Color(0xFFFFB4AB), const Color(0xFFDC2626));
+  static Color get onError => _color(const Color(0xFF690005), const Color(0xFFFFFFFF));
+  static Color get errorContainer => _color(const Color(0xFF93000A), const Color(0xFFFEE2E2));
+  static Color get onErrorContainer => _color(const Color(0xFFFFDAD6), const Color(0xFF991B1B));
 
   // Text Colors
-  static const Color textPrimary = ThemeColor(Color(0xFFE3E0F4), Color(0xFF0F172A));
-  static const Color textSecondary = ThemeColor(Color(0xFFC3C6D7), Color(0xFF475569));
-  static const Color textTertiary = ThemeColor(Color(0xFF8D90A0), Color(0xFF64748B));
-  static const Color textHint = ThemeColor(Color(0xFF6B7280), Color(0xFF94A3B8));
+  static Color get textPrimary => _color(const Color(0xFFE3E0F4), const Color(0xFF0F172A));
+  static Color get textSecondary => _color(const Color(0xFFC3C6D7), const Color(0xFF475569));
+  static Color get textTertiary => _color(const Color(0xFF8D90A0), const Color(0xFF64748B));
+  static Color get textHint => _color(const Color(0xFF6B7280), const Color(0xFF94A3B8));
 
   // Surface elevation colors from design
-  static const Color surfaceBright = ThemeColor(Color(0xFF383847), Color(0xFFE2E8F0));
-  static const Color surfaceContainerLow = ThemeColor(Color(0xFF1A1A28), Color(0xFFF8FAFC));
-  static const Color surfaceContainer = ThemeColor(Color(0xFF1E1E2C), Color(0xFFFFFFFF));
-  static const Color surfaceContainerHigh = ThemeColor(Color(0xFF292937), Color(0xFFF1F5F9));
-  static const Color surfaceContainerHighest = ThemeColor(Color(0xFF343342), Color(0xFFE2E8F0));
+  static Color get surfaceBright => _color(const Color(0xFF383847), const Color(0xFFE2E8F0));
+  static Color get surfaceContainerLow => _color(const Color(0xFF1A1A28), const Color(0xFFF8FAFC));
+  static Color get surfaceContainer => _color(const Color(0xFF1E1E2C), const Color(0xFFFFFFFF));
+  static Color get surfaceContainerHigh => _color(const Color(0xFF292937), const Color(0xFFF1F5F9));
+  static Color get surfaceContainerHighest => _color(const Color(0xFF343342), const Color(0xFFE2E8F0));
 }
 
 /// Gradients from Stitch design
@@ -103,7 +105,7 @@ class AppTheme {
       primaryColor: AppColors.primary,
       
       // Color Scheme
-      colorScheme: const ColorScheme.dark(
+      colorScheme: ColorScheme.dark(
         primary: AppColors.primary,
         onPrimary: AppColors.onPrimary,
         primaryContainer: AppColors.primaryContainer,
@@ -198,12 +200,12 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(24),
-          borderSide: const BorderSide(
+          borderSide: BorderSide(
             color: AppColors.primary,
             width: 1.5,
           ),
         ),
-        hintStyle: const TextStyle(
+        hintStyle: TextStyle(
           color: AppColors.textHint,
           fontSize: 14,
         ),
@@ -265,7 +267,7 @@ class AppTheme {
       primaryColor: AppColors.primary,
       
       // Color Scheme
-      colorScheme: const ColorScheme.light(
+      colorScheme: ColorScheme.light(
         primary: AppColors.primary,
         onPrimary: AppColors.onPrimary,
         primaryContainer: AppColors.primaryContainer,
@@ -360,12 +362,12 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(24),
-          borderSide: const BorderSide(
+          borderSide: BorderSide(
             color: AppColors.primary,
             width: 1.5,
           ),
         ),
-        hintStyle: const TextStyle(
+        hintStyle: TextStyle(
           color: AppColors.textHint,
           fontSize: 14,
         ),
@@ -389,7 +391,7 @@ class AppTheme {
       ),
 
       // Floating Action Button
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 6,
