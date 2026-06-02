@@ -1,5 +1,8 @@
 plugins {
     id("com.android.application")
+    // START: FlutterFire Configuration
+    id("com.google.gms.google-services")
+    // END: FlutterFire Configuration
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
@@ -37,6 +40,13 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("debug")
+            // Disable R8 shrinking for beta to avoid stripping needed classes
+            isMinifyEnabled = false
+            isShrinkResources = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 
@@ -45,9 +55,6 @@ android {
             excludes.add("lib/armeabi/**")
             excludes.add("lib/mips/**")
             excludes.add("lib/mips64/**")
-        }
-        jniLibs {
-            keepDebugSymbols.add("**/libflutter.so")
         }
     }
 }
