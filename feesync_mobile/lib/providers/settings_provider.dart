@@ -27,7 +27,9 @@ class SettingsNotifier extends StateNotifier<AsyncValue<AppSettings>> {
       if (settings != null) {
         state = AsyncValue.data(settings);
       } else {
-        state = AsyncValue.error('Settings not found', StackTrace.current);
+        // Not authenticated yet — stay in loading state silently
+        // Settings will load once the user logs in and provider is refreshed
+        state = const AsyncValue.loading();
       }
     } catch (e, st) {
       state = AsyncValue.error(e, st);

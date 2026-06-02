@@ -6,9 +6,9 @@ class SettingsRepository {
 
   SettingsRepository(this._client);
 
-  Future<String> _getAccountId() async {
+  Future<String?> _getAccountId() async {
     final user = _client.auth.currentUser;
-    if (user == null) throw Exception('Not authenticated');
+    if (user == null) return null; // Not authenticated — return null instead of throwing
 
     final userData = await _client
         .from('users')
@@ -20,8 +20,10 @@ class SettingsRepository {
   }
 
   Future<AppSettings?> getSettings() async {
+    final accountId = await _getAccountId();
+    if (accountId == null) return null; // Not authenticated — return null gracefully
+
     try {
-      final accountId = await _getAccountId();
       final response = await _client
           .from('app_settings')
           .select()
@@ -30,13 +32,11 @@ class SettingsRepository {
       return AppSettings.fromJson(response);
     } catch (e) {
       // If no settings exist yet, create default ones
-      return _initializeDefaultSettings();
+      return _initializeDefaultSettings(accountId);
     }
   }
 
-  Future<AppSettings> _initializeDefaultSettings() async {
-    final accountId = await _getAccountId();
-
+  Future<AppSettings> _initializeDefaultSettings(String accountId) async {
     final response = await _client.from('app_settings').insert({
       'account_id': accountId,
       'center_name': 'FeeSync Academy',
@@ -47,6 +47,8 @@ class SettingsRepository {
 
   Future<AppSettings> updateSettings(Map<String, dynamic> data) async {
     final accountId = await _getAccountId();
+    if (accountId == null) throw Exception('Not authenticated');
+
     final response = await _client
         .from('app_settings')
         .update(data)
@@ -56,3 +58,4 @@ class SettingsRepository {
     return AppSettings.fromJson(response);
   }
 }
+
