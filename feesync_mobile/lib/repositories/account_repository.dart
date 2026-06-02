@@ -6,13 +6,14 @@ class AccountRepository {
 
   AccountRepository(this._client);
 
-  Future<AccountProfile> getAccountProfile(String accountId) async {
+  Future<AccountProfile?> getAccountProfile(String accountId) async {
     final response = await _client
         .from('accounts')
         .select()
         .eq('id', accountId)
-        .single();
+        .maybeSingle(); // Avoid PGRST116 if account row doesn't exist yet
 
+    if (response == null) return null;
     return AccountProfile.fromJson(response);
   }
 

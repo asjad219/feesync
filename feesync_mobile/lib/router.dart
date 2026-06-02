@@ -8,7 +8,6 @@ import 'screens/auth/login_screen.dart';
 import 'screens/auth/signup_screen.dart';
 import 'screens/auth/splash_screen.dart';
 import 'screens/auth/forgot_password_screen.dart';
-import 'screens/auth/totp_prompt_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
 import 'screens/students/student_list_screen.dart';
 import 'screens/students/student_details_screen.dart';
@@ -48,13 +47,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isSplashRoute = state.uri.path == '/splash';
       final isAuthRoute = state.uri.path == '/login' ||
           state.uri.path == '/signup' ||
-          state.uri.path == '/forgot-password' ||
-          state.uri.path.startsWith('/auth/totp');
+          state.uri.path == '/forgot-password';
       final isOnboardingRoute = state.uri.path.startsWith('/onboarding');
       final user = Supabase.instance.client.auth.currentUser;
       final metadata = user?.userMetadata ?? {};
-      final totpEnabled = metadata['totp_enabled'] == true;
-      final totpSkipUsed = metadata['totp_skip_used'] == true;
       final onboardingComplete = metadata['onboarding_complete'] == true;
       final rawStep = metadata['onboarding_step']?.toString() ?? 'intro';
       final onboardingStep = rawStep.replaceAll('_', '-');
@@ -68,19 +64,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       if (isLoggedIn && isAuthRoute) {
-        if (!totpEnabled) {
-          return totpSkipUsed ? '/auth/totp-required' : '/auth/totp';
-        }
-
         if (!onboardingComplete) {
           return '/onboarding/$onboardingStep';
         }
-
         return '/dashboard';
-      }
-
-      if (isLoggedIn && !totpEnabled && !state.uri.path.startsWith('/auth/totp')) {
-        return totpSkipUsed ? '/auth/totp-required' : '/auth/totp';
       }
 
       if (isLoggedIn && !onboardingComplete && !isOnboardingRoute) {
@@ -112,18 +99,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/forgot-password',
         builder: (context, state) => const ForgotPasswordScreen(),
-      ),
-      GoRoute(
-        path: '/auth/totp',
-        builder: (context, state) => const TotpPromptScreen(
-          isMandatory: false,
-        ),
-      ),
-      GoRoute(
-        path: '/auth/totp-required',
-        builder: (context, state) => const TotpPromptScreen(
-          isMandatory: true,
-        ),
       ),
 
       // Onboarding routes

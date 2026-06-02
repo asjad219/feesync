@@ -14,8 +14,9 @@ class SettingsRepository {
         .from('users')
         .select('account_id')
         .eq('id', user.id)
-        .single();
+        .maybeSingle(); // Use maybeSingle to avoid PGRST116 when no row exists
 
+    if (userData == null) return null;
     return userData['account_id'] as String;
   }
 
