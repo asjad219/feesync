@@ -23,6 +23,9 @@ import 'screens/settings/screens/billing_settings_screen.dart';
 import 'screens/settings/screens/automation_settings_screen.dart';
 import 'screens/settings/screens/ai_settings_screen.dart';
 import 'screens/settings/screens/security_settings_screen.dart';
+import 'screens/settings/screens/data_management_screen.dart';
+import 'screens/settings/screens/import_data_screen.dart';
+import 'screens/settings/screens/export_data_screen.dart';
 import 'screens/shell/main_shell.dart';
 import 'screens/onboarding/onboarding_intro_screen.dart';
 import 'screens/onboarding/center_setup_screen.dart';
@@ -188,6 +191,18 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/settings/security',
             builder: (context, state) => const SecuritySettingsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/data',
+            builder: (context, state) => const DataManagementScreen(),
+          ),
+          GoRoute(
+            path: '/settings/data/import',
+            builder: (context, state) => const ImportDataScreen(),
+          ),
+          GoRoute(
+            path: '/settings/data/export',
+            builder: (context, state) => const ExportDataScreen(),
           ),
         ],
       ),

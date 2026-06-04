@@ -7,7 +7,6 @@ import '../../core/theme/app_theme.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../models/user_profile.dart';
-import '../../models/app_settings.dart';
 import '../../core/widgets/glass/glass_card.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -128,6 +127,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 title: 'Security & System',
                 subtitle: 'Biometrics check, lock screen, server logs',
                 onTap: () => context.push('/settings/security'),
+              ),
+            ]),
+            const SizedBox(height: 24),
+
+            _buildSectionHeader('Data Management'),
+            const SizedBox(height: 12),
+            _buildSettingsGroup([
+              _SettingsItem(
+                icon: Icons.storage_rounded,
+                iconColor: const Color(0xFF06B6D4),
+                title: 'Data Management',
+                subtitle: 'Import students, export data as CSV, sync with cloud',
+                onTap: () => context.push('/settings/data'),
               ),
             ]),
             const SizedBox(height: 24),
