@@ -30,6 +30,13 @@ class AppSettings {
   final String dashboardLayout;
   final bool glassEffectsEnabled;
 
+  // Message Templates
+  final String tplFeeReminder;
+  final String tplPaymentReceipt;
+  final String tplOverdueNotice;
+  final String tplLateFineApplied;
+  final String tplNewFeeGenerated;
+
   AppSettings({
     required this.id,
     required this.accountId,
@@ -61,6 +68,11 @@ class AppSettings {
     required this.themeMode,
     required this.dashboardLayout,
     required this.glassEffectsEnabled,
+    required this.tplFeeReminder,
+    required this.tplPaymentReceipt,
+    required this.tplOverdueNotice,
+    required this.tplLateFineApplied,
+    required this.tplNewFeeGenerated,
   });
 
   factory AppSettings.fromJson(Map<String, dynamic> json) {
@@ -95,6 +107,16 @@ class AppSettings {
       themeMode: json['theme_mode'] ?? 'dark_luxury',
       dashboardLayout: json['dashboard_layout'] ?? 'bento',
       glassEffectsEnabled: json['glass_effects_enabled'] ?? true,
+      tplFeeReminder: json['tpl_fee_reminder'] ??
+          'Hi {parent_name}, this is a reminder that a fee of ₹{amount} is due for {student_name} on {due_date}. Please pay on time to avoid late charges. — {school_name}',
+      tplPaymentReceipt: json['tpl_payment_receipt'] ??
+          'Dear {parent_name}, we have received ₹{amount} for {student_name} (Receipt #{receipt_no}). Thank you for your timely payment. — {school_name}',
+      tplOverdueNotice: json['tpl_overdue_notice'] ??
+          'URGENT: The fee of ₹{amount} for {student_name} is overdue by {days_overdue} day(s). Please clear the dues immediately to avoid further penalties. — {school_name}',
+      tplLateFineApplied: json['tpl_late_fine_applied'] ??
+          'Dear {parent_name}, a late fine of ₹{fine_amount} has been applied to {student_name}\'s account as the fee was not paid within the grace period. Total due: ₹{amount}. — {school_name}',
+      tplNewFeeGenerated: json['tpl_new_fee_generated'] ??
+          'Dear {parent_name}, a new monthly fee of ₹{amount} has been generated for {student_name} due on {due_date}. — {school_name}',
     );
   }
 
@@ -128,6 +150,11 @@ class AppSettings {
       'theme_mode': themeMode,
       'dashboard_layout': dashboardLayout,
       'glass_effects_enabled': glassEffectsEnabled,
+      'tpl_fee_reminder': tplFeeReminder,
+      'tpl_payment_receipt': tplPaymentReceipt,
+      'tpl_overdue_notice': tplOverdueNotice,
+      'tpl_late_fine_applied': tplLateFineApplied,
+      'tpl_new_fee_generated': tplNewFeeGenerated,
     };
   }
 
@@ -160,6 +187,11 @@ class AppSettings {
     String? themeMode,
     String? dashboardLayout,
     bool? glassEffectsEnabled,
+    String? tplFeeReminder,
+    String? tplPaymentReceipt,
+    String? tplOverdueNotice,
+    String? tplLateFineApplied,
+    String? tplNewFeeGenerated,
   }) {
     return AppSettings(
       id: id,
@@ -192,6 +224,11 @@ class AppSettings {
       themeMode: themeMode ?? this.themeMode,
       dashboardLayout: dashboardLayout ?? this.dashboardLayout,
       glassEffectsEnabled: glassEffectsEnabled ?? this.glassEffectsEnabled,
+      tplFeeReminder: tplFeeReminder ?? this.tplFeeReminder,
+      tplPaymentReceipt: tplPaymentReceipt ?? this.tplPaymentReceipt,
+      tplOverdueNotice: tplOverdueNotice ?? this.tplOverdueNotice,
+      tplLateFineApplied: tplLateFineApplied ?? this.tplLateFineApplied,
+      tplNewFeeGenerated: tplNewFeeGenerated ?? this.tplNewFeeGenerated,
     );
   }
 }
