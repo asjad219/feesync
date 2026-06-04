@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../models/student.dart';
+import '../../models/batch.dart';
 import '../../models/fee.dart';
 import '../../providers/providers.dart';
 import '../../core/utils/receipt_service.dart';
@@ -24,6 +25,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
   bool _isLoading = false;
 
   Student? _selectedStudent;
+  String? _selectedBatchId;
   final _amountController = TextEditingController();
   final _notesController = TextEditingController();
   DateTime _paymentDate = DateTime.now();
@@ -36,6 +38,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
     super.initState();
     if (widget.student != null) {
       _selectedStudent = widget.student;
+      _selectedBatchId = widget.student!.batchId;
     }
   }
 
@@ -242,6 +245,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
   @override
   Widget build(BuildContext context) {
     final studentsAsync = ref.watch(studentBalancesProvider);
+    final batchesAsync = ref.watch(batchNotifierProvider);
     final duesAsync = _selectedStudent != null 
         ? ref.watch(studentDuesProvider(_selectedStudent!.id)) 
         : const AsyncValue<List<Due>>.data([]);
@@ -262,6 +266,15 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
             children: [
               _SectionHeader(title: 'Transaction Details', subtitle: 'Link payment to a student and select due periods'),
               const SizedBox(height: 32),
+
+              _buildLabel('BATCH / CLASS'),
+              const SizedBox(height: 12),
+              batchesAsync.when(
+                data: (batches) => _buildBatchPicker(batches),
+                loading: () => const LinearProgressIndicator(),
+                error: (e, _) => Text('Error: $e'),
+              ),
+              const SizedBox(height: 24),
               
               _buildLabel('STUDENT NAME'),
               const SizedBox(height: 12),
@@ -334,7 +347,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
 
   Widget _buildLabel(String text) => Text(text, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: AppColors.textTertiary));
 
-  Widget _buildStudentPicker(List<StudentBalance> balances) {
+  Widget _buildBatchPicker(List<Batch> batches) {
     final bool isDark = AppColors.isDarkMode;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -346,33 +359,106 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           isExpanded: true,
-          value: _selectedStudent?.id,
-          hint: const Text('Select a student'),
+          value: _selectedBatchId,
+          hint: const Text('All Batches / Classes'),
           dropdownColor: isDark ? const Color(0xFF1E1E2C) : Colors.white,
           icon: Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textTertiary),
-          items: balances.map((b) => DropdownMenuItem(value: b.id, child: Text('${b.fullName} (${b.studentClass})'))).toList(),
+          items: [
+            const DropdownMenuItem<String>(
+              value: null,
+              child: Text('All Batches / Classes'),
+            ),
+            ...batches.map((b) => DropdownMenuItem<String>(
+                  value: b.id,
+                  child: Text('${b.name} (${b.subject})'),
+                )),
+          ],
           onChanged: (value) {
-            if (value != null) {
-              final student = balances.firstWhere((b) => b.id == value);
-              setState(() {
-                _selectedStudent = Student(
-                  id: student.id, 
-                  accountId: student.accountId, 
-                  admissionNumber: student.admissionNumber, 
-                  firstName: student.firstName, 
-                  lastName: student.lastName, 
-                  studentClass: student.studentClass, 
-                  rollNumber: student.rollNumber,
-                  parentPhone: student.parentPhone,
-                  createdAt: DateTime.now(), 
-                  updatedAt: DateTime.now()
-                );
-                _selectedDueIds.clear();
-                _amountController.clear();
-              });
-            }
+            setState(() {
+              _selectedBatchId = value;
+              // Reset selected student if they do not belong to the selected batch
+              if (_selectedStudent != null) {
+                final balances = ref.read(studentBalancesProvider).value ?? [];
+                final existsInBatch = balances.any((b) => b.id == _selectedStudent!.id && (value == null || b.batchId == value));
+                if (!existsInBatch) {
+                  _selectedStudent = null;
+                  _selectedDueIds.clear();
+                  _amountController.clear();
+                }
+              }
+            });
           },
         ),
+      ),
+    );
+  }
+
+  Widget _buildStudentPicker(List<StudentBalance> balances) {
+    final bool isDark = AppColors.isDarkMode;
+    final displayName = _selectedStudent != null 
+        ? '${_selectedStudent!.fullName} (${_selectedStudent!.studentClass})'
+        : 'Select a student';
+    return InkWell(
+      onTap: () => _showStudentSearchBottomSheet(balances),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surfaceContainer.withValues(alpha: 0.5) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.1)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                displayName,
+                style: GoogleFonts.inter(
+                  fontSize: 15,
+                  fontWeight: _selectedStudent != null ? FontWeight.w600 : FontWeight.w400,
+                  color: _selectedStudent != null ? AppColors.textPrimary : AppColors.textHint,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textTertiary),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showStudentSearchBottomSheet(List<StudentBalance> balances) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surfaceContainer,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => _StudentSearchBottomSheet(
+        balances: balances,
+        selectedBatchId: _selectedBatchId,
+        onStudentSelected: (studentBalance) {
+          setState(() {
+            _selectedStudent = Student(
+              id: studentBalance.id,
+              accountId: studentBalance.accountId,
+              admissionNumber: studentBalance.admissionNumber,
+              firstName: studentBalance.firstName,
+              lastName: studentBalance.lastName,
+              studentClass: studentBalance.studentClass,
+              rollNumber: studentBalance.rollNumber,
+              parentPhone: studentBalance.parentPhone,
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            );
+            _selectedDueIds.clear();
+            _amountController.clear();
+          });
+        },
       ),
     );
   }
@@ -595,6 +681,246 @@ class _SectionHeader extends StatelessWidget {
         const SizedBox(height: 4),
         Text(subtitle, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textTertiary)),
       ],
+    );
+  }
+}
+
+class _StudentSearchBottomSheet extends StatefulWidget {
+  final List<StudentBalance> balances;
+  final String? selectedBatchId;
+  final ValueChanged<StudentBalance> onStudentSelected;
+
+  const _StudentSearchBottomSheet({
+    required this.balances,
+    this.selectedBatchId,
+    required this.onStudentSelected,
+  });
+
+  @override
+  State<_StudentSearchBottomSheet> createState() => _StudentSearchBottomSheetState();
+}
+
+class _StudentSearchBottomSheetState extends State<_StudentSearchBottomSheet> {
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Filter balances by batch
+    final batchFiltered = widget.balances.where((b) {
+      if (widget.selectedBatchId != null && b.batchId != widget.selectedBatchId) {
+        return false;
+      }
+      return true;
+    }).toList();
+
+    // Filter by search query
+    final filtered = batchFiltered.where((b) {
+      if (_searchQuery.isEmpty) return true;
+      final q = _searchQuery.toLowerCase();
+      return b.fullName.toLowerCase().contains(q) ||
+          b.admissionNumber.toLowerCase().contains(q) ||
+          (b.rollNumber ?? '').toLowerCase().contains(q);
+    }).toList();
+
+    final isDark = AppColors.isDarkMode;
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainer,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top drag indicator
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.textTertiary.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Select Student',
+                style: GoogleFonts.manrope(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Search Input
+              TextField(
+                controller: _searchController,
+                autofocus: true,
+                style: GoogleFonts.inter(fontSize: 15, color: AppColors.textPrimary),
+                decoration: InputDecoration(
+                  hintText: 'Search by name, roll, or admission no...',
+                  prefixIcon: Icon(Icons.search_rounded, color: AppColors.textTertiary),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(Icons.clear_rounded, color: AppColors.textTertiary),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _searchQuery = '');
+                          },
+                        )
+                      : null,
+                  fillColor: isDark
+                      ? AppColors.surfaceContainerLow.withValues(alpha: 0.6)
+                      : Colors.white,
+                  filled: true,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.1),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.1),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: AppColors.primary, width: 1.5),
+                  ),
+                ),
+                onChanged: (val) => setState(() => _searchQuery = val),
+              ),
+              const SizedBox(height: 16),
+              // Filter count
+              Text(
+                'Showing ${filtered.length} of ${batchFiltered.length} students',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textTertiary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: filtered.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.person_search_rounded, size: 48, color: AppColors.textTertiary),
+                            const SizedBox(height: 12),
+                            Text(
+                              'No students found',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        controller: scrollController,
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: filtered.length,
+                        itemBuilder: (context, index) {
+                          final student = filtered[index];
+                          final balanceText = student.balance > 0
+                              ? 'Balance: ₹${student.balance.toStringAsFixed(0)}'
+                              : 'No dues';
+                          final balanceColor = student.balance > 0
+                              ? AppColors.error
+                              : AppColors.success;
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              tileColor: isDark
+                                  ? AppColors.surfaceContainerLow.withValues(alpha: 0.3)
+                                  : Colors.white,
+                              leading: CircleAvatar(
+                                backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                                child: Text(
+                                  student.firstName.substring(0, 1).toUpperCase(),
+                                  style: GoogleFonts.inter(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                              title: Text(
+                                student.fullName,
+                                style: GoogleFonts.inter(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              subtitle: Text(
+                                'Class: ${student.studentClass} • Roll: ${student.rollNumber ?? 'N/A'}',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: AppColors.textTertiary,
+                                ),
+                              ),
+                              trailing: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    balanceText,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: balanceColor,
+                                    ),
+                                  ),
+                                  if (student.admissionNumber.isNotEmpty)
+                                    Text(
+                                      'ID: ${student.admissionNumber}',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 10,
+                                        color: AppColors.textTertiary,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              onTap: () {
+                                widget.onStudentSelected(student);
+                                Navigator.pop(context);
+                              },
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
