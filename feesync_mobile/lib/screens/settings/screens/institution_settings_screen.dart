@@ -235,28 +235,14 @@ class _InstitutionSettingsScreenState extends ConsumerState<InstitutionSettingsS
                   const SizedBox(height: 12),
                   GlassCard(
                     padding: const EdgeInsets.all(12),
-                    child: Column(
-                      children: [
-                        SwitchListTile.adaptive(
-                          value: _gstEnabled,
-                          title: Text('Enable GST Calculations', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
-                          subtitle: Text('Apply tax on billing receipts automatically', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
-                          secondary: Icon(Icons.percent_rounded, color: AppColors.primary),
-                          activeThumbColor: AppColors.primary,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                          onChanged: (val) => setState(() => _gstEnabled = val),
-                        ),
-                        Divider(color: AppColors.outline.withValues(alpha: 0.1), height: 1),
-                        SwitchListTile.adaptive(
-                          value: _parentPortal,
-                          title: Text('Parent Access Portal', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
-                          subtitle: Text('Allow parent accounts to view fee cards online', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
-                          secondary: Icon(Icons.family_restroom_rounded, color: AppColors.primary),
-                          activeThumbColor: AppColors.primary,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                          onChanged: (val) => setState(() => _parentPortal = val),
-                        ),
-                      ],
+                    child: SwitchListTile.adaptive(
+                      value: _gstEnabled,
+                      title: Text('Enable GST Calculations', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
+                      subtitle: Text('Apply tax on billing receipts automatically', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
+                      secondary: Icon(Icons.percent_rounded, color: AppColors.primary),
+                      activeThumbColor: AppColors.primary,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                      onChanged: (val) => setState(() => _gstEnabled = val),
                     ),
                   ),
                   const SizedBox(height: 36),
