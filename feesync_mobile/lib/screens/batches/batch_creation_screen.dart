@@ -50,6 +50,20 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
       _capacityController.text = batch.maxCapacity.toString();
       _feeController.text = batch.monthlyFee.toString();
       _selectedColor = batch.colorHex ?? '#2563EB';
+      
+      // Load Schedule
+      _selectedDays.clear();
+      _selectedDays.addAll(batch.scheduleDays);
+      
+      if (batch.startTime.contains(':')) {
+        final parts = batch.startTime.split(':');
+        _startTime = TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+      }
+      if (batch.endTime.contains(':')) {
+        final parts = batch.endTime.split(':');
+        _endTime = TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+      }
+
       setState(() {});
     } catch (_) {
       // batch not found
@@ -138,6 +152,9 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
     }
 
     try {
+      final String startTimeStr = '${_startTime.hour.toString().padLeft(2, '0')}:${_startTime.minute.toString().padLeft(2, '0')}';
+      final String endTimeStr = '${_endTime.hour.toString().padLeft(2, '0')}:${_endTime.minute.toString().padLeft(2, '0')}';
+
       if (widget.batchId == null) {
         final newBatch = {
           'account_id': userProfile.accountId,
@@ -148,6 +165,10 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
           'monthly_fee': double.tryParse(_feeController.text) ?? 1000.0,
           'color_hex': _selectedColor,
           'status': 'active',
+          'schedule_days': _selectedDays.join(','),
+          'start_time': startTimeStr,
+          'end_time': endTimeStr,
+          'room': 'Room 101',
           'created_at': DateTime.now().toIso8601String(),
         };
         await ref.read(batchNotifierProvider.notifier).createBatch(newBatch);
@@ -159,6 +180,9 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
           'max_capacity': int.tryParse(_capacityController.text) ?? 20,
           'monthly_fee': double.tryParse(_feeController.text) ?? 1000.0,
           'color_hex': _selectedColor,
+          'schedule_days': _selectedDays.join(','),
+          'start_time': startTimeStr,
+          'end_time': endTimeStr,
         };
         await ref.read(batchNotifierProvider.notifier).updateBatch(widget.batchId!, updatedData);
       }
@@ -494,7 +518,7 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
               children: [
                 '#2563EB', '#7C3AED', '#DB2777', '#EA580C', '#16A34A', '#0891B2'
               ].map((color) {
-                final isSelected = _selectedColor == color;
+                final isSelected = _selectedColor.toUpperCase() == color.toUpperCase();
                 return GestureDetector(
                   onTap: () => setState(() => _selectedColor = color),
                   child: Container(

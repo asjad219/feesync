@@ -28,8 +28,8 @@ class MainShell extends StatelessWidget {
     final String location = GoRouterState.of(context).uri.path;
     if (location.startsWith('/dashboard')) return 0;
     if (location.startsWith('/batches')) return 1;
-    if (location.startsWith('/payments')) return 2;
-    if (location.startsWith('/reports')) return 3;
+    if (location.startsWith('/students')) return 2;
+    if (location.startsWith('/payments')) return 3;
     if (location.startsWith('/settings')) return 4;
     return 0;
   }
@@ -43,10 +43,10 @@ class MainShell extends StatelessWidget {
         context.go('/batches');
         break;
       case 2:
-        context.go('/payments');
+        context.go('/students');
         break;
       case 3:
-        context.go('/reports');
+        context.go('/payments');
         break;
       case 4:
         context.go('/settings');
@@ -117,14 +117,14 @@ class _StyledBottomNav extends StatelessWidget {
                   onTap: () => onTap(1),
                 ),
                 _NavItem(
-                  icon: Icons.payments_rounded,
-                  label: 'Payments',
+                  icon: Icons.people_rounded,
+                  label: 'Students',
                   isSelected: selectedIndex == 2,
                   onTap: () => onTap(2),
                 ),
                 _NavItem(
-                  icon: Icons.analytics_rounded,
-                  label: 'Reports',
+                  icon: Icons.payments_rounded,
+                  label: 'Payments',
                   isSelected: selectedIndex == 3,
                   onTap: () => onTap(3),
                 ),

@@ -111,6 +111,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ]),
             const SizedBox(height: 24),
 
+            _buildSectionHeader('Reports & Analytics'),
+            const SizedBox(height: 12),
+            _buildSettingsGroup([
+              _SettingsItem(
+                icon: Icons.analytics_rounded,
+                iconColor: const Color(0xFF8B5CF6),
+                title: 'Reports & Analytics',
+                subtitle: 'Collections, pending fees, dynamic reports',
+                onTap: () => context.push('/reports'),
+              ),
+            ]),
+            const SizedBox(height: 24),
+
             _buildSectionHeader('Preferences & Intelligence'),
             const SizedBox(height: 12),
             _buildSettingsGroup([

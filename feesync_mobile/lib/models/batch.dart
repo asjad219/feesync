@@ -23,6 +23,12 @@ class Batch {
   final double attendancePercentage;
   final double revenueGenerated;
   final double pendingDues;
+  
+  // Schedule Fields
+  final List<int> scheduleDays;
+  final String startTime;
+  final String endTime;
+  final String room;
 
   Batch({
     required this.id,
@@ -41,6 +47,10 @@ class Batch {
     this.attendancePercentage = 0.0,
     this.revenueGenerated = 0.0,
     this.pendingDues = 0.0,
+    this.scheduleDays = const [],
+    this.startTime = '16:00',
+    this.endTime = '17:30',
+    this.room = 'Room 101',
   });
 
   double get capacityPercentage => (studentCount / maxCapacity).clamp(0.0, 1.0);
@@ -72,6 +82,12 @@ class Batch {
       attendancePercentage: (json['attendance_percentage'] as num? ?? 0.0).toDouble(),
       revenueGenerated: (json['revenue_generated'] as num? ?? 0.0).toDouble(),
       pendingDues: (json['pending_dues'] as num? ?? 0.0).toDouble(),
+      scheduleDays: json['schedule_days'] != null && json['schedule_days'].toString().isNotEmpty
+          ? (json['schedule_days'] as String).split(',').map((e) => int.parse(e.trim())).toList()
+          : [],
+      startTime: json['start_time'] ?? '16:00',
+      endTime: json['end_time'] ?? '17:30',
+      room: json['room'] ?? 'Room 101',
     );
   }
 
@@ -93,6 +109,10 @@ class Batch {
       'attendance_percentage': attendancePercentage,
       'revenue_generated': revenueGenerated,
       'pending_dues': pendingDues,
+      'schedule_days': scheduleDays.join(','),
+      'start_time': startTime,
+      'end_time': endTime,
+      'room': room,
     };
   }
 
@@ -113,6 +133,10 @@ class Batch {
     double? attendancePercentage,
     double? revenueGenerated,
     double? pendingDues,
+    List<int>? scheduleDays,
+    String? startTime,
+    String? endTime,
+    String? room,
   }) {
     return Batch(
       id: id ?? this.id,
@@ -131,6 +155,10 @@ class Batch {
       attendancePercentage: attendancePercentage ?? this.attendancePercentage,
       revenueGenerated: revenueGenerated ?? this.revenueGenerated,
       pendingDues: pendingDues ?? this.pendingDues,
+      scheduleDays: scheduleDays ?? this.scheduleDays,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      room: room ?? this.room,
     );
   }
 }

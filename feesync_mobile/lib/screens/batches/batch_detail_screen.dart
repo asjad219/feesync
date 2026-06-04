@@ -120,7 +120,7 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
                         ),
                         child: Icon(Icons.school, color: batch.color, size: 32),
                       ),
-                      _AiHealthScore(score: 92),
+                      _AiHealthScore(score: _calculateHealthScore(batch)),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -218,6 +218,31 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
       ),
     );
   }
+}
+
+int _calculateHealthScore(Batch batch) {
+  // 1. Attendance factor (up to 40 points)
+  final attendanceFactor = (batch.attendancePercentage * 40).clamp(0.0, 40.0);
+  
+  // 2. Capacity fill factor (up to 30 points)
+  final fillRatio = batch.maxCapacity > 0 ? (batch.studentCount / batch.maxCapacity) : 0.0;
+  final fillFactor = (fillRatio * 30).clamp(0.0, 30.0);
+  
+  // 3. Collection factor (up to 30 points)
+  double collectionFactor = 30.0;
+  final totalExpected = batch.revenueGenerated + batch.pendingDues;
+  if (totalExpected > 0 && batch.pendingDues > 0) {
+    final duesRatio = batch.pendingDues / totalExpected;
+    collectionFactor = (30 * (1 - duesRatio)).clamp(0.0, 30.0);
+  }
+  
+  final totalScore = (attendanceFactor + fillFactor + collectionFactor).round();
+  
+  if (batch.studentCount == 0 && batch.attendancePercentage == 0) {
+    return 85; // healthy new batch
+  }
+  
+  return totalScore.clamp(10, 100);
 }
 
 class _AiHealthScore extends StatelessWidget {
@@ -349,11 +374,19 @@ class _OverviewTab extends StatelessWidget {
     required this.onEditTap,
   });
 
-  List<DateTime> _generateUpcomingDates() {
+  List<DateTime> _generateUpcomingDates(Batch batch) {
     final List<DateTime> dates = [];
     DateTime current = DateTime.now();
-    while (dates.length < 3) {
-      if (current.weekday != DateTime.sunday) {
+    
+    // If the batch has no schedule days selected, fallback to Mon-Sat (original logic)
+    final activeDays = batch.scheduleDays.isNotEmpty 
+        ? batch.scheduleDays 
+        : [0, 1, 2, 3, 4, 5]; // Mon to Sat
+
+    // Loop through the next 30 days to find the next 3 matching occurrences
+    for (int i = 0; i < 30 && dates.length < 3; i++) {
+      final weekdayIndex = current.weekday - 1;
+      if (activeDays.contains(weekdayIndex)) {
         dates.add(DateTime(current.year, current.month, current.day));
       }
       current = current.add(const Duration(days: 1));
@@ -361,10 +394,25 @@ class _OverviewTab extends StatelessWidget {
     return dates;
   }
 
+  String _formatTimeString(String timeStr) {
+    try {
+      final parts = timeStr.split(':');
+      final hour = int.parse(parts[0]);
+      final minute = int.parse(parts[1]);
+      final time = TimeOfDay(hour: hour, minute: minute);
+      
+      final now = DateTime.now();
+      final dt = DateTime(now.year, now.month, now.day, time.hour, time.minute);
+      return DateFormat('hh:mm a').format(dt);
+    } catch (_) {
+      return timeStr;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isDark = AppColors.isDarkMode;
-    final dates = _generateUpcomingDates();
+    final dates = _generateUpcomingDates(batch);
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textSecondaryColor = isDark ? const Color(0xFFC3C6D7) : const Color(0xFF475569);
     final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
@@ -437,7 +485,7 @@ class _OverviewTab extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '04:00 PM - 05:30 PM • Room 101',
+                          '${_formatTimeString(batch.startTime)} - ${_formatTimeString(batch.endTime)} • ${batch.room}',
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             color: textSecondaryColor,

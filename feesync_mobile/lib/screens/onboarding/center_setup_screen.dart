@@ -50,8 +50,12 @@ class _CenterSetupScreenState extends ConsumerState<CenterSetupScreen> {
         centerAddress: _addressController.text.trim(),
       );
 
-      await Supabase.instance.client.auth.updateUser(UserAttributes(data: {'onboarding_step': 'optional-profile', 'onboarding_center_setup_complete': true}));
-      if (mounted) context.go('/onboarding/optional-profile');
+      await Supabase.instance.client.auth.updateUser(UserAttributes(data: {
+        'onboarding_step': 'complete',
+        'onboarding_center_setup_complete': true,
+        'onboarding_complete': true,
+      }));
+      if (mounted) context.go('/dashboard');
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error));
     } finally {

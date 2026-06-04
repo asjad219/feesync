@@ -30,8 +30,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     if (user == null) { context.go('/login'); return; }
     
     final metadata = user.userMetadata ?? {};
-    if (metadata['onboarding_complete'] == true) { context.go('/dashboard'); }
-    else { context.go('/onboarding/intro'); }
+    final onboardingComplete = metadata['onboarding_complete'] == true ||
+        metadata['onboarding_center_setup_complete'] == true;
+    if (onboardingComplete) {
+      context.go('/dashboard');
+    } else {
+      context.go('/onboarding/intro');
+    }
   }
 
   @override

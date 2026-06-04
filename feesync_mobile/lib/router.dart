@@ -54,7 +54,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isOnboardingRoute = state.uri.path.startsWith('/onboarding');
       final user = Supabase.instance.client.auth.currentUser;
       final metadata = user?.userMetadata ?? {};
-      final onboardingComplete = metadata['onboarding_complete'] == true;
+      final onboardingComplete = metadata['onboarding_complete'] == true ||
+          metadata['onboarding_center_setup_complete'] == true;
       final rawStep = metadata['onboarding_step']?.toString() ?? 'intro';
       final onboardingStep = rawStep.replaceAll('_', '-');
 
