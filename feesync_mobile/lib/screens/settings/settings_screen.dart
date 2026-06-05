@@ -6,7 +6,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/settings_provider.dart';
+import '../../providers/subscription_provider.dart';
 import '../../models/user_profile.dart';
+import '../../models/subscription.dart';
 import '../../core/widgets/glass/glass_card.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -65,7 +67,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               );
             },
             loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
+            error: (_, _) => const SizedBox.shrink(),
           ),
           const SizedBox(width: 8),
         ],
@@ -157,6 +159,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ]),
             const SizedBox(height: 24),
 
+            _buildSectionHeader('Subscription & Billing'),
+            const SizedBox(height: 12),
             _buildSubscriptionCard(),
             const SizedBox(height: 28),
             _buildLogoutButton(context),
@@ -262,45 +266,189 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _buildSubscriptionCard() {
-    return GlassCard(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'PRO TIER SUBSCRIPTION',
-                style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w800, color: const Color(0xFFF59E0B)),
-              ),
-              const Icon(Icons.workspace_premium_rounded, color: Color(0xFFF59E0B), size: 18),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Center Enrollment Seat Usage',
-            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-          ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: const BorderRadius.all(Radius.circular(6)),
-            child: LinearProgressIndicator(
-              value: 0.9,
-              minHeight: 8,
-              backgroundColor: AppColors.outline.withValues(alpha: 0.2),
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFF59E0B)),
+    final dataAsync = ref.watch(subscriptionScreenDataProvider);
+
+    return dataAsync.when(
+      loading: () => GlassCard(
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: [
+            const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
             ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('450 / 500 active students', style: GoogleFonts.inter(fontSize: 11, color: AppColors.textTertiary)),
-              Text('90% Limit', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-            ],
-          ),
+            const SizedBox(width: 14),
+            Text(
+              'Loading subscription…',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: AppColors.textTertiary,
+              ),
+            ),
+          ],
+        ),
+      ),
+      error: (_, _) => _buildSubscriptionCardContent(
+        sub: Subscription.defaultFree(''),
+        activeStudents: 0,
+        onTap: () => context.push('/settings/subscription'),
+      ),
+      data: (data) => _buildSubscriptionCardContent(
+        sub: data.subscription,
+        activeStudents: data.activeStudentCount,
+        onTap: () => context.push('/settings/subscription'),
+        isNearLimit: data.isNearLimit,
+        isAtLimit: data.isAtLimit,
+        usageRatio: data.studentUsageRatio,
+      ),
+    );
+  }
+
+  Widget _buildSubscriptionCardContent({
+    required Subscription sub,
+    required int activeStudents,
+    required VoidCallback onTap,
+    bool isNearLimit = false,
+    bool isAtLimit = false,
+    double usageRatio = 0.0,
+  }) {
+    final planColor = sub.isGrowth
+        ? const Color(0xFF8B5CF6)
+        : sub.isStarter
+            ? const Color(0xFF2563EB)
+            : AppColors.textTertiary;
+
+    final progressColor = isAtLimit
+        ? AppColors.error
+        : isNearLimit
+            ? AppColors.pending
+            : AppColors.success;
+
+    final maxLabel = sub.maxStudents <= 0
+        ? 'Unlimited'
+        : '$activeStudents / ${sub.maxStudents}';
+
+    return GestureDetector(
+      onTap: onTap,
+      child: GlassCard(
+        padding: const EdgeInsets.all(20),
+        borderColor: planColor.withValues(alpha: 0.3),
+        gradientColors: [
+          planColor.withValues(alpha: 0.08),
+          Colors.transparent,
         ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      sub.isGrowth
+                          ? Icons.workspace_premium_rounded
+                          : sub.isStarter
+                              ? Icons.bolt_rounded
+                              : Icons.spa_rounded,
+                      color: planColor,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${sub.planLabel.toUpperCase()} PLAN',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: planColor,
+                      ),
+                    ),
+                  ],
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.textTertiary,
+                  size: 18,
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Student Seat Usage',
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 10),
+            if (sub.maxStudents > 0) ...[  
+              ClipRRect(
+                borderRadius: const BorderRadius.all(Radius.circular(6)),
+                child: LinearProgressIndicator(
+                  value: usageRatio,
+                  minHeight: 8,
+                  backgroundColor: AppColors.outline.withValues(alpha: 0.2),
+                  valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '$activeStudents active student${activeStudents == 1 ? '' : 's'}',
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    color: AppColors.textTertiary,
+                  ),
+                ),
+                Text(
+                  maxLabel,
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: isAtLimit
+                        ? AppColors.error
+                        : isNearLimit
+                            ? AppColors.pending
+                            : AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+            if (!sub.isGrowth) ...[  
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF7C3AED), Color(0xFFDB2777)],
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.rocket_launch_rounded,
+                        color: Colors.white, size: 14),
+                    const SizedBox(width: 6),
+                    Text(
+                      'View Plans & Upgrade',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

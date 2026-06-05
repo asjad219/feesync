@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/custom_widgets.dart';
+import '../../core/widgets/paywall_dialog.dart';
 import '../../models/models.dart';
 import '../../providers/providers.dart';
+import '../../providers/subscription_provider.dart';
 
 class AddEditStudentScreen extends ConsumerStatefulWidget {
   final String? studentId;
@@ -38,8 +40,22 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
   void initState() {
     super.initState();
     // Pre-load batches
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       ref.read(batchNotifierProvider.notifier).loadBatches();
+      // ── Paywall check (add-new mode only) ──────────────────────────────────
+      if (widget.studentId == null) {
+        final data = await ref.read(subscriptionScreenDataProvider.future);
+        if (!data.canAddStudent && mounted) {
+          await showPaywallDialog(
+            context,
+            ref,
+            trigger: PaywallTrigger.studentLimit,
+          );
+          // Pop back — the form would be useless without quota
+          if (mounted) context.pop();
+          return;
+        }
+      }
     });
     if (widget.studentId != null) {
       _loadStudentData();

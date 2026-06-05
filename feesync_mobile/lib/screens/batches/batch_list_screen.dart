@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/paywall_dialog.dart';
 import '../../widgets/dashboard/stat_card.dart';
 import '../../../providers/batch_provider.dart';
+import '../../../providers/subscription_provider.dart';
 import '../../../models/batch.dart';
 import 'widgets/batch_card.dart';
 
@@ -17,12 +19,27 @@ class BatchListScreen extends ConsumerWidget {
     final batchesAsync = ref.watch(batchNotifierProvider);
     final search = ref.watch(batchSearchProvider);
     final statusFilter = ref.watch(batchStatusFilterProvider);
+    final subDataAsync = ref.watch(subscriptionScreenDataProvider);
 
     final bool isDark = AppColors.isDarkMode;
     final Color primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
     final Color scaffoldBgColor = isDark ? const Color(0xFF0D0D1A) : const Color(0xFFF8FAFC);
     final Color textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final Color surfaceColor = isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF);
+
+    // Paywall check: can the user add another batch?
+    Future<void> onAddBatchTap() async {
+      final data = subDataAsync.valueOrNull;
+      if (data != null && !data.canAddBatch) {
+        await showPaywallDialog(
+          context,
+          ref,
+          trigger: PaywallTrigger.batchLimit,
+        );
+        return;
+      }
+      if (context.mounted) context.push('/batches/create');
+    }
 
     return Scaffold(
       backgroundColor: scaffoldBgColor,
@@ -83,7 +100,7 @@ class BatchListScreen extends ConsumerWidget {
           ),
         ),
       ),
-      floatingActionButton: _buildPremiumFab(context, primaryColor, isDark),
+      floatingActionButton: _buildPremiumFab(onAddBatchTap, primaryColor, isDark),
     );
   }
 
@@ -294,7 +311,7 @@ class BatchListScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildPremiumFab(BuildContext context, Color primaryColor, bool isDark) {
+  Widget _buildPremiumFab(VoidCallback onTap, Color primaryColor, bool isDark) {
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -312,7 +329,7 @@ class BatchListScreen extends ConsumerWidget {
         ],
       ),
       child: FloatingActionButton(
-        onPressed: () => context.push('/batches/create'),
+        onPressed: onTap,
         backgroundColor: Colors.transparent,
         elevation: 0,
         shape: const CircleBorder(),
