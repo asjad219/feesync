@@ -8,31 +8,7 @@ import '../../providers/providers.dart';
 
 final studentSearchProvider = StateProvider<String>((ref) => '');
 final studentClassFilterProvider = StateProvider<String?>((ref) => null);
-
-final filteredStudentBalancesProvider = Provider<List>((ref) {
-  final students = ref.watch(studentBalancesProvider).value ?? [];
-  final searchQuery = ref.watch(studentSearchProvider).toLowerCase();
-  final classFilter = ref.watch(studentClassFilterProvider);
-
-  return students.where((student) {
-    final matchesSearch = searchQuery.isEmpty ||
-        student.fullName.toLowerCase().contains(searchQuery) ||
-        student.admissionNumber.toLowerCase().contains(searchQuery);
-
-    final matchesClass = classFilter == null ||
-        classFilter.isEmpty ||
-        student.studentClass == classFilter;
-
-    return matchesSearch && matchesClass;
-  }).toList();
-});
-
-final studentClassesProvider = Provider<List<String>>((ref) {
-  final students = ref.watch(studentBalancesProvider).value ?? [];
-  final classes = students.map((s) => s.studentClass).toSet().toList();
-  classes.sort();
-  return classes;
-});
+final studentStatusFilterProvider = StateProvider<String?>((ref) => null);
 
 class StudentListScreen extends ConsumerStatefulWidget {
   const StudentListScreen({super.key});
@@ -55,10 +31,92 @@ class _StudentListScreenState extends ConsumerState<StudentListScreen> {
     return 'PAID';
   }
 
+  void _showFilterBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surfaceContainer,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return Consumer(
+          builder: (context, ref, child) {
+            final currentStatus = ref.watch(studentStatusFilterProvider);
+            return Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Filter Students',
+                    style: GoogleFonts.manrope(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  _buildFilterOption(
+                    context: context,
+                    ref: ref,
+                    label: 'All Students',
+                    value: null,
+                    groupValue: currentStatus,
+                  ),
+                  _buildFilterOption(
+                    context: context,
+                    ref: ref,
+                    label: 'Overdue (Pending Fees)',
+                    value: 'OVERDUE',
+                    groupValue: currentStatus,
+                  ),
+                  _buildFilterOption(
+                    context: context,
+                    ref: ref,
+                    label: 'Paid (No Outstanding)',
+                    value: 'PAID',
+                    groupValue: currentStatus,
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildFilterOption({
+    required BuildContext context,
+    required WidgetRef ref,
+    required String label,
+    required String? value,
+    required String? groupValue,
+  }) {
+    final isSelected = value == groupValue;
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text(
+        label,
+        style: GoogleFonts.inter(
+          color: isSelected ? AppColors.primary : AppColors.textPrimary,
+          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+        ),
+      ),
+      trailing: isSelected
+          ? Icon(Icons.check_rounded, color: AppColors.primary)
+          : null,
+      onTap: () {
+        ref.read(studentStatusFilterProvider.notifier).state = value;
+        Navigator.pop(context);
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final filteredStudents = ref.watch(filteredStudentBalancesProvider);
-    final classes = ref.watch(studentClassesProvider);
+    final studentBalancesAsync = ref.watch(studentBalancesProvider);
     final selectedClass = ref.watch(studentClassFilterProvider);
 
     return Scaffold(
@@ -74,7 +132,7 @@ class _StudentListScreenState extends ConsumerState<StudentListScreen> {
         ),
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: () => _showFilterBottomSheet(context),
             icon: Icon(Icons.tune_rounded, color: AppColors.textPrimary),
           ),
         ],
@@ -104,51 +162,100 @@ class _StudentListScreenState extends ConsumerState<StudentListScreen> {
             ),
           ),
 
-          if (classes.isNotEmpty)
-            Container(
-              height: 72,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                itemCount: classes.length,
-                itemBuilder: (context, index) {
-                  final classItem = classes[index];
-                  final isSelected = selectedClass == classItem;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: FilterChipButton(
-                      label: classItem,
-                      isSelected: isSelected,
-                      onTap: () => ref.read(studentClassFilterProvider.notifier).state = isSelected ? null : classItem,
+          studentBalancesAsync.when(
+            data: (students) {
+              final searchQuery = ref.watch(studentSearchProvider).toLowerCase();
+              final classFilter = ref.watch(studentClassFilterProvider);
+              final statusFilter = ref.watch(studentStatusFilterProvider);
+
+              final filteredStudents = students.where((student) {
+                final matchesSearch = searchQuery.isEmpty ||
+                    student.fullName.toLowerCase().contains(searchQuery) ||
+                    student.admissionNumber.toLowerCase().contains(searchQuery);
+
+                final matchesClass = classFilter == null ||
+                    classFilter.isEmpty ||
+                    student.studentClass == classFilter;
+
+                final matchesStatus = statusFilter == null ||
+                    _getPaymentStatus(student.balance) == statusFilter;
+
+                return matchesSearch && matchesClass && matchesStatus;
+              }).toList();
+
+              final classes = students.map((s) => s.studentClass).toSet().toList();
+              classes.sort();
+
+              return Expanded(
+                child: Column(
+                  children: [
+                    if (classes.isNotEmpty)
+                      Container(
+                        height: 72,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          itemCount: classes.length,
+                          itemBuilder: (context, index) {
+                            final classItem = classes[index];
+                            final isSelected = selectedClass == classItem;
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: FilterChipButton(
+                                label: classItem,
+                                isSelected: isSelected,
+                                onTap: () => ref.read(studentClassFilterProvider.notifier).state = isSelected ? null : classItem,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: () => ref.refresh(studentBalancesProvider.future),
+                        color: AppColors.primaryContainer,
+                        child: filteredStudents.isEmpty
+                            ? _EmptyState()
+                            : ListView.separated(
+                                padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+                                itemCount: filteredStudents.length,
+                                separatorBuilder: (context, index) => const SizedBox(height: 16),
+                                itemBuilder: (context, index) {
+                                  final student = filteredStudents[index];
+                                  return StudentCard(
+                                    name: student.fullName,
+                                    className: student.studentClass,
+                                    admissionNo: student.admissionNumber,
+                                    balance: student.balance.abs(),
+                                    status: _getPaymentStatus(student.balance),
+                                    onTap: () => context.push('/students/${student.id}'),
+                                  );
+                                },
+                              ),
+                      ),
                     ),
-                  );
-                },
+                  ],
+                ),
+              );
+            },
+            loading: () => const Expanded(
+              child: Center(
+                child: CircularProgressIndicator(),
               ),
             ),
-
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: () => ref.refresh(studentBalancesProvider.future),
-              color: AppColors.primaryContainer,
-              child: filteredStudents.isEmpty
-                  ? _EmptyState()
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
-                      itemCount: filteredStudents.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 16),
-                      itemBuilder: (context, index) {
-                        final student = filteredStudents[index];
-                        return StudentCard(
-                          name: student.fullName,
-                          className: student.studentClass,
-                          admissionNo: student.admissionNumber,
-                          balance: student.balance.abs(),
-                          status: _getPaymentStatus(student.balance),
-                          onTap: () => context.push('/students/${student.id}'),
-                        );
-                      },
-                    ),
+            error: (err, stack) => Expanded(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Text(
+                    'Error: $err',
+                    style: const TextStyle(color: Colors.redAccent),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
             ),
           ),
         ],

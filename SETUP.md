@@ -150,9 +150,15 @@ flutter run -d chrome
 ### 3.4 Build for Production
 
 **Android APK:**
+You can build the APK from the workspace root directory using:
 ```bash
+npm run build:mobile
+```
+Or directly from the `feesync_mobile` directory:
+```bash
+cd feesync_mobile
 flutter build apk --release
-# Output: build/app/outputs/apk/release/app-release.apk
+# Output: build/app/outputs/flutter-apk/app-release.apk
 ```
 
 **iOS:**

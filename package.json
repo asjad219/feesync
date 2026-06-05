@@ -1,4 +1,11 @@
 {
+  "scripts": {
+    "build:mobile": "cd feesync_mobile && flutter build apk --release",
+    "clean:mobile": "cd feesync_mobile && flutter clean",
+    "get:mobile": "cd feesync_mobile && flutter pub get",
+    "build:web": "cd feesync_web && npm run build",
+    "dev:web": "cd feesync_web && npm run dev"
+  },
   "devDependencies": {
     "supabase": "^2.100.1"
   },
@@ -17,3 +24,4 @@
     "tailwind-merge": "^3.6.0"
   }
 }
+
