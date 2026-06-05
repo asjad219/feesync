@@ -21,6 +21,8 @@ class BatchListScreen extends ConsumerWidget {
     final statusFilter = ref.watch(batchStatusFilterProvider);
     final subDataAsync = ref.watch(subscriptionScreenDataProvider);
 
+    final batches = batchesAsync.valueOrNull;
+
     final bool isDark = AppColors.isDarkMode;
     final Color primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
     final Color scaffoldBgColor = isDark ? const Color(0xFF0D0D1A) : const Color(0xFFF8FAFC);
@@ -56,9 +58,9 @@ class BatchListScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildAiInsightChip(isDark, primaryColor),
+                _buildAiInsightChip(isDark, primaryColor, batches),
                 const SizedBox(height: 20),
-                _buildKpiSection(isDark, primaryColor),
+                _buildKpiSection(isDark, primaryColor, batches),
                 const SizedBox(height: 24),
                 _buildSearchAndFilters(context, ref, search, isDark, primaryColor, surfaceColor, textPrimaryColor),
                 const SizedBox(height: 20),
@@ -104,7 +106,24 @@ class BatchListScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildAiInsightChip(bool isDark, Color primaryColor) {
+  String _formatRevenue(double value) {
+    if (value >= 100000) {
+      return '₹${(value / 100000).toStringAsFixed(1)}L';
+    } else if (value >= 1000) {
+      return '₹${(value / 1000).toStringAsFixed(1)}K';
+    } else {
+      return '₹${value.toStringAsFixed(0)}';
+    }
+  }
+
+  Widget _buildAiInsightChip(bool isDark, Color primaryColor, List<Batch>? batches) {
+    if (batches == null || batches.isEmpty) return const SizedBox.shrink();
+    
+    final nearingCapacityCount = batches.where((b) => b.maxCapacity > 0 && (b.studentCount / b.maxCapacity) >= 0.8).length;
+    final message = nearingCapacityCount == 0 
+        ? 'All batches have optimal capacity' 
+        : '$nearingCapacityCount batch${nearingCapacityCount == 1 ? '' : 'es'} nearing capacity';
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -118,7 +137,7 @@ class BatchListScreen extends ConsumerWidget {
           Icon(Icons.auto_awesome, color: primaryColor, size: 14),
           const SizedBox(width: 6),
           Text(
-            '3 batches nearing capacity',
+            message,
             style: GoogleFonts.inter(
               color: primaryColor,
               fontSize: 11,
@@ -130,8 +149,35 @@ class BatchListScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildKpiSection(bool isDark, Color primaryColor) {
+  Widget _buildKpiSection(bool isDark, Color primaryColor, List<Batch>? batches) {
     final secondaryColor = isDark ? const Color(0xFFD0BCFF) : const Color(0xFF7C3AED);
+
+    final String activeBatchesVal;
+    final String totalStudentsVal;
+    final String attendanceHealthVal;
+    final String monthlyRevenueVal;
+
+    if (batches == null) {
+      activeBatchesVal = '--';
+      totalStudentsVal = '--';
+      attendanceHealthVal = '--';
+      monthlyRevenueVal = '--';
+    } else {
+      final activeCount = batches.where((b) => b.status == BatchStatus.active).length;
+      final totalStudents = batches.fold<int>(0, (sum, b) => sum + b.studentCount);
+      
+      final batchesWithAttendance = batches.where((b) => b.studentCount > 0).toList();
+      final avgAttendance = batchesWithAttendance.isEmpty
+          ? 0.0
+          : batchesWithAttendance.fold<double>(0.0, (sum, b) => sum + b.attendancePercentage) / batchesWithAttendance.length;
+
+      final totalRevenue = batches.fold<double>(0.0, (sum, b) => sum + b.revenueGenerated);
+
+      activeBatchesVal = activeCount.toString();
+      totalStudentsVal = totalStudents.toString();
+      attendanceHealthVal = '${avgAttendance.round()}%';
+      monthlyRevenueVal = _formatRevenue(totalRevenue);
+    }
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -142,13 +188,10 @@ class BatchListScreen extends ConsumerWidget {
             width: 160,
             child: StatCard(
               title: 'Active Batches',
-              value: '12',
+              value: activeBatchesVal,
               icon: Icons.layers_rounded,
               iconColor: primaryColor,
               iconBackgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
-              showTrend: true,
-              trendPercent: 8.0,
-              trendUp: true,
             ),
           ),
           const SizedBox(width: 16),
@@ -156,13 +199,10 @@ class BatchListScreen extends ConsumerWidget {
             width: 160,
             child: StatCard(
               title: 'Total Students',
-              value: '248',
+              value: totalStudentsVal,
               icon: Icons.group_rounded,
               iconColor: secondaryColor,
               iconBackgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFF3E8FF),
-              showTrend: true,
-              trendPercent: 12.0,
-              trendUp: true,
             ),
           ),
           const SizedBox(width: 16),
@@ -170,13 +210,10 @@ class BatchListScreen extends ConsumerWidget {
             width: 160,
             child: StatCard(
               title: 'Attendance Health',
-              value: '94%',
+              value: attendanceHealthVal,
               icon: Icons.analytics_rounded,
               iconColor: const Color(0xFF10B981),
               iconBackgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFECFDF5),
-              showTrend: true,
-              trendPercent: 2.0,
-              trendUp: false,
             ),
           ),
           const SizedBox(width: 16),
@@ -184,13 +221,10 @@ class BatchListScreen extends ConsumerWidget {
             width: 160,
             child: StatCard(
               title: 'Monthly Revenue',
-              value: '₹1.2L',
+              value: monthlyRevenueVal,
               icon: Icons.account_balance_wallet_rounded,
               iconColor: const Color(0xFFF59E0B),
               iconBackgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFFEF3C7),
-              showTrend: true,
-              trendPercent: 15.0,
-              trendUp: true,
             ),
           ),
         ],
@@ -379,31 +413,6 @@ class _BatchesTopBar extends StatelessWidget implements PreferredSizeWidget {
                         color: textPrimaryColor,
                         letterSpacing: -0.6,
                       ),
-                    ),
-                  ),
-                  Container(
-                    margin: const EdgeInsets.only(right: 8),
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: IconButton(
-                      onPressed: () {},
-                      constraints: const BoxConstraints(minHeight: 40, minWidth: 40),
-                      padding: EdgeInsets.zero,
-                      icon: Icon(Icons.notifications_none_rounded, color: textPrimaryColor, size: 20),
-                    ),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: IconButton(
-                      onPressed: () {},
-                      constraints: const BoxConstraints(minHeight: 40, minWidth: 40),
-                      padding: EdgeInsets.zero,
-                      icon: Icon(Icons.settings_rounded, color: textPrimaryColor, size: 20),
                     ),
                   ),
                 ],

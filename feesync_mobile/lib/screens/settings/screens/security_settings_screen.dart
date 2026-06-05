@@ -20,7 +20,6 @@ class _SecuritySettingsScreenState
     extends ConsumerState<SecuritySettingsScreen> {
   bool _isSendingReset = false;
   bool _isSigningOutAll = false;
-  bool _isWipingCache = false;
 
   // ── Change Password ────────────────────────────────────────────────────────
   Future<void> _sendPasswordReset(String email) async {
@@ -67,25 +66,7 @@ class _SecuritySettingsScreenState
     }
   }
 
-  // ── Wipe Offline Cache ─────────────────────────────────────────────────────
-  Future<void> _wipeOfflineCache() async {
-    final confirmed = await _showConfirmDialog(
-      title: 'Clear Offline Cache',
-      message:
-          'This clears locally cached settings and preferences. Your cloud data is unaffected.',
-      confirmLabel: 'Clear Cache',
-      isDanger: false,
-    );
-    if (!confirmed || !mounted) return;
 
-    setState(() => _isWipingCache = true);
-    await Future.delayed(const Duration(milliseconds: 800));
-    await ref.read(localSettingsProvider.notifier).resetAll();
-    if (mounted) {
-      setState(() => _isWipingCache = false);
-      _showSnack('Offline cache cleared successfully.', isSuccess: true);
-    }
-  }
 
   // ── Account Deletion ───────────────────────────────────────────────────────
   Future<void> _showDeleteAccountDialog(
@@ -349,12 +330,20 @@ class _SecuritySettingsScreenState
                         : null,
                     onTap: _isSendingReset
                         ? null
-                        : () {
-                            userAsync.whenData((user) {
-                              if (user != null) {
+                        : () async {
+                            final user = userAsync.value;
+                            if (user != null) {
+                              final confirmed = await _showConfirmDialog(
+                                title: 'Reset Password',
+                                message:
+                                    'Are you sure you want to request a password reset?\n\nAn email will be sent to ${user.email} with instructions to reset your password. Please check your inbox and spam folders to complete the password reset.',
+                                confirmLabel: 'Send Link',
+                                isDanger: false,
+                              );
+                              if (confirmed && mounted) {
                                 _sendPasswordReset(user.email);
                               }
-                            });
+                            }
                           },
                   ),
                   _divider(),
@@ -382,32 +371,6 @@ class _SecuritySettingsScreenState
             ),
             const SizedBox(height: 24),
 
-            // ── Data & Storage ─────────────────────────────────────────────
-            _sectionHeader('Data & Storage'),
-            const SizedBox(height: 12),
-            GlassCard(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: _actionTile(
-                icon: Icons.delete_sweep_rounded,
-                iconColor: const Color(0xFFF59E0B),
-                title: 'Clear Offline Cache',
-                subtitle:
-                    'Reset locally stored settings and preferences',
-                trailingWidget: _isWipingCache
-                    ? SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: const Color(0xFFF59E0B),
-                        ),
-                      )
-                    : null,
-                onTap: _isWipingCache ? null : _wipeOfflineCache,
-              ),
-            ),
-            const SizedBox(height: 24),
 
             // ── About ──────────────────────────────────────────────────────
             _sectionHeader('About'),
@@ -418,7 +381,11 @@ class _SecuritySettingsScreenState
                 children: [
                   _infoRow('App Version', '1.0.0'),
                   _divider(),
-                  _infoRow('Platform', 'Flutter / Supabase'),
+                  _infoRow('Environment', 'Production'),
+                  _divider(),
+                  _infoRow('Support Email', 'support@feesync.com'),
+                  _divider(),
+                  _infoRow('Developer', 'FeeSync Team'),
                   _divider(),
                   _infoRow('Build', 'Release'),
                 ],
@@ -429,7 +396,7 @@ class _SecuritySettingsScreenState
             // ── Danger Zone ────────────────────────────────────────────────
             userAsync.when(
               loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
               data: (user) {
                 if (user == null) return const SizedBox.shrink();
                 return Column(

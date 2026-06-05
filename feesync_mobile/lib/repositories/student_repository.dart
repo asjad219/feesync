@@ -42,11 +42,21 @@ class StudentRepository {
   }
 
   Future<List<StudentBalance>> getStudentBalances() async {
-    final response = await _client
-        .from('student_balances')
-        .select()
-        .order('last_name');
+    final userId = _client.auth.currentUser?.id;
+    var query = _client.from('student_balances').select();
 
+    if (userId != null) {
+      final userResponse = await _client
+          .from('users')
+          .select('account_id')
+          .eq('id', userId)
+          .maybeSingle();
+      if (userResponse != null && userResponse['account_id'] != null) {
+        query = query.eq('account_id', userResponse['account_id']);
+      }
+    }
+
+    final response = await query.order('last_name');
     return (response as List).map((json) => StudentBalance.fromJson(json)).toList();
   }
 

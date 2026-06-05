@@ -235,7 +235,7 @@ class _DashboardTopBar extends StatelessWidget implements PreferredSizeWidget {
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: IconButton(
-                      onPressed: () {},
+                      onPressed: () => context.go('/students'),
                       constraints: const BoxConstraints(minHeight: 40, minWidth: 40),
                       padding: EdgeInsets.zero,
                       icon: Icon(Icons.search_rounded, color: textPrimaryColor, size: 20),

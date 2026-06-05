@@ -16,7 +16,28 @@ class MainShell extends StatelessWidget {
     return Scaffold(
       extendBody: false,
       backgroundColor: AppColors.darkBg,
-      body: child,
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onHorizontalDragEnd: (details) {
+          final primaryVelocity = details.primaryVelocity ?? 0;
+          if (primaryVelocity < -300) {
+            // Swiped left -> Go to next page
+            final nextIndex = selectedIndex + 1;
+            if (nextIndex <= 4) {
+              HapticFeedback.lightImpact();
+              _onItemTapped(nextIndex, context);
+            }
+          } else if (primaryVelocity > 300) {
+            // Swiped right -> Go to previous page
+            final prevIndex = selectedIndex - 1;
+            if (prevIndex >= 0) {
+              HapticFeedback.lightImpact();
+              _onItemTapped(prevIndex, context);
+            }
+          }
+        },
+        child: child,
+      ),
       bottomNavigationBar: _StyledBottomNav(
         selectedIndex: selectedIndex,
         onTap: (index) => _onItemTapped(index, context),

@@ -1,0 +1,100 @@
+﻿[        ] Transforming datastore-core-release.aar (androidx.datastore:datastore-core-android:1.1.7) with ExtractAarTransform
+[        ] Transforming datastore-core-release.aar (androidx.datastore:datastore-core-android:1.1.7) with AarTransform
+[        ] Transforming datastore-preferences-release.aar (androidx.datastore:datastore-preferences-android:1.1.7) with ExtractAarTransform
+[        ] Transforming datastore-preferences-release.aar (androidx.datastore:datastore-preferences-android:1.1.7) with AarTransform
+[        ] Transforming datastore-release.aar (androidx.datastore:datastore-android:1.1.7) with ExtractAarTransform
+[        ] Transforming datastore-release.aar (androidx.datastore:datastore-android:1.1.7) with AarTransform
+[        ] Transforming interpolator-1.0.0.aar (androidx.interpolator:interpolator:1.0.0) with ExtractAarTransform
+[        ] Transforming interpolator-1.0.0.aar (androidx.interpolator:interpolator:1.0.0) with AarTransform
+[        ] Transforming interpolator-1.0.0.aar (androidx.interpolator:interpolator:1.0.0) with ExtractAarTransform
+[        ] Transforming interpolator-1.0.0.aar (androidx.interpolator:interpolator:1.0.0) with AarTransform
+[        ] Transforming versionedparcelable-1.1.1.aar (androidx.versionedparcelable:versionedparcelable:1.1.1) with ExtractAarTransform
+[        ] Transforming versionedparcelable-1.1.1.aar (androidx.versionedparcelable:versionedparcelable:1.1.1) with AarTransform
+[        ] Transforming core-runtime-2.2.0.aar (androidx.arch.core:core-runtime:2.2.0) with ExtractAarTransform
+[        ] Transforming core-runtime-2.2.0.aar (androidx.arch.core:core-runtime:2.2.0) with AarTransform
+[        ] Transforming core-common-2.2.0.jar (androidx.arch.core:core-common:2.2.0) with ExtractJniTransform
+[        ] Transforming cursoradapter-1.0.0.aar (androidx.cursoradapter:cursoradapter:1.0.0) with ExtractAarTransform
+[        ] Transforming cursoradapter-1.0.0.aar (androidx.cursoradapter:cursoradapter:1.0.0) with AarTransform
+[        ] Transforming collection-ktx-1.4.2.jar (androidx.collection:collection-ktx:1.4.2) with ExtractJniTransform
+[        ] Transforming collection-jvm-1.4.2.jar (androidx.collection:collection-jvm:1.4.2) with ExtractJniTransform
+[        ] Transforming concurrent-futures-1.1.0.jar (androidx.concurrent:concurrent-futures:1.1.0) with ExtractJniTransform
+[        ] Transforming core-1.0.0.aar (androidx.window.extensions.core:core:1.0.0) with ExtractAarTransform
+[        ] Transforming core-1.0.0.aar (androidx.window.extensions.core:core:1.0.0) with AarTransform
+[        ] Transforming documentfile-1.0.0.aar (androidx.documentfile:documentfile:1.0.0) with ExtractAarTransform
+[        ] Transforming documentfile-1.0.0.aar (androidx.documentfile:documentfile:1.0.0) with AarTransform
+[        ] Transforming localbroadcastmanager-1.0.0.aar (androidx.localbroadcastmanager:localbroadcastmanager:1.0.0) with ExtractAarTransform
+[        ] Transforming localbroadcastmanager-1.0.0.aar (androidx.localbroadcastmanager:localbroadcastmanager:1.0.0) with AarTransform
+[        ] Transforming print-1.0.0.aar (androidx.print:print:1.0.0) with ExtractAarTransform
+[        ] Transforming print-1.0.0.aar (androidx.print:print:1.0.0) with AarTransform
+[        ] Transforming annotation-jvm-1.9.1.jar (androidx.annotation:annotation-jvm:1.9.1) with ExtractJniTransform
+[        ] Transforming annotation-experimental-1.4.1.aar (androidx.annotation:annotation-experimental:1.4.1) with ExtractAarTransform
+[  +19 ms] Transforming annotation-experimental-1.4.1.aar (androidx.annotation:annotation-experimental:1.4.1) with AarTransform
+[        ] Transforming core-viewtree-1.0.0.aar (androidx.core:core-viewtree:1.0.0) with ExtractAarTransform
+[        ] Transforming core-viewtree-1.0.0.aar (androidx.core:core-viewtree:1.0.0) with AarTransform
+[        ] Transforming kotlinx-coroutines-android-1.8.1.jar (org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1) with ExtractJniTransform
+[        ] Transforming kotlinx-coroutines-core-jvm-1.8.1.jar (org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.1) with ExtractJniTransform
+[        ] Transforming kotlin-parcelize-runtime-1.9.22.jar (org.jetbrains.kotlin:kotlin-parcelize-runtime:1.9.22) with ExtractJniTransform
+[        ] Transforming okio-jvm-3.4.0.jar (com.squareup.okio:okio-jvm:3.4.0) with ExtractJniTransform
+[        ] Transforming kotlin-stdlib-jdk8-1.8.0.jar (org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0) with ExtractJniTransform
+[        ] Transforming kotlin-android-extensions-runtime-1.9.22.jar (org.jetbrains.kotlin:kotlin-android-extensions-runtime:1.9.22) with ExtractJniTransform
+[        ] Transforming kotlin-stdlib-jdk7-1.8.0.jar (org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0) with ExtractJniTransform
+[        ] Transforming kotlin-stdlib-2.2.0.jar (org.jetbrains.kotlin:kotlin-stdlib:2.2.0) with ExtractJniTransform
+[        ] Transforming armeabi_v7a_debug-1.0.0-42d3d75a56efe1a2e9902f52dc8006099c45d937.jar (io.flutter:armeabi_v7a_debug:1.0.0-42d3d75a56efe1a2e9902f52dc8006099c45d937) with ExtractJniTransform
+[        ] Transforming arm64_v8a_debug-1.0.0-42d3d75a56efe1a2e9902f52dc8006099c45d937.jar (io.flutter:arm64_v8a_debug:1.0.0-42d3d75a56efe1a2e9902f52dc8006099c45d937) with ExtractJniTransform
+[        ] Transforming x86_64_debug-1.0.0-42d3d75a56efe1a2e9902f52dc8006099c45d937.jar (io.flutter:x86_64_debug:1.0.0-42d3d75a56efe1a2e9902f52dc8006099c45d937) with ExtractJniTransform
+[        ] Transforming annotations-23.0.0.jar (org.jetbrains:annotations:23.0.0) with ExtractJniTransform
+[        ] Transforming relinker-1.4.5.aar (com.getkeepsafe.relinker:relinker:1.4.5) with ExtractAarTransform
+[   +1 ms] Transforming relinker-1.4.5.aar (com.getkeepsafe.relinker:relinker:1.4.5) with AarTransform
+[   +1 ms] Transforming listenablefuture-1.0.jar (com.google.guava:listenablefuture:1.0) with ExtractJniTransform
+[        ] Transforming jspecify-1.0.0.jar (org.jspecify:jspecify:1.0.0) with ExtractJniTransform
+[        ] Caching disabled for task ':app:mergeDebugNativeLibs' because:
+[        ]   Build cache is disabled
+[        ]   Caching has been disabled for the task
+[        ] Task ':app:mergeDebugNativeLibs' is not up-to-date because:
+[        ]   Input property 'externalLibNativeLibs' file C:\Users\Asjaduzzaman\.gradle\caches\8.11.1\transforms\0a6ec14b899912755323600baf1d036a\transformed\armeabi_v7a_debug-1.0.0-42d3d75a56efe1a2e9902f52dc8006099c45d937\armeabi-v7a\libflutter.so has been added.
+[   +1 ms]   Input property 'externalLibNativeLibs' file C:\Users\Asjaduzzaman\.gradle\caches\8.11.1\transforms\357631ec4dcd24aab8b589d4f2c72f93\transformed\x86_64_debug-1.0.0-42d3d75a56efe1a2e9902f52dc8006099c45d937\x86_64\libflutter.so has been added.
+[+21847 ms] Resolve mutations for :app:stripDebugDebugSymbols (Thread[#490,Execution worker,5,main]) started.
+[        ] :app:stripDebugDebugSymbols (Thread[#490,Execution worker,5,main]) started.
+[+2009 ms] > Task :app:stripDebugDebugSymbols
+[   +6 ms] Caching disabled for task ':app:stripDebugDebugSymbols' because:
+[        ]   Build cache is disabled
+[        ]   Caching has been disabled for the task
+[        ] Task ':app:stripDebugDebugSymbols' is not up-to-date because:
+[        ]   Input property 'inputDir' file D:\FeeSync\feesync_mobile\build\app\intermediates\merged_native_libs\debug\mergeDebugNativeLibs\out\lib\armeabi-v7a\libflutter.so has been added.
+[        ]   Input property 'inputDir' file D:\FeeSync\feesync_mobile\build\app\intermediates\merged_native_libs\debug\mergeDebugNativeLibs\out\lib\x86_64\libflutter.so has been added.
+[+5881 ms] Resolve mutations for :app:packageDebug (Thread[#490,Execution worker,5,main]) started.
+[        ] :app:packageDebug (Thread[#490,Execution worker,5,main]) started.
+[+1909 ms] > Task :app:packageDebug
+[        ] Custom actions are attached to task ':app:packageDebug'.
+[        ] Caching disabled for task ':app:packageDebug' because:
+[        ]   Build cache is disabled
+[        ]   Caching has been disabled for the task
+[        ] Task ':app:packageDebug' is not up-to-date because:
+[        ]   Input property 'assets' file D:\FeeSync\feesync_mobile\build\app\intermediates\compressed_assets\debug\compressDebugAssets\out\assets\flutter_assets\kernel_blob.bin.jar has changed.
+[        ]   Input property 'jniFolders' file D:\FeeSync\feesync_mobile\build\app\intermediates\stripped_native_libs\debug\stripDebugDebugSymbols\out\lib\x86\libdatastore_shared_counter.so has been removed.
+[        ]   Input property 'jniFolders' file D:\FeeSync\feesync_mobile\build\app\intermediates\stripped_native_libs\debug\stripDebugDebugSymbols\out\lib\armeabi-v7a\libflutter.so has been added.
+[        ]   and more...
+[+15995 ms] Resolve mutations for :app:createDebugApkListingFileRedirect (Thread[#490,Execution worker,5,main]) started.
+[        ] :app:createDebugApkListingFileRedirect (Thread[#490,Execution worker,5,main]) started.
+[        ] > Task :app:createDebugApkListingFileRedirect UP-TO-DATE
+[        ] Caching disabled for task ':app:createDebugApkListingFileRedirect' because:
+[        ]   Build cache is disabled
+[        ]   Caching has been disabled for the task
+[        ] Skipping task ':app:createDebugApkListingFileRedirect' as it is up-to-date.
+[        ] Resolve mutations for :app:assembleDebug (Thread[#489,included builds,5,main]) started.
+[        ] :app:assembleDebug (Thread[#489,included builds,5,main]) started.
+[+2019 ms] > Task :app:assembleDebug
+[        ] Caching disabled for task ':app:assembleDebug' because:
+[        ]   Build cache is disabled
+[        ] Task ':app:assembleDebug' is not up-to-date because:
+[        ]   Task has not declared any outputs despite executing actions.
+[+6282 ms] BUILD SUCCESSFUL in 1m 53s
+[        ] 261 actionable tasks: 26 executed, 235 up-to-date
+[ +113 ms] Watched directory hierarchies: [D:\flutter\packages\flutter_tools\gradle, D:\FeeSync\feesync_mobile\android]
+[ +349 ms] Running Gradle task 'assembleDebug'... (completed in 114.1s)
+[ +128 ms] Calculate SHA1: LocalDirectory: 'D:\FeeSync\feesync_mobile\build\app\outputs\flutter-apk'/app-debug.apk
+[+28399 ms] ΓêÜ Built build\app\outputs\flutter-apk\app-debug.apk
+[  +65 ms] "flutter apk" took 1,46,587ms.
+[ +233 ms] Running 1 shutdown hook
+[   +4 ms] Shutdown hooks complete
+[ +293 ms] exiting with code 0

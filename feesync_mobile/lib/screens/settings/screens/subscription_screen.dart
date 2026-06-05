@@ -20,6 +20,9 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isAnnual = false;
+  int _selectedComparePlanIndex = 1; // Default to Starter (index 1)
+  bool _showDetailedMatrix = false;
+  bool _initializedPlanIndex = false;
 
   @override
   void initState() {
@@ -44,9 +47,27 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
       body: dataAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => _buildError(err),
-        data: (data) => _buildContent(data),
+        data: (data) {
+          if (!_initializedPlanIndex) {
+            final tier = data.subscription.effectivePlan;
+            _selectedComparePlanIndex = _getCurrentPlanIndex(tier);
+            _initializedPlanIndex = true;
+          }
+          return _buildContent(data);
+        },
       ),
     );
+  }
+
+  int _getCurrentPlanIndex(String tier) {
+    switch (tier) {
+      case 'starter':
+        return 1;
+      case 'growth':
+        return 2;
+      default:
+        return 0;
+    }
   }
 
   // ─── Error state ──────────────────────────────────────────────────────────
@@ -578,26 +599,368 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
 
   // ─── Plan comparison ──────────────────────────────────────────────────────
 
+  Widget _buildComparePlanPills() {
+    final tiers = ['free', 'starter', 'growth'];
+    final labels = ['Free', 'Starter', 'Growth'];
+    
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerHigh.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.outline.withValues(alpha: 0.15)),
+      ),
+      child: Row(
+        children: List.generate(3, (index) {
+          final isSelected = _selectedComparePlanIndex == index;
+          final tier = tiers[index];
+          
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _selectedComparePlanIndex = index),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  gradient: isSelected ? _planGradient(tier) : null,
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: _planColor(tier).withValues(alpha: 0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          )
+                        ]
+                      : null,
+                ),
+                child: Center(
+                  child: Text(
+                    labels[index],
+                    style: GoogleFonts.manrope(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: isSelected ? Colors.white : AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildComparePlanCard(Subscription currentSub) {
+    final plans = SubscriptionPlan.all;
+    final plan = plans[_selectedComparePlanIndex];
+    final tier = plan.tier;
+    
+    final isCurrent = tier == currentSub.effectivePlan;
+    final price = _isAnnual ? plan.annualPrice : plan.monthlyPrice;
+        
+    final themeColor = _planColor(tier);
+    
+    final List<String> highlights;
+    switch (tier) {
+      case 'growth':
+        highlights = [
+          'Unlimited student capacity',
+          'Unlimited batches & groups',
+          'Full AI intelligence suite (all 9 features)',
+          'Razorpay Auto-Debit collection support',
+          'WhatsApp call & chat official support',
+          'Scheduled automated PDF email reports',
+          'Up to 500 fallback transactional SMS/mo',
+        ];
+        break;
+      case 'starter':
+        highlights = [
+          'Up to 200 active students (10x Free limit)',
+          'Up to 10 batches / classes',
+          'Unlimited automated WhatsApp receipts',
+          'Full reports collection access (14 reports)',
+          'AI assistance (3 smart features)',
+          'Razorpay standard payment links',
+          'Export all reports & student lists to CSV',
+        ];
+        break;
+      default:
+        highlights = [
+          'Up to 20 active students',
+          '1 Batch / class limit',
+          '200 WhatsApp Receipts per month',
+          '50 WhatsApp Reminders per month',
+          'Basic Reports access (5 types)',
+        ];
+        break;
+    }
+
+    return GlassCard(
+      padding: const EdgeInsets.all(24),
+      borderColor: themeColor.withValues(alpha: 0.35),
+      gradientColors: [
+        themeColor.withValues(alpha: 0.08),
+        themeColor.withValues(alpha: 0.02),
+      ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: _planGradient(tier),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: themeColor.withValues(alpha: 0.25),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    )
+                  ],
+                ),
+                child: Icon(
+                  _planIcon(tier),
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          plan.name,
+                          style: GoogleFonts.manrope(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        if (isCurrent) ...[
+                          const SizedBox(width: 10),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: themeColor.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                  color: themeColor.withValues(alpha: 0.3)),
+                            ),
+                            child: Text(
+                              'Active',
+                              style: GoogleFonts.inter(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: themeColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      tier == 'growth'
+                          ? 'Ultimate plan for scaling coaching centers'
+                          : tier == 'starter'
+                              ? 'Best value for growing coaching hubs'
+                              : 'Kickstart your school management',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        color: AppColors.textTertiary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                price == 0 ? 'Free' : '₹$price',
+                style: GoogleFonts.manrope(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              if (price > 0) ...[
+                const SizedBox(width: 6),
+                Text(
+                  _isAnnual ? '/year' : '/month',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: AppColors.textTertiary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ],
+          ),
+          if (price > 0 && _isAnnual) ...[
+            const SizedBox(height: 4),
+            Text(
+              'Billed annually (Includes 2 months free!)',
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                color: AppColors.success,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+          const SizedBox(height: 24),
+          Divider(
+            color: AppColors.outline.withValues(alpha: 0.1),
+            height: 1,
+          ),
+          const SizedBox(height: 20),
+          ...highlights.map((item) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(top: 2),
+                      child: Icon(
+                        Icons.check_circle_rounded,
+                        color: themeColor == AppColors.textTertiary
+                            ? AppColors.primary
+                            : themeColor,
+                        size: 16,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        item,
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: isCurrent
+                ? Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceContainerHigh,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                          color: AppColors.outline.withValues(alpha: 0.1)),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      'Your Active Plan',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  )
+                : _selectedComparePlanIndex == 0
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                              color: AppColors.outline.withValues(alpha: 0.3)),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          'Downgrade details on web portal',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textTertiary,
+                          ),
+                        ),
+                      )
+                    : _GradientButton(
+                        label: _selectedComparePlanIndex == 1
+                            ? 'Upgrade to Starter'
+                            : 'Upgrade to Growth',
+                        gradient: _planGradient(tier),
+                        onTap: () => _showUpgradeSheet(currentSub),
+                      ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPlanComparison(Subscription currentSub) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionHeader('Compare Plans'),
         const SizedBox(height: 12),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: IntrinsicWidth(
-            child: Column(
-              children: [
-                _buildPlanHeaderRow(currentSub),
-                const SizedBox(height: 4),
-                ..._comparisonRows.map(
-                  (row) => _buildComparisonRow(row, currentSub),
-                ),
-              ],
+        _buildComparePlanPills(),
+        const SizedBox(height: 16),
+        _buildComparePlanCard(currentSub),
+        const SizedBox(height: 24),
+        Center(
+          child: TextButton.icon(
+            onPressed: () => setState(() => _showDetailedMatrix = !_showDetailedMatrix),
+            icon: Icon(
+              _showDetailedMatrix
+                  ? Icons.keyboard_arrow_up_rounded
+                  : Icons.keyboard_arrow_down_rounded,
+              color: AppColors.primary,
+            ),
+            label: Text(
+              _showDetailedMatrix
+                  ? 'Hide Detailed Comparison Matrix'
+                  : 'View Detailed Comparison Matrix',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.primary,
+              ),
             ),
           ),
         ),
+        if (_showDetailedMatrix) ...[
+          const SizedBox(height: 12),
+          GlassCard(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: IntrinsicWidth(
+                child: Column(
+                  children: [
+                    _buildPlanHeaderRow(currentSub),
+                    const SizedBox(height: 12),
+                    ..._comparisonRows.asMap().entries.map(
+                      (entry) => _buildComparisonRow(entry.value, currentSub, entry.key),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -688,9 +1051,16 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
   }
 
   Widget _buildComparisonRow(
-      _ComparisonRow row, Subscription currentSub) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 2),
+      _ComparisonRow row, Subscription currentSub, int index) {
+    final isAlternate = index % 2 == 1;
+    return Container(
+      decoration: BoxDecoration(
+        color: isAlternate
+            ? AppColors.surfaceContainerLow.withValues(alpha: 0.25)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
           _comparisonLabelCell(row.label),
@@ -738,7 +1108,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                   size: 18)
               : isCross
                   ? Icon(Icons.cancel_rounded,
-                      color: AppColors.outline.withValues(alpha: 0.6), size: 16)
+                      color: AppColors.outline.withValues(alpha: 0.3), size: 16)
                   : Text(
                       value,
                       style: GoogleFonts.inter(
@@ -931,7 +1301,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
           spacing: 16,
           children: [
             GestureDetector(
-              onTap: () {}, // TODO: open Terms URL
+              onTap: () => context.push('/settings/policy?type=terms'),
               child: Text(
                 'Terms of Service',
                 style: GoogleFonts.inter(
@@ -943,7 +1313,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
               ),
             ),
             GestureDetector(
-              onTap: () {}, // TODO: open Privacy URL
+              onTap: () => context.push('/settings/policy?type=privacy'),
               child: Text(
                 'Privacy Policy',
                 style: GoogleFonts.inter(
@@ -955,7 +1325,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
               ),
             ),
             GestureDetector(
-              onTap: () {}, // TODO: open Refund Policy URL
+              onTap: () => context.push('/settings/policy?type=refund'),
               child: Text(
                 'Refund Policy',
                 style: GoogleFonts.inter(
