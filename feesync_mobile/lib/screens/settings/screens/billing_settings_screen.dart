@@ -294,7 +294,7 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
     final safeValue = days.contains(_defaultDueDay) ? _defaultDueDay : 5;
 
     return DropdownButtonFormField<int>(
-      value: safeValue,
+      initialValue: safeValue,
       items: days.map((d) => DropdownMenuItem(
         value: d,
         child: Text(

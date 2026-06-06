@@ -216,10 +216,12 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
           final xFiles = _exportedFiles
               .map((path) => XFile(path, mimeType: 'text/csv'))
               .toList();
-          await Share.shareXFiles(
-            xFiles,
-            subject: 'FeeSync Data Export - $timestamp',
-            text: 'Exported CSV files containing FeeSync records.',
+          await SharePlus.instance.share(
+            ShareParams(
+              files: xFiles,
+              subject: 'FeeSync Data Export - $timestamp',
+              text: 'Exported CSV files containing FeeSync records.',
+            ),
           );
         }
       }
@@ -541,9 +543,11 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
                 trailing: IconButton(
                   icon: const Icon(Icons.share_rounded),
                   onPressed: () {
-                    Share.shareXFiles(
-                      [XFile(path, mimeType: 'text/csv')],
-                      subject: 'FeeSync Export - $fileName',
+                    SharePlus.instance.share(
+                      ShareParams(
+                        files: [XFile(path, mimeType: 'text/csv')],
+                        subject: 'FeeSync Export - $fileName',
+                      ),
                     );
                   },
                 ),

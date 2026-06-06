@@ -41,7 +41,6 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
     super.initState();
     // Pre-load batches
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      ref.read(batchNotifierProvider.notifier).loadBatches();
       // ── Paywall check (add-new mode only) ──────────────────────────────────
       if (widget.studentId == null) {
         final data = await ref.read(subscriptionScreenDataProvider.future);
@@ -54,6 +53,15 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
           // Pop back — the form would be useless without quota
           if (mounted) context.pop();
           return;
+        }
+      }
+
+      await ref.read(batchNotifierProvider.notifier).loadBatches();
+      if (widget.studentId == null && mounted) {
+        final batchState = ref.read(batchNotifierProvider);
+        final batches = batchState.value ?? [];
+        if (batches.isEmpty) {
+          _showNoBatchesDialog();
         }
       }
     });
@@ -84,6 +92,157 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _showNoBatchesDialog() {
+    showModalBottomSheet(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final Color surfaceColor = AppColors.darkSurface;
+        final Color textPrimaryColor = AppColors.textPrimary;
+        final Color textSecondaryColor = AppColors.textSecondary;
+        final Color textTertiaryColor = AppColors.textTertiary;
+        
+        return Container(
+          decoration: BoxDecoration(
+            color: surfaceColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+          ),
+          padding: EdgeInsets.fromLTRB(
+            24,
+            16,
+            24,
+            MediaQuery.of(context).viewInsets.bottom + 36,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // --- Handle ---
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.outline.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              // --- Icon with gradient ---
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF2563EB), Color(0xFF7C3AED)],
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF2563EB).withValues(alpha: 0.4),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.layers_rounded, color: Colors.white, size: 36),
+              ),
+              const SizedBox(height: 20),
+              // --- Title ---
+              Text(
+                'Create a Batch First',
+                style: GoogleFonts.manrope(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: textPrimaryColor,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              // --- Subtitle ---
+              Text(
+                'Students must be enrolled in a batch to track fees and schedules. Since you don\'t have any batches yet, let\'s create your first one!',
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  color: textSecondaryColor,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 28),
+              // --- Create Batch Button ---
+              GestureDetector(
+                onTap: () {
+                  context.pop(); // dismiss sheet
+                  context.push('/batches/create'); // navigate to batch creation
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF2563EB), Color(0xFF7C3AED)],
+                    ),
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF2563EB).withValues(alpha: 0.35),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.add_circle_outline_rounded, color: Colors.white, size: 18),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Create New Batch',
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // --- Cancel/Back Button ---
+              GestureDetector(
+                onTap: () {
+                  context.pop(); // dismiss sheet
+                  context.pop(); // go back from add student screen
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    'Go Back',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: textTertiaryColor,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -343,31 +502,45 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
         ),
         const SizedBox(height: 8),
         batchesAsync.when(
-          data: (batches) => Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            height: 50,
-            decoration: BoxDecoration(
-              color: isDark ? surfaceColor.withValues(alpha: 0.5) : Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.1)
+          data: (batches) {
+            // Auto-select if there is exactly 1 batch and nothing is selected yet
+            if (_selectedBatchId == null && batches.isNotEmpty) {
+              if (batches.length == 1) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted && _selectedBatchId != batches.first.id) {
+                    setState(() {
+                      _selectedBatchId = batches.first.id;
+                    });
+                  }
+                });
+              }
+            }
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              height: 50,
+              decoration: BoxDecoration(
+                color: isDark ? surfaceColor.withValues(alpha: 0.5) : Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.1)
+                ),
               ),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: _selectedBatchId,
-                hint: Text('Select Batch', style: TextStyle(color: textTertiaryColor.withValues(alpha: 0.5), fontSize: 14)),
-                isExpanded: true,
-                dropdownColor: dropdownBgColor,
-                icon: Icon(Icons.arrow_drop_down_rounded, color: textTertiaryColor),
-                items: batches.map((b) => DropdownMenuItem(
-                  value: b.id.toString(),
-                  child: Text(b.name, style: TextStyle(color: textPrimaryColor, fontSize: 15)),
-                )).toList(),
-                onChanged: (val) => setState(() => _selectedBatchId = val),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _selectedBatchId,
+                  hint: Text('Select Batch', style: TextStyle(color: textTertiaryColor.withValues(alpha: 0.5), fontSize: 14)),
+                  isExpanded: true,
+                  dropdownColor: dropdownBgColor,
+                  icon: Icon(Icons.arrow_drop_down_rounded, color: textTertiaryColor),
+                  items: batches.map((b) => DropdownMenuItem(
+                    value: b.id.toString(),
+                    child: Text(b.name, style: TextStyle(color: textPrimaryColor, fontSize: 15)),
+                  )).toList(),
+                  onChanged: (val) => setState(() => _selectedBatchId = val),
+                ),
               ),
-            ),
-          ),
+            );
+          },
           loading: () => const SizedBox(height: 50, child: Center(child: LinearProgressIndicator())),
           error: (_, _) => const Text('Error loading batches', style: TextStyle(color: Colors.red)),
         ),
