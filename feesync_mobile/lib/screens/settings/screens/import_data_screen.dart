@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_file_dialog/flutter_file_dialog.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/glass/glass_card.dart';
 
@@ -69,17 +69,26 @@ class _ImportDataScreenState extends ConsumerState<ImportDataScreen> {
   Future<void> _downloadTemplate() async {
     setState(() => _isDownloadingTemplate = true);
     try {
-      final dir = await getApplicationDocumentsDirectory();
+      final dir = await getTemporaryDirectory();
       final file = File('${dir.path}/student_import_template.csv');
       await file.writeAsString(_templateCsv);
-      await Share.shareXFiles(
-        [XFile(file.path, mimeType: 'text/csv')],
-        subject: 'FeeSync Student Import Template',
-        text: 'Use this template to import students into FeeSync.',
+      
+      final params = SaveFileDialogParams(
+        sourceFilePath: file.path,
+        fileName: 'student_import_template.csv',
       );
+      final filePath = await FlutterFileDialog.saveFile(params: params);
+      
+      if (mounted) {
+        if (filePath != null) {
+          _showSnack('Template downloaded successfully to device!');
+        } else {
+          _showSnack('Download cancelled', isError: true);
+        }
+      }
     } catch (e) {
       if (mounted) {
-        _showSnack('Failed to share template: $e', isError: true);
+        _showSnack('Failed to save template: $e', isError: true);
       }
     } finally {
       if (mounted) setState(() => _isDownloadingTemplate = false);

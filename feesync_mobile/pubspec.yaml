@@ -43,6 +43,14 @@ dependencies:
   # Local state cache
   shared_preferences: ^2.3.2
 
+  # Google Sign-In and Google Drive APIs
+  google_sign_in: ^6.2.1
+  googleapis: ^13.1.0
+  extension_google_sign_in_as_googleapis_auth: ^2.0.1
+
+  # Native File Dialogs (Save File directly)
+  flutter_file_dialog: ^3.0.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

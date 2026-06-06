@@ -108,13 +108,24 @@ class FeeRepository {
   }
 
   // Dues
-  Future<List<Due>> getDues({String? studentId, String? status}) async {
+  Future<List<Due>> getDues({
+    String? studentId,
+    String? status,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
     final query = _client.from('dues').select('*, fee_structures(*)');
     if (studentId != null) {
       query.eq('student_id', studentId);
     }
     if (status != null) {
       query.eq('status', status);
+    }
+    if (startDate != null) {
+      query.gte('due_date', startDate.toIso8601String());
+    }
+    if (endDate != null) {
+      query.lte('due_date', endDate.toIso8601String());
     }
     final response = await query.order('due_date', ascending: true);
     return (response as List).map((json) => Due.fromJson(json)).toList();

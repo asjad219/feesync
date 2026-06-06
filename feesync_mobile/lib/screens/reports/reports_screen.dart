@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../providers/dashboard_provider.dart';
@@ -26,9 +27,27 @@ class ReportsScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text('Analytics', style: GoogleFonts.manrope(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
         actions: [
-          IconButton(
-            onPressed: () {},
-            icon: Icon(Icons.share_rounded, color: AppColors.textPrimary),
+          statsAsync.when(
+            data: (stats) => IconButton(
+              onPressed: () {
+                final text = 'FeeSync Analytics Report\n'
+                    'Last Updated: ${DateFormat('yyyy-MM-dd HH:mm').format(stats.lastUpdated)}\n\n'
+                    '• Total Students: ${stats.totalStudents}\n'
+                    '• Total Revenue (Collected): ${currencyFormatter.format(stats.totalFeesCollected)}\n'
+                    '• Outstanding Dues: ${currencyFormatter.format(stats.pendingFees)}\n'
+                    '• Collection Rate: ${stats.collectionRate.toStringAsFixed(1)}%\n\n'
+                    'Generated from FeeSync app settings analytics.';
+                SharePlus.instance.share(
+                  ShareParams(
+                    text: text,
+                    subject: 'FeeSync Analytics Report',
+                  ),
+                );
+              },
+              icon: Icon(Icons.share_rounded, color: AppColors.textPrimary),
+            ),
+            loading: () => const SizedBox.shrink(),
+            error: (err, stack) => const SizedBox.shrink(),
           ),
         ],
       ),
@@ -56,7 +75,16 @@ class ReportsScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SectionHeader(title: 'Overview', subtitle: 'Snapshot of your financial performance'),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _SectionHeader(title: 'Overview', subtitle: 'Snapshot of your financial performance'),
+              ),
+              const _CycleFilterDropdown(),
+            ],
+          ),
           const SizedBox(height: 24),
           _KeyMetricsGrid(stats: stats, currencyFormatter: currencyFormatter),
           const SizedBox(height: 32),
@@ -327,6 +355,57 @@ class _SectionHeader extends StatelessWidget {
         const SizedBox(height: 4),
         Text(subtitle, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textTertiary)),
       ],
+    );
+  }
+}
+
+class _CycleFilterDropdown extends ConsumerWidget {
+  const _CycleFilterDropdown();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedCycle = ref.watch(selectedTimeCycleProvider);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainer.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: AppColors.outline.withValues(alpha: 0.1),
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<TimeCycle>(
+          value: selectedCycle,
+          dropdownColor: AppColors.darkSurface,
+          icon: Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textPrimary, size: 18),
+          style: GoogleFonts.inter(
+            color: AppColors.textPrimary,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+          onChanged: (TimeCycle? newCycle) {
+            if (newCycle != null) {
+              ref.read(selectedTimeCycleProvider.notifier).state = newCycle;
+            }
+          },
+          items: const [
+            DropdownMenuItem(
+              value: TimeCycle.monthly,
+              child: Text('Monthly'),
+            ),
+            DropdownMenuItem(
+              value: TimeCycle.quarterly,
+              child: Text('Quarterly'),
+            ),
+            DropdownMenuItem(
+              value: TimeCycle.yearly,
+              child: Text('Yearly'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

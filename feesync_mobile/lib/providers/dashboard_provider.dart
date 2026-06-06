@@ -17,9 +17,18 @@ final dashboardAnalyticsRepositoryProvider =
   );
 });
 
+enum TimeCycle {
+  monthly,
+  quarterly,
+  yearly,
+}
+
+final selectedTimeCycleProvider = StateProvider<TimeCycle>((ref) => TimeCycle.monthly);
+
 final dashboardStatsProvider = FutureProvider<DashboardStats>((ref) async {
+  final cycle = ref.watch(selectedTimeCycleProvider);
   final repo = ref.watch(dashboardAnalyticsRepositoryProvider);
-  return repo.getDashboardStats();
+  return repo.getDashboardStatsForCycle(cycle);
 });
 
 final monthlyCollectionDataProvider =
@@ -105,6 +114,91 @@ class DashboardAnalyticsRepository {
       );
     } catch (e) {
       debugPrint('Error fetching dashboard stats: $e');
+      rethrow;
+    }
+  }
+
+  /// Get dashboard statistics filtered by time cycle
+  Future<DashboardStats> getDashboardStatsForCycle(TimeCycle cycle) async {
+    try {
+      final now = DateTime.now();
+      DateTime startDate;
+      DateTime endDate;
+
+      switch (cycle) {
+        case TimeCycle.monthly:
+          startDate = DateTime(now.year, now.month, 1);
+          endDate = DateTime(now.year, now.month + 1, 0);
+          break;
+        case TimeCycle.quarterly:
+          int quarterMonth = (((now.month - 1) ~/ 3) * 3) + 1;
+          startDate = DateTime(now.year, quarterMonth, 1);
+          endDate = DateTime(now.year, quarterMonth + 3, 0);
+          break;
+        case TimeCycle.yearly:
+          startDate = DateTime(now.year, 1, 1);
+          endDate = DateTime(now.year, 12, 31);
+          break;
+      }
+
+      // Get total students
+      final students = await _studentRepo.getStudents();
+      final totalStudents = students.length;
+
+      // Get total collected in this period
+      final periodCollection = await _paymentRepo.getTotalCollection(
+        startDate: startDate,
+        endDate: endDate,
+      );
+      final totalCollectedInPeriod =
+          (periodCollection['total'] as num?)?.toDouble() ?? 0;
+
+      // Get outstanding and expected amount from dues table for this period
+      double totalOutstanding = 0;
+      double totalAssigned = 0;
+
+      final dues = await _feeRepo.getDues(startDate: startDate, endDate: endDate);
+      for (var due in dues) {
+        if (due.status.toLowerCase() != 'cancelled') {
+          totalOutstanding += due.amountOutstanding;
+          totalAssigned += due.amountAssigned;
+        }
+      }
+
+      // If no dues were found in the period, fallback to calculating overall
+      if (totalAssigned == 0) {
+        final balances = await _studentRepo.getStudentBalances();
+        totalOutstanding = balances.fold<double>(
+          0,
+          (sum, balance) => sum + balance.balance,
+        );
+        final allTimeCollection = await _paymentRepo.getTotalCollection();
+        final totalCollected = (allTimeCollection['total'] as num?)?.toDouble() ?? 0;
+        final totalFees = totalCollected + totalOutstanding;
+        final collectionRate = totalFees > 0 ? (totalCollected / totalFees) * 100 : 0.0;
+
+        return DashboardStats(
+          totalStudents: totalStudents,
+          totalFeesCollected: totalCollectedInPeriod,
+          pendingFees: totalOutstanding,
+          collectionRate: collectionRate,
+          lastUpdated: DateTime.now(),
+        );
+      }
+
+      final collectionRate = totalAssigned > 0 
+          ? ((totalAssigned - totalOutstanding) / totalAssigned) * 100 
+          : 0.0;
+
+      return DashboardStats(
+        totalStudents: totalStudents,
+        totalFeesCollected: totalCollectedInPeriod,
+        pendingFees: totalOutstanding,
+        collectionRate: collectionRate,
+        lastUpdated: DateTime.now(),
+      );
+    } catch (e) {
+      debugPrint('Error fetching dashboard stats for cycle $cycle: $e');
       rethrow;
     }
   }
