@@ -143,7 +143,7 @@ class _PaywallSheet extends StatelessWidget {
             color: const Color(0xFF2563EB),
             text: isStudent
                 ? 'Starter: up to 200 students'
-                : 'Starter: up to 10 batches',
+                : 'Starter: up to 15 batches',
             highlight: 'Starter',
           ),
           const SizedBox(height: 10),

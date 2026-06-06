@@ -7,6 +7,7 @@ import 'firebase_options.dart';
 import 'router.dart';
 import 'core/config/supabase_config.dart';
 import 'core/theme/app_theme.dart';
+import 'core/billing/billing_provider.dart';
 import 'providers/settings_provider.dart';
 
 void main() async {
@@ -54,6 +55,9 @@ class FeeSyncApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Initialize billing service once at startup.
+    ref.watch(billingInitProvider);
+
     final router = ref.watch(routerProvider);
     final settingsAsync = ref.watch(settingsProvider);
     final themeMode = settingsAsync.value?.themeMode.toLowerCase() ?? 'dark_luxury';

@@ -37,6 +37,12 @@ dependencies:
   local_auth: ^3.0.1
   flutter_secure_storage: ^10.3.1
 
+  # Billing — Google Play In-App Purchases
+  in_app_purchase: ^3.2.0
+
+  # Local state cache
+  shared_preferences: ^2.3.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

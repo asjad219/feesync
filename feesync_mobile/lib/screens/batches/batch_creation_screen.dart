@@ -4,8 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/paywall_dialog.dart';
 import '../../../providers/batch_provider.dart';
 import '../../../providers/user_provider.dart';
+import '../../../providers/subscription_provider.dart';
 
 class BatchCreationScreen extends ConsumerStatefulWidget {
   final String? batchId;
@@ -22,9 +24,21 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (widget.batchId != null) {
         _loadBatchData();
+      } else {
+        // ── Paywall check (create-new mode only) ────────────────────────────
+        final data = await ref.read(subscriptionScreenDataProvider.future);
+        if (!data.canAddBatch && mounted) {
+          await showPaywallDialog(
+            context,
+            ref,
+            trigger: PaywallTrigger.batchLimit,
+          );
+          if (mounted) context.pop();
+          return;
+        }
       }
     });
   }
