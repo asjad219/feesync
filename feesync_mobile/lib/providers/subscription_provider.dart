@@ -108,7 +108,7 @@ class SubscriptionScreenData {
 
   /// Usage ratio 0.0–1.0. Returns 0.0 for unlimited plans.
   double get studentUsageRatio {
-    final max = subscription.maxStudents;
+    final max = subscription.currentMaxStudents;
     if (max < 0) return 0.0;
     if (max == 0) return 1.0;
     return (activeStudentCount / max).clamp(0.0, 1.0);
@@ -120,13 +120,13 @@ class SubscriptionScreenData {
   /// True if adding one more student is allowed.
   bool get canAddStudent {
     if (subscription.hasUnlimitedStudents) return true;
-    return activeStudentCount < subscription.maxStudents;
+    return activeStudentCount < subscription.currentMaxStudents;
   }
 
   // ─── Batch limit ────────────────────────────────────────────────────────────
 
   double get batchUsageRatio {
-    final max = subscription.maxBatches;
+    final max = subscription.currentMaxBatches;
     if (max < 0) return 0.0;
     if (max == 0) return 1.0;
     return (activeBatchCount / max).clamp(0.0, 1.0);
@@ -137,7 +137,7 @@ class SubscriptionScreenData {
   /// True if adding one more batch is allowed.
   bool get canAddBatch {
     if (subscription.hasUnlimitedBatches) return true;
-    return activeBatchCount < subscription.maxBatches;
+    return activeBatchCount < subscription.currentMaxBatches;
   }
 
   // ─── WhatsApp Limits ────────────────────────────────────────────────────────
@@ -145,7 +145,7 @@ class SubscriptionScreenData {
   int get waReceiptsUsed => usage['whatsapp_receipts_used'] ?? 0;
   
   double get waReceiptsUsageRatio {
-    final max = subscription.whatsappReceiptsLimit;
+    final max = subscription.currentWaReceiptsLimit;
     if (max < 0) return 0.0;
     if (max == 0) return 1.0;
     return (waReceiptsUsed / max).clamp(0.0, 1.0);

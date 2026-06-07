@@ -10,6 +10,9 @@ final notificationRepositoryProvider = Provider<NotificationRepository>((ref) {
 });
 
 final notificationsProvider = FutureProvider<List<AppNotification>>((ref) async {
+  final authState = ref.watch(authStateProvider);
+  if (authState.value == null) return [];
+  
   final repository = ref.watch(notificationRepositoryProvider);
   return repository.getNotifications();
 });
@@ -24,6 +27,9 @@ final unreadNotificationsCountProvider = Provider<int>((ref) {
 });
 
 final notificationSettingsProvider = FutureProvider<NotificationSettings?>((ref) async {
+  final authState = ref.watch(authStateProvider);
+  if (authState.value == null) return null;
+  
   final repository = ref.watch(notificationRepositoryProvider);
   return repository.getNotificationSettings();
 });

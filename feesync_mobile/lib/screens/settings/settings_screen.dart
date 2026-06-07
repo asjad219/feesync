@@ -325,9 +325,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ? AppColors.pending
             : AppColors.success;
 
-    final maxLabel = sub.maxStudents <= 0
+    final maxLabel = sub.currentMaxStudents <= 0
         ? 'Unlimited'
-        : '$activeStudents / ${sub.maxStudents}';
+        : '$activeStudents / ${sub.currentMaxStudents}';
 
     return GestureDetector(
       onTap: onTap,
@@ -383,7 +383,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ),
             const SizedBox(height: 10),
-            if (sub.maxStudents > 0) ...[  
+            if (sub.currentMaxStudents > 0) ...[  
               ClipRRect(
                 borderRadius: const BorderRadius.all(Radius.circular(6)),
                 child: LinearProgressIndicator(

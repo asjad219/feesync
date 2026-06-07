@@ -10,7 +10,16 @@ final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
 
 final settingsProvider = StateNotifierProvider<SettingsNotifier, AsyncValue<AppSettings>>((ref) {
   final repository = ref.watch(settingsRepositoryProvider);
-  return SettingsNotifier(repository);
+  final notifier = SettingsNotifier(repository);
+
+  ref.listen(authStateProvider, (previous, next) {
+    // If the user changed (e.g. logged in or logged out), reload settings
+    if (next.value?.id != previous?.value?.id) {
+      notifier.loadSettings();
+    }
+  });
+
+  return notifier;
 });
 
 class SettingsNotifier extends StateNotifier<AsyncValue<AppSettings>> {

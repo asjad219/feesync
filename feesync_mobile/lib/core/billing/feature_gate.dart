@@ -27,21 +27,21 @@ class FeatureGate {
   /// True if the user can add more students.
   bool get canAddStudent {
     if (subscription.hasUnlimitedStudents) return true;
-    return activeStudentCount < subscription.maxStudents;
+    return activeStudentCount < subscription.currentMaxStudents;
   }
 
   /// How many more students the user can add (-1 = unlimited).
   int get remainingStudentSlots {
     if (subscription.hasUnlimitedStudents) return -1;
-    final remaining = subscription.maxStudents - activeStudentCount;
+    final remaining = subscription.currentMaxStudents - activeStudentCount;
     return remaining < 0 ? 0 : remaining;
   }
 
   /// Student usage as a fraction (0.0–1.0). Returns 0.0 for unlimited.
   double get studentUsageFraction {
     if (subscription.hasUnlimitedStudents) return 0.0;
-    if (subscription.maxStudents == 0) return 1.0;
-    return (activeStudentCount / subscription.maxStudents).clamp(0.0, 1.0);
+    if (subscription.currentMaxStudents == 0) return 1.0;
+    return (activeStudentCount / subscription.currentMaxStudents).clamp(0.0, 1.0);
   }
 
   // ── Batch limits ───────────────────────────────────────────────────────────
@@ -49,13 +49,13 @@ class FeatureGate {
   /// True if the user can create more batches.
   bool get canAddBatch {
     if (subscription.hasUnlimitedBatches) return true;
-    return activeBatchCount < subscription.maxBatches;
+    return activeBatchCount < subscription.currentMaxBatches;
   }
 
   /// How many more batches the user can create (-1 = unlimited).
   int get remainingBatchSlots {
     if (subscription.hasUnlimitedBatches) return -1;
-    final remaining = subscription.maxBatches - activeBatchCount;
+    final remaining = subscription.currentMaxBatches - activeBatchCount;
     return remaining < 0 ? 0 : remaining;
   }
 
@@ -64,25 +64,25 @@ class FeatureGate {
   /// True if the user can send another WhatsApp receipt.
   bool get canSendWhatsappReceipt {
     if (subscription.hasUnlimitedWaReceipts) return true;
-    return waReceiptsUsedThisMonth < subscription.whatsappReceiptsLimit;
+    return waReceiptsUsedThisMonth < subscription.currentWaReceiptsLimit;
   }
 
   /// True if the user can send another WhatsApp reminder.
   bool get canSendWhatsappReminder {
     if (subscription.hasUnlimitedWaReminders) return true;
-    return waRemindersUsedThisMonth < subscription.whatsappRemindersLimit;
+    return waRemindersUsedThisMonth < subscription.currentWaRemindersLimit;
   }
 
   int get remainingWaReceipts {
     if (subscription.hasUnlimitedWaReceipts) return -1;
-    return (subscription.whatsappReceiptsLimit - waReceiptsUsedThisMonth)
-        .clamp(0, subscription.whatsappReceiptsLimit);
+    return (subscription.currentWaReceiptsLimit - waReceiptsUsedThisMonth)
+        .clamp(0, subscription.currentWaReceiptsLimit);
   }
 
   int get remainingWaReminders {
     if (subscription.hasUnlimitedWaReminders) return -1;
-    return (subscription.whatsappRemindersLimit - waRemindersUsedThisMonth)
-        .clamp(0, subscription.whatsappRemindersLimit);
+    return (subscription.currentWaRemindersLimit - waRemindersUsedThisMonth)
+        .clamp(0, subscription.currentWaRemindersLimit);
   }
 
   // ── Feature flags ──────────────────────────────────────────────────────────
@@ -138,12 +138,12 @@ class FeatureGate {
   /// Human-readable limit status for student usage.
   String get studentLimitStatus {
     if (subscription.hasUnlimitedStudents) return 'Unlimited students';
-    return '$activeStudentCount / ${subscription.maxStudents} students used';
+    return '$activeStudentCount / ${subscription.currentMaxStudents} students used';
   }
 
   /// Human-readable limit status for batch usage.
   String get batchLimitStatus {
     if (subscription.hasUnlimitedBatches) return 'Unlimited batches';
-    return '$activeBatchCount / ${subscription.maxBatches} batches used';
+    return '$activeBatchCount / ${subscription.currentMaxBatches} batches used';
   }
 }

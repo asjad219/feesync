@@ -1,8 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter_file_dialog/flutter_file_dialog.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/currency_formatter.dart';
@@ -28,23 +31,121 @@ class ReportsScreen extends ConsumerWidget {
         title: Text('Analytics', style: GoogleFonts.manrope(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
         actions: [
           statsAsync.when(
-            data: (stats) => IconButton(
-              onPressed: () {
-                final text = 'FeeSync Analytics Report\n'
-                    'Last Updated: ${DateFormat('yyyy-MM-dd HH:mm').format(stats.lastUpdated)}\n\n'
-                    '• Total Students: ${stats.totalStudents}\n'
-                    '• Total Revenue (Collected): ${currencyFormatter.format(stats.totalFeesCollected)}\n'
-                    '• Outstanding Dues: ${currencyFormatter.format(stats.pendingFees)}\n'
-                    '• Collection Rate: ${stats.collectionRate.toStringAsFixed(1)}%\n\n'
-                    'Generated from FeeSync app settings analytics.';
-                SharePlus.instance.share(
-                  ShareParams(
-                    text: text,
-                    subject: 'FeeSync Analytics Report',
+            data: (stats) => Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                monthlyAsync.when(
+                  data: (monthly) => IconButton(
+                    onPressed: () async {
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          backgroundColor: AppColors.darkSurface,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          title: Text(
+                            'Download Report',
+                            style: GoogleFonts.manrope(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 18,
+                            ),
+                          ),
+                          content: Text(
+                            'Do you want to download the Analytics report as an Excel (CSV) file?',
+                            style: GoogleFonts.inter(
+                              color: AppColors.textSecondary,
+                              fontSize: 14,
+                            ),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, false),
+                              child: Text('Cancel', style: GoogleFonts.inter(color: AppColors.textSecondary)),
+                            ),
+                            ElevatedButton(
+                              onPressed: () => Navigator.pop(ctx, true),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: AppColors.onPrimary,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                              child: Text('Download', style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (confirmed != true) return;
+
+                      final csvBuffer = StringBuffer();
+                      csvBuffer.writeln('FeeSync Analytics Report');
+                      csvBuffer.writeln('Last Updated,${DateFormat('yyyy-MM-dd HH:mm').format(stats.lastUpdated)}');
+                      csvBuffer.writeln();
+                      csvBuffer.writeln('Overview Metrics');
+                      csvBuffer.writeln('Metric,Value');
+                      csvBuffer.writeln('Total Students,${stats.totalStudents}');
+                      csvBuffer.writeln('Total Revenue (Collected),${stats.totalFeesCollected}');
+                      csvBuffer.writeln('Outstanding Dues,${stats.pendingFees}');
+                      csvBuffer.writeln('Collection Rate,${stats.collectionRate.toStringAsFixed(1)}%');
+                      csvBuffer.writeln();
+                      csvBuffer.writeln('Revenue Trend');
+                      csvBuffer.writeln('Month,Amount');
+                      for (final m in monthly) {
+                        csvBuffer.writeln('${m.month},${m.amount}');
+                      }
+                      
+                      final dir = await getApplicationDocumentsDirectory();
+                      final fileName = 'feesync_analytics_${DateTime.now().millisecondsSinceEpoch}.csv';
+                      final path = '${dir.path}/$fileName';
+                      final file = File(path);
+                      await file.writeAsString(csvBuffer.toString());
+
+                      final params = SaveFileDialogParams(
+                        sourceFilePath: path,
+                        fileName: fileName,
+                      );
+                      
+                      final savedPath = await FlutterFileDialog.saveFile(params: params);
+
+                      if (savedPath != null && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Report downloaded successfully!',
+                              style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppColors.onSuccess),
+                            ),
+                            backgroundColor: AppColors.success,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    },
+                    icon: Icon(Icons.table_view_rounded, color: AppColors.textPrimary),
+                    tooltip: 'Export as XLS/CSV',
                   ),
-                );
-              },
-              icon: Icon(Icons.share_rounded, color: AppColors.textPrimary),
+                  loading: () => const SizedBox.shrink(),
+                  error: (err, stack) => const SizedBox.shrink(),
+                ),
+                IconButton(
+                  onPressed: () {
+                    final text = 'FeeSync Analytics Report\n'
+                        'Last Updated: ${DateFormat('yyyy-MM-dd HH:mm').format(stats.lastUpdated)}\n\n'
+                        '• Total Students: ${stats.totalStudents}\n'
+                        '• Total Revenue (Collected): ${currencyFormatter.format(stats.totalFeesCollected)}\n'
+                        '• Outstanding Dues: ${currencyFormatter.format(stats.pendingFees)}\n'
+                        '• Collection Rate: ${stats.collectionRate.toStringAsFixed(1)}%\n\n'
+                        'Generated from FeeSync app settings analytics.';
+                    SharePlus.instance.share(
+                      ShareParams(
+                        text: text,
+                        subject: 'FeeSync Analytics Report',
+                      ),
+                    );
+                  },
+                  icon: Icon(Icons.share_rounded, color: AppColors.textPrimary),
+                  tooltip: 'Share Text Report',
+                ),
+              ],
             ),
             loading: () => const SizedBox.shrink(),
             error: (err, stack) => const SizedBox.shrink(),

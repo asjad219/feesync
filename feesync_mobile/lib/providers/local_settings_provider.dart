@@ -9,8 +9,10 @@ final localSettingsProvider = StateNotifierProvider<LocalSettingsNotifier, Local
 });
 
 class LocalSettingsNotifier extends StateNotifier<LocalSettings> {
+  late final Future<void> initFuture;
+
   LocalSettingsNotifier() : super(LocalSettings.defaultSettings()) {
-    loadSettings();
+    initFuture = loadSettings();
   }
 
   Future<File> get _localFile async {

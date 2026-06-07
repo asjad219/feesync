@@ -16,6 +16,9 @@ final accountRepositoryProvider = Provider<AccountRepository>((ref) {
 });
 
 final currentUserProfileProvider = FutureProvider<UserProfile?>((ref) async {
+  final authState = ref.watch(authStateProvider);
+  if (authState.value == null) return null;
+  
   final repository = ref.watch(userRepositoryProvider);
   return repository.getCurrentUserProfile();
 });

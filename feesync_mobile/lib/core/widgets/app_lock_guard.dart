@@ -17,14 +17,23 @@ class _AppLockGuardState extends ConsumerState<AppLockGuard>
     with WidgetsBindingObserver {
   bool _isLocked = false;
   bool _isAuthenticating = false;
+  bool _isCheckingInitialState = true;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Always lock on startup if any lock is enabled
+    // Always lock on startup if any lock is enabled, but wait for settings to load first
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkLock(isStartup: true);
+      ref.read(localSettingsProvider.notifier).initFuture.then((_) {
+        if (mounted) {
+          _checkLock(isStartup: true).then((_) {
+            if (mounted) {
+              setState(() => _isCheckingInitialState = false);
+            }
+          });
+        }
+      });
     });
   }
 
@@ -98,6 +107,14 @@ class _AppLockGuardState extends ConsumerState<AppLockGuard>
 
   @override
   Widget build(BuildContext context) {
+    if (_isCheckingInitialState) {
+      // Show an empty container that matches the dark background to prevent flashing the app content
+      return Directionality(
+        textDirection: TextDirection.ltr,
+        child: Container(color: const Color(0xFF0D0D1A)),
+      );
+    }
+
     if (!_isLocked) {
       return widget.child;
     }

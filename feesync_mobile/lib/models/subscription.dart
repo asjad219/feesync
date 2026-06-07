@@ -189,17 +189,43 @@ class Subscription {
     return days <= 7;
   }
 
+  // ── Resolved effective limits ──────────────────────────────────────────────
+  
+  int get currentMaxStudents {
+    final planLimit = SubscriptionPlan.fromTier(effectivePlan).maxStudents;
+    if (planLimit < 0 || maxStudents < 0) return -1;
+    return maxStudents > planLimit ? maxStudents : planLimit;
+  }
+
+  int get currentMaxBatches {
+    final planLimit = SubscriptionPlan.fromTier(effectivePlan).maxBatches;
+    if (planLimit < 0 || maxBatches < 0) return -1;
+    return maxBatches > planLimit ? maxBatches : planLimit;
+  }
+
+  int get currentWaReceiptsLimit {
+    final planLimit = SubscriptionPlan.fromTier(effectivePlan).whatsappReceiptsPerMonth;
+    if (planLimit < 0 || whatsappReceiptsLimit < 0) return -1;
+    return whatsappReceiptsLimit > planLimit ? whatsappReceiptsLimit : planLimit;
+  }
+
+  int get currentWaRemindersLimit {
+    final planLimit = SubscriptionPlan.fromTier(effectivePlan).whatsappRemindersPerMonth;
+    if (planLimit < 0 || whatsappRemindersLimit < 0) return -1;
+    return whatsappRemindersLimit > planLimit ? whatsappRemindersLimit : planLimit;
+  }
+
   /// True if unlimited students are allowed.
-  bool get hasUnlimitedStudents => maxStudents < 0;
+  bool get hasUnlimitedStudents => currentMaxStudents < 0;
 
   /// True if unlimited batches are allowed.
-  bool get hasUnlimitedBatches => maxBatches < 0;
+  bool get hasUnlimitedBatches => currentMaxBatches < 0;
 
   /// True if unlimited WhatsApp receipts are allowed.
-  bool get hasUnlimitedWaReceipts => whatsappReceiptsLimit < 0;
+  bool get hasUnlimitedWaReceipts => currentWaReceiptsLimit < 0;
 
   /// True if unlimited WhatsApp reminders are allowed.
-  bool get hasUnlimitedWaReminders => whatsappRemindersLimit < 0;
+  bool get hasUnlimitedWaReminders => currentWaRemindersLimit < 0;
 
   // ── Feature gates by effective plan ───────────────────────────────────────
 
