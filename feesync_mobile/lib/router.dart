@@ -8,6 +8,7 @@ import 'screens/auth/login_screen.dart';
 import 'screens/auth/signup_screen.dart';
 import 'screens/auth/splash_screen.dart';
 import 'screens/auth/forgot_password_screen.dart';
+import 'screens/auth/update_password_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
 import 'screens/students/student_list_screen.dart';
 import 'screens/students/student_details_screen.dart';
@@ -42,7 +43,7 @@ import 'screens/batches/batch_detail_screen.dart';
 import 'models/student.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
-  return GoRouter(
+  final router = GoRouter(
     initialLocation: '/splash',
     refreshListenable: GoRouterRefreshStream(
       Supabase.instance.client.auth.onAuthStateChange,
@@ -52,7 +53,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isSplashRoute = state.uri.path == '/splash';
       final isAuthRoute = state.uri.path == '/login' ||
           state.uri.path == '/signup' ||
-          state.uri.path == '/forgot-password';
+          state.uri.path == '/forgot-password' ||
+          state.uri.path == '/update-password';
       final isOnboardingRoute = state.uri.path.startsWith('/onboarding');
       final user = Supabase.instance.client.auth.currentUser;
       final metadata = user?.userMetadata ?? {};
@@ -70,6 +72,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       if (isLoggedIn && isAuthRoute) {
+        if (state.uri.path == '/update-password') {
+          return null;
+        }
         if (!onboardingComplete) {
           return '/onboarding/$onboardingStep';
         }
@@ -105,6 +110,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/forgot-password',
         builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/update-password',
+        builder: (context, state) => const UpdatePasswordScreen(),
       ),
 
       // Onboarding routes
@@ -264,6 +273,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
+
+  // Listen for password recovery events to navigate to update-password
+  Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+    if (data.event == AuthChangeEvent.passwordRecovery) {
+      router.go('/update-password');
+    }
+  });
+
+  return router;
 });
 
 class GoRouterRefreshStream extends ChangeNotifier {

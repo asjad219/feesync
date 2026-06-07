@@ -663,7 +663,7 @@ class _DataManagementScreenState extends ConsumerState<DataManagementScreen> {
                     child: ExpansionTile(
                       tilePadding: EdgeInsets.zero,
                       title: Text(
-                        'Setup Instructions & Guidelines',
+                        'Backup Guidelines & Security',
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
@@ -675,25 +675,10 @@ class _DataManagementScreenState extends ConsumerState<DataManagementScreen> {
                       children: [
                         const SizedBox(height: 8),
                         _instructionText(
-                          'For Users:',
-                          '• Backups are saved in a folder named "FeeSync_Backups" in your Google Drive.\n'
-                          '• The app only has permission to access files created by FeeSync, keeping the rest of your Drive fully private.\n'
-                          '• When restoring, your current database data will be merged or updated with the backup data.',
-                        ),
-                        const SizedBox(height: 12),
-                        _instructionText(
-                          'For Developers (Google Cloud Setup):',
-                          'To enable Google Sign-In and Drive backups, configure credentials on Google Cloud Console:\n\n'
-                          '1. Go to Google Cloud Console > APIs & Services > Credentials.\n'
-                          '2. Create an OAuth client ID for Android and iOS.\n'
-                          '3. **Android Configuration**:\n'
-                          '   • Package Name: Register your bundle ID (e.g., com.example.feesync_mobile).\n'
-                          '   • SHA-1 Fingerprint: Run `./gradlew signingReport` in your Android folder, locate the debug/release key SHA-1, and register it.\n'
-                          '4. **iOS Configuration**:\n'
-                          '   • Register bundle ID, obtain the Reversed Client ID from the GoogleService-Info.plist file.\n'
-                          '   • Add the Reversed Client ID as a URL Scheme in `Info.plist` in Xcode.\n'
-                          '5. **OAuth Consent Screen**:\n'
-                          '   • Add the Drive API Scope `https://www.googleapis.com/auth/drive.file` and set status to Testing/Production.',
+                          'How it works:',
+                          '• Backups are saved securely in a folder named "FeeSync_Backups" in your Google Drive.\n'
+                          '• Privacy: FeeSync only requests access to files it creates. It cannot access any other files on your Google Drive.\n'
+                          '• Restoring: Restoring a backup will merge or update records in your current database with the backed-up data.',
                         ),
                       ],
                     ),

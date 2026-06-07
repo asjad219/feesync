@@ -57,11 +57,19 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
       lastDate: DateTime.now(),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: ColorScheme.dark(
-            primary: AppColors.primary,
-            onPrimary: AppColors.onPrimary,
-            surface: AppColors.surfaceContainer,
-          ),
+          colorScheme: AppColors.isDarkMode
+              ? ColorScheme.dark(
+                  primary: AppColors.primary,
+                  onPrimary: AppColors.onPrimary,
+                  surface: AppColors.surfaceContainer,
+                  onSurface: AppColors.textPrimary,
+                )
+              : ColorScheme.light(
+                  primary: AppColors.primary,
+                  onPrimary: Colors.white,
+                  surface: AppColors.surfaceContainer,
+                  onSurface: AppColors.textPrimary,
+                ),
         ),
         child: child!,
       ),
@@ -329,11 +337,12 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
               const SizedBox(height: 32),
 
               _buildField(
-                label: 'NOTES',
+                label: 'NOTES (OPTIONAL)',
                 controller: _notesController,
                 hint: 'Internal remarks...',
                 icon: Icons.notes_rounded,
                 maxLines: 2,
+                isRequired: false,
               ),
               const SizedBox(height: 64),
 
@@ -539,7 +548,15 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
     );
   }
 
-  Widget _buildField({required String label, required TextEditingController controller, required String hint, required IconData icon, int maxLines = 1, TextInputType? keyboardType}) {
+  Widget _buildField({
+    required String label,
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    int maxLines = 1,
+    TextInputType? keyboardType,
+    bool isRequired = true,
+  }) {
     final bool isDark = AppColors.isDarkMode;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -576,7 +593,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
               ),
             ),
           ),
-          validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+          validator: isRequired ? (v) => v?.isEmpty ?? true ? 'Required' : null : null,
         ),
       ],
     );

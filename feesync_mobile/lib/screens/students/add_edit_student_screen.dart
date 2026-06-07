@@ -61,7 +61,11 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
         final batchState = ref.read(batchNotifierProvider);
         final batches = batchState.value ?? [];
         if (batches.isEmpty) {
-          _showNoBatchesDialog();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _showNoBatchesDialog();
+            }
+          });
         }
       }
     });
@@ -101,7 +105,7 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
       enableDrag: false,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) {
+      builder: (sheetContext) {
         final Color surfaceColor = AppColors.darkSurface;
         final Color textPrimaryColor = AppColors.textPrimary;
         final Color textSecondaryColor = AppColors.textSecondary;
@@ -117,7 +121,7 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
             24,
             16,
             24,
-            MediaQuery.of(context).viewInsets.bottom + 36,
+            MediaQuery.of(sheetContext).viewInsets.bottom + 36,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -180,9 +184,19 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
               const SizedBox(height: 28),
               // --- Create Batch Button ---
               GestureDetector(
-                onTap: () {
-                  context.pop(); // dismiss sheet
-                  context.push('/batches/create'); // navigate to batch creation
+                onTap: () async {
+                  Navigator.of(sheetContext).pop(); // dismiss sheet
+                  final router = GoRouter.of(context);
+                  await router.push('/batches/create'); // navigate to batch creation
+                  if (mounted) {
+                    await ref.read(batchNotifierProvider.notifier).loadBatches();
+                    if (mounted) {
+                      final batches = ref.read(batchNotifierProvider).value ?? [];
+                      if (batches.isEmpty) {
+                        router.pop(); // go back since they didn't create a batch
+                      }
+                    }
+                  }
                 },
                 child: Container(
                   width: double.infinity,
@@ -223,7 +237,7 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
               // --- Cancel/Back Button ---
               GestureDetector(
                 onTap: () {
-                  context.pop(); // dismiss sheet
+                  Navigator.of(sheetContext).pop(); // dismiss sheet
                   context.pop(); // go back from add student screen
                 },
                 child: Padding(
