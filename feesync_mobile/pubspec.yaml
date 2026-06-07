@@ -50,6 +50,7 @@ dependencies:
 
   # Native File Dialogs (Save File directly)
   flutter_file_dialog: ^3.0.2
+  crypto: ^3.0.7
 
 dev_dependencies:
   flutter_test:

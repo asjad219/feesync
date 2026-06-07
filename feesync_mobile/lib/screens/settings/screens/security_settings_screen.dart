@@ -7,6 +7,8 @@ import '../../../core/theme/app_theme.dart';
 import '../../../providers/user_provider.dart';
 import '../../../providers/local_settings_provider.dart';
 import '../../../core/widgets/glass/glass_card.dart';
+import '../../../services/app_lock_service.dart';
+import 'pin_lock_screen.dart';
 
 class SecuritySettingsScreen extends ConsumerStatefulWidget {
   const SecuritySettingsScreen({super.key});
@@ -156,6 +158,59 @@ class _SecuritySettingsScreenState
     }
   }
 
+  // ── App Lock Toggles ───────────────────────────────────────────────────────
+  Future<void> _toggleBiometric(bool value) async {
+    final settings = ref.read(localSettingsProvider.notifier);
+    if (value) {
+      final service = ref.read(appLockServiceProvider);
+      final canUse = await service.canUseBiometrics();
+      if (!canUse) {
+        if (mounted) {
+          _showSnack('Biometric authentication is not set up or not supported on this device.');
+        }
+        return;
+      }
+      // Optionally verify right now to confirm ownership
+      final success = await service.authenticateWithBiometrics('Verify to enable biometric login');
+      if (success) {
+        await settings.updateBiometricEnabled(true);
+      }
+    } else {
+      await settings.updateBiometricEnabled(false);
+    }
+  }
+
+  Future<void> _togglePinLock(bool value) async {
+    final settings = ref.read(localSettingsProvider.notifier);
+    if (value) {
+      // Setup PIN
+      if (mounted) {
+        await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const PinLockScreen(mode: PinLockMode.setup),
+          ),
+        );
+        // The screen already saves the pinHash and pinLockEnabled if successful
+      }
+    } else {
+      // Remove PIN
+      if (mounted) {
+        final result = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const PinLockScreen(mode: PinLockMode.verify),
+          ),
+        );
+        if (result == true) {
+          await settings.updatePinHash(null);
+          await settings.updatePinLockEnabled(false);
+          if (mounted) _showSnack('PIN lock disabled', isSuccess: true);
+        }
+      }
+    }
+  }
+
   // ── Shared helpers ─────────────────────────────────────────────────────────
   Future<bool> _showConfirmDialog({
     required String title,
@@ -272,9 +327,7 @@ class _SecuritySettingsScreenState
                     subtitle:
                         'Use Face ID or fingerprint for fast secure login',
                     value: local.biometricEnabled,
-                    onChanged: (v) => ref
-                        .read(localSettingsProvider.notifier)
-                        .updateBiometricEnabled(v),
+                    onChanged: _toggleBiometric,
                   ),
                   _divider(),
                   _switchTile(
@@ -284,9 +337,7 @@ class _SecuritySettingsScreenState
                     subtitle:
                         'Require a 4-digit PIN when opening the app',
                     value: local.pinLockEnabled,
-                    onChanged: (v) => ref
-                        .read(localSettingsProvider.notifier)
-                        .updatePinLockEnabled(v),
+                    onChanged: _togglePinLock,
                   ),
                 ],
               ),

@@ -57,6 +57,10 @@ class LocalSettingsNotifier extends StateNotifier<LocalSettings> {
     await updateSettings(state.copyWith(aiConfidenceThreshold: threshold));
   }
 
+  Future<void> updatePinHash(String? hash) async {
+    await updateSettings(state.copyWith(pinHash: hash, clearPin: hash == null));
+  }
+
   Future<void> resetAll() async {
     final defaults = LocalSettings.defaultSettings();
     await updateSettings(defaults);

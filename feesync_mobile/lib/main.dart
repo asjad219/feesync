@@ -10,6 +10,8 @@ import 'core/theme/app_theme.dart';
 import 'core/billing/billing_provider.dart';
 import 'providers/settings_provider.dart';
 
+import 'core/widgets/app_lock_guard.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -72,6 +74,9 @@ class FeeSyncApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: isLight ? AppTheme.lightTheme : AppTheme.darkTheme,
       routerConfig: router,
+      builder: (context, child) {
+        return AppLockGuard(child: child!);
+      },
     );
   }
 }
