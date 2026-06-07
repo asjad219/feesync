@@ -370,6 +370,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                 ratio: data.studentUsageRatio,
                 isNearLimit: data.isNearLimit,
                 isAtLimit: data.isAtLimit,
+                limitName: 'student',
               ),
               const SizedBox(height: 16),
               Divider(color: AppColors.outline.withValues(alpha: 0.1), height: 1),
@@ -407,14 +408,12 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                 icon: Icons.chat_rounded,
                 iconColor: const Color(0xFF25D366),
                 label: 'WhatsApp Receipts/mo',
-                used: 0,
-                max: _getPlanByTier(sub.effectivePlan).whatsappReceiptsPerMonth,
-                suffix: _getPlanByTier(sub.effectivePlan)
-                            .whatsappReceiptsPerMonth ==
-                        -1
-                    ? 'Unlimited'
-                    : '${_getPlanByTier(sub.effectivePlan).whatsappReceiptsPerMonth} / month',
-                isSimpleLabel: true,
+                used: data.waReceiptsUsed,
+                max: sub.whatsappReceiptsLimit,
+                ratio: data.waReceiptsUsageRatio,
+                isNearLimit: data.isNearWaReceiptsLimit,
+                isAtLimit: data.isAtWaReceiptsLimit,
+                limitName: 'WhatsApp receipts',
               ),
             ],
           ),
@@ -434,6 +433,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
     bool isAtLimit = false,
     String? suffix,
     bool isSimpleLabel = false,
+    String limitName = 'limit',
   }) {
     final isUnlimited = max <= 0;
     final progressColor = isAtLimit
@@ -499,8 +499,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
               padding: const EdgeInsets.only(top: 6),
               child: Text(
                 isAtLimit
-                    ? '⚠️ Student limit reached — upgrade to add more'
-                    : '⚠️ Approaching student limit — consider upgrading',
+                    ? '⚠️ ${limitName[0].toUpperCase()}${limitName.substring(1)} limit reached — upgrade to add more'
+                    : '⚠️ Approaching $limitName limit — consider upgrading',
                 style: GoogleFonts.inter(
                   fontSize: 11,
                   color: progressColor,

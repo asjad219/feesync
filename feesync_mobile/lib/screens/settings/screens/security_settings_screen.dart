@@ -8,7 +8,7 @@ import '../../../providers/user_provider.dart';
 import '../../../providers/local_settings_provider.dart';
 import '../../../core/widgets/glass/glass_card.dart';
 import '../../../services/app_lock_service.dart';
-import 'pin_lock_screen.dart';
+import 'mpin_settings_screen.dart';
 
 class SecuritySettingsScreen extends ConsumerStatefulWidget {
   const SecuritySettingsScreen({super.key});
@@ -180,37 +180,6 @@ class _SecuritySettingsScreenState
     }
   }
 
-  Future<void> _togglePinLock(bool value) async {
-    final settings = ref.read(localSettingsProvider.notifier);
-    if (value) {
-      // Setup PIN
-      if (mounted) {
-        await Navigator.push<bool>(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const PinLockScreen(mode: PinLockMode.setup),
-          ),
-        );
-        // The screen already saves the pinHash and pinLockEnabled if successful
-      }
-    } else {
-      // Remove PIN
-      if (mounted) {
-        final result = await Navigator.push<bool>(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const PinLockScreen(mode: PinLockMode.verify),
-          ),
-        );
-        if (result == true) {
-          await settings.updatePinHash(null);
-          await settings.updatePinLockEnabled(false);
-          if (mounted) _showSnack('PIN lock disabled', isSuccess: true);
-        }
-      }
-    }
-  }
-
   // ── Shared helpers ─────────────────────────────────────────────────────────
   Future<bool> _showConfirmDialog({
     required String title,
@@ -330,14 +299,21 @@ class _SecuritySettingsScreenState
                     onChanged: _toggleBiometric,
                   ),
                   _divider(),
-                  _switchTile(
+                  _actionTile(
                     icon: Icons.password_rounded,
                     iconColor: const Color(0xFF8B5CF6),
-                    title: 'PIN App Lock',
-                    subtitle:
-                        'Require a 4-digit PIN when opening the app',
-                    value: local.pinLockEnabled,
-                    onChanged: _togglePinLock,
+                    title: 'MPIN Settings',
+                    subtitle: local.pinLockEnabled
+                        ? 'Manage or remove your 4-digit PIN'
+                        : 'Set up a 4-digit PIN to secure your app',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const MpinSettingsScreen(),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),

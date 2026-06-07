@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../providers/local_settings_provider.dart';
 import '../../../services/app_lock_service.dart';
@@ -111,6 +112,56 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen> {
     }
   }
 
+  Future<void> _forgotPin() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.darkSurface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'Forgot PIN?',
+          style: GoogleFonts.manrope(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+          ),
+        ),
+        content: Text(
+          'To reset your PIN, you will be signed out of FeeSync. You can create a new PIN after logging back in.',
+          style: GoogleFonts.inter(
+            color: AppColors.textSecondary,
+            fontSize: 14,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Cancel', style: GoogleFonts.inter(color: AppColors.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.errorContainer,
+              foregroundColor: AppColors.onErrorContainer,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: Text('Sign Out', style: GoogleFonts.inter()),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      // Clear local settings
+      await ref.read(localSettingsProvider.notifier).resetAll();
+      // Sign out from Supabase
+      await Supabase.instance.client.auth.signOut();
+      if (mounted) {
+        context.go('/login');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = AppColors.isDarkMode;
@@ -196,8 +247,20 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen> {
                 _errorText,
                 style: GoogleFonts.inter(color: AppColors.error, fontSize: 14, fontWeight: FontWeight.w600),
               )
+            else if (widget.mode == PinLockMode.verify)
+              TextButton(
+                onPressed: _forgotPin,
+                child: Text(
+                  'Forgot PIN?',
+                  style: GoogleFonts.inter(
+                    color: AppColors.primary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              )
             else
-              const SizedBox(height: 20),
+              const SizedBox(height: 48), // Match the height of the button or error text
               
             const Spacer(),
             

@@ -22,9 +22,9 @@ class _AppLockGuardState extends ConsumerState<AppLockGuard>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Lock on startup if enabled
+    // Always lock on startup if any lock is enabled
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkLock();
+      _checkLock(isStartup: true);
     });
   }
 
@@ -37,10 +37,13 @@ class _AppLockGuardState extends ConsumerState<AppLockGuard>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _checkLock();
+      if (_isLocked) {
+        // App was locked while in background (or startup), try biometric auth again
+        _tryBiometricUnlock();
+      }
     } else if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
       final settings = ref.read(localSettingsProvider);
-      if (settings.biometricEnabled || settings.pinLockEnabled) {
+      if ((settings.biometricEnabled || settings.pinLockEnabled) && settings.lockOnMinimize) {
         if (!_isLocked && !_isAuthenticating) {
           setState(() {
             _isLocked = true;
@@ -50,7 +53,7 @@ class _AppLockGuardState extends ConsumerState<AppLockGuard>
     }
   }
 
-  Future<void> _checkLock() async {
+  Future<void> _checkLock({required bool isStartup}) async {
     if (_isAuthenticating) return;
 
     final settings = ref.read(localSettingsProvider);
@@ -59,31 +62,32 @@ class _AppLockGuardState extends ConsumerState<AppLockGuard>
       return;
     }
 
-    if (!_isLocked) {
-      setState(() => _isLocked = true);
-    }
-
-    // Try biometric first if enabled
-    if (settings.biometricEnabled) {
-      _isAuthenticating = true;
-      final authService = ref.read(appLockServiceProvider);
-      final canUse = await authService.canUseBiometrics();
-      if (canUse) {
-        final success = await authService.authenticateWithBiometrics(
-            'Unlock FeeSync');
-        if (success && mounted) {
-          setState(() {
-            _isLocked = false;
-            _isAuthenticating = false;
-          });
-          return; // Unlocked successfully
-        }
+    if (isStartup || settings.lockOnMinimize) {
+      if (!_isLocked) {
+        setState(() => _isLocked = true);
       }
-      _isAuthenticating = false;
+      await _tryBiometricUnlock();
     }
-    
-    // If we reach here, we are locked. The UI will show the PIN screen 
-    // or a prompt to retry biometrics if PIN is disabled.
+  }
+
+  Future<void> _tryBiometricUnlock() async {
+    final settings = ref.read(localSettingsProvider);
+    if (!settings.biometricEnabled || _isAuthenticating) return;
+
+    _isAuthenticating = true;
+    final authService = ref.read(appLockServiceProvider);
+    final canUse = await authService.canUseBiometrics();
+    if (canUse) {
+      final success = await authService.authenticateWithBiometrics('Unlock FeeSync');
+      if (success && mounted) {
+        setState(() {
+          _isLocked = false;
+          _isAuthenticating = false;
+        });
+        return; // Unlocked successfully
+      }
+    }
+    _isAuthenticating = false;
   }
 
   void _unlock() {

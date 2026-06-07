@@ -61,6 +61,10 @@ class LocalSettingsNotifier extends StateNotifier<LocalSettings> {
     await updateSettings(state.copyWith(pinHash: hash, clearPin: hash == null));
   }
 
+  Future<void> updateLockOnMinimize(bool enabled) async {
+    await updateSettings(state.copyWith(lockOnMinimize: enabled));
+  }
+
   Future<void> resetAll() async {
     final defaults = LocalSettings.defaultSettings();
     await updateSettings(defaults);

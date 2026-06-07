@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/subscription.dart';
 import '../repositories/subscription_repository.dart';
 import '../core/billing/feature_gate.dart';
+import '../repositories/usage_repository.dart';
 import 'supabase_provider.dart';
 
 // ─── Repository provider ───────────────────────────────────────────────────────
@@ -9,6 +10,11 @@ import 'supabase_provider.dart';
 final subscriptionRepositoryProvider = Provider<SubscriptionRepository>((ref) {
   final client = ref.watch(supabaseClientProvider);
   return SubscriptionRepository(client);
+});
+
+final usageRepositoryProvider = Provider<UsageRepository>((ref) {
+  final client = ref.watch(supabaseClientProvider);
+  return UsageRepository(client);
 });
 
 // ─── Core subscription data ────────────────────────────────────────────────────
@@ -32,6 +38,12 @@ final activeBatchCountProvider = FutureProvider<int>((ref) async {
   return repo.getActiveBatchCount();
 });
 
+/// Provides the current month's usage for the active user.
+final currentMonthUsageProvider = FutureProvider<Map<String, int>>((ref) async {
+  final repo = ref.watch(usageRepositoryProvider);
+  return repo.getCurrentMonthUsage();
+});
+
 // ─── Feature Gate provider ─────────────────────────────────────────────────────
 
 /// The authoritative feature gate — use this everywhere in the app to check
@@ -44,13 +56,14 @@ final featureGateProvider = FutureProvider<FeatureGate>((ref) async {
   final sub          = await ref.watch(subscriptionProvider.future);
   final studentCount = await ref.watch(activeStudentCountProvider.future);
   final batchCount   = await ref.watch(activeBatchCountProvider.future);
+  final usage        = await ref.watch(currentMonthUsageProvider.future);
 
   return FeatureGate(
     subscription:              sub,
     activeStudentCount:        studentCount,
     activeBatchCount:          batchCount,
-    waReceiptsUsedThisMonth:   0, // TODO: wire to usage_repository once deployed
-    waRemindersUsedThisMonth:  0,
+    waReceiptsUsedThisMonth:   usage['whatsapp_receipts_used'] ?? 0,
+    waRemindersUsedThisMonth:  usage['whatsapp_reminders_used'] ?? 0,
   );
 });
 
@@ -63,10 +76,12 @@ final subscriptionScreenDataProvider =
   final sub          = await ref.watch(subscriptionProvider.future);
   final studentCount = await ref.watch(activeStudentCountProvider.future);
   final batchCount   = await ref.watch(activeBatchCountProvider.future);
+  final usage        = await ref.watch(currentMonthUsageProvider.future);
   return SubscriptionScreenData(
     subscription:       sub,
     activeStudentCount: studentCount,
     activeBatchCount:   batchCount,
+    usage:              usage,
   );
 });
 
@@ -76,11 +91,13 @@ class SubscriptionScreenData {
   final Subscription subscription;
   final int activeStudentCount;
   final int activeBatchCount;
+  final Map<String, int> usage;
 
   const SubscriptionScreenData({
     required this.subscription,
     required this.activeStudentCount,
     required this.activeBatchCount,
+    this.usage = const {},
   });
 
   // ─── Derived plan object ────────────────────────────────────────────────────
@@ -122,6 +139,20 @@ class SubscriptionScreenData {
     if (subscription.hasUnlimitedBatches) return true;
     return activeBatchCount < subscription.maxBatches;
   }
+
+  // ─── WhatsApp Limits ────────────────────────────────────────────────────────
+
+  int get waReceiptsUsed => usage['whatsapp_receipts_used'] ?? 0;
+  
+  double get waReceiptsUsageRatio {
+    final max = subscription.whatsappReceiptsLimit;
+    if (max < 0) return 0.0;
+    if (max == 0) return 1.0;
+    return (waReceiptsUsed / max).clamp(0.0, 1.0);
+  }
+
+  bool get isNearWaReceiptsLimit => waReceiptsUsageRatio >= 0.80;
+  bool get isAtWaReceiptsLimit   => waReceiptsUsageRatio >= 1.0;
 
   // ─── Legacy aliases (keep backward compat with old code) ───────────────────
   bool get isNearLimit  => isNearStudentLimit;
