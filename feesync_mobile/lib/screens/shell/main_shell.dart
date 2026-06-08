@@ -1,16 +1,24 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
+import '../../providers/user_provider.dart';
 
-class MainShell extends StatelessWidget {
+class MainShell extends ConsumerWidget {
   final Widget child;
 
   const MainShell({super.key, required this.child});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userProfileAsync = ref.watch(currentUserProfileProvider);
+    final user = userProfileAsync.value;
+    
+    final bool canViewStudents = user?.role == 'admin' || (user?.permissions['view_students'] == true);
+    final bool canViewPayments = user?.role == 'admin' || (user?.permissions['view_payments'] == true);
+
     final selectedIndex = _calculateSelectedIndex(context);
 
     return Scaffold(
@@ -40,6 +48,8 @@ class MainShell extends StatelessWidget {
       ),
       bottomNavigationBar: _StyledBottomNav(
         selectedIndex: selectedIndex,
+        canViewStudents: canViewStudents,
+        canViewPayments: canViewPayments,
         onTap: (index) => _onItemTapped(index, context),
       ),
     );
@@ -78,10 +88,14 @@ class MainShell extends StatelessWidget {
 
 class _StyledBottomNav extends StatelessWidget {
   final int selectedIndex;
+  final bool canViewStudents;
+  final bool canViewPayments;
   final Function(int) onTap;
 
   const _StyledBottomNav({
     required this.selectedIndex,
+    required this.canViewStudents,
+    required this.canViewPayments,
     required this.onTap,
   });
 
@@ -137,18 +151,20 @@ class _StyledBottomNav extends StatelessWidget {
                   isSelected: selectedIndex == 1,
                   onTap: () => onTap(1),
                 ),
-                _NavItem(
-                  icon: Icons.people_rounded,
-                  label: 'Students',
-                  isSelected: selectedIndex == 2,
-                  onTap: () => onTap(2),
-                ),
-                _NavItem(
-                  icon: Icons.payments_rounded,
-                  label: 'Payments',
-                  isSelected: selectedIndex == 3,
-                  onTap: () => onTap(3),
-                ),
+                if (canViewStudents)
+                  _NavItem(
+                    icon: Icons.people_rounded,
+                    label: 'Students',
+                    isSelected: selectedIndex == 2,
+                    onTap: () => onTap(2),
+                  ),
+                if (canViewPayments)
+                  _NavItem(
+                    icon: Icons.payments_rounded,
+                    label: 'Payments',
+                    isSelected: selectedIndex == 3,
+                    onTap: () => onTap(3),
+                  ),
                 _NavItem(
                   icon: Icons.settings_rounded,
                   label: 'Settings',

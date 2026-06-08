@@ -29,6 +29,8 @@ import 'screens/settings/screens/import_data_screen.dart';
 import 'screens/settings/screens/export_data_screen.dart';
 import 'screens/settings/screens/subscription_screen.dart';
 import 'screens/settings/screens/policy_viewer_screen.dart';
+import 'screens/settings/screens/staff_list_screen.dart';
+import 'screens/settings/screens/invite_edit_staff_screen.dart';
 import 'screens/shell/main_shell.dart';
 import 'screens/onboarding/onboarding_intro_screen.dart';
 import 'screens/onboarding/center_setup_screen.dart';
@@ -41,6 +43,7 @@ import 'screens/batches/batch_list_screen.dart';
 import 'screens/batches/batch_creation_screen.dart';
 import 'screens/batches/batch_detail_screen.dart';
 import 'models/student.dart';
+import 'models/user_profile.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
@@ -219,6 +222,16 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/settings/subscription',
             builder: (context, state) => const SubscriptionScreen(),
+          ),
+          GoRoute(
+            path: '/settings/staff',
+            builder: (context, state) => const StaffListScreen(),
+          ),
+          GoRoute(
+            path: '/settings/staff/invite',
+            builder: (context, state) => InviteEditStaffScreen(
+              existingStaff: state.extra as UserProfile?,
+            ),
           ),
           GoRoute(
             path: '/settings/policy',

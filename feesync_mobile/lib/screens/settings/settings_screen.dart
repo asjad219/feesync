@@ -96,6 +96,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 subtitle: 'Registration details, currency, school logo',
                 onTap: () => context.push('/settings/institution'),
               ),
+              if (userProfile.value?.role == 'admin')
+                _SettingsItem(
+                  icon: Icons.people_outline_rounded,
+                  iconColor: const Color(0xFFF43F5E),
+                  title: 'Staff & Access Control',
+                  subtitle: 'Manage roles, permissions, and staff limits',
+                  onTap: () => context.push('/settings/staff'),
+                ),
               _SettingsItem(
                 icon: Icons.account_balance_wallet_rounded,
                 iconColor: const Color(0xFF10B981),

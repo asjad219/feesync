@@ -5,6 +5,8 @@ class UserProfile {
   final String fullName;
   final String role;
   final String? phone;
+  final Map<String, dynamic> permissions;
+  final bool isActive;
 
   UserProfile({
     required this.id,
@@ -13,6 +15,8 @@ class UserProfile {
     required this.fullName,
     required this.role,
     this.phone,
+    this.permissions = const {},
+    this.isActive = true,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -23,6 +27,8 @@ class UserProfile {
       fullName: json['full_name'] as String,
       role: json['role'] as String,
       phone: json['phone'] as String?,
+      permissions: json['permissions'] as Map<String, dynamic>? ?? {},
+      isActive: json['is_active'] as bool? ?? true,
     );
   }
 }

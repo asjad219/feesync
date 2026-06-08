@@ -23,6 +23,7 @@ class Subscription {
   final int whatsappReceiptsLimit;  // -1 = unlimited
   final int whatsappRemindersLimit; // -1 = unlimited
   final int smsLimit;             // -1 = unlimited
+  final int maxStaff;             // -1 = unlimited
 
   // --- Payment tokens ---
   final String? razorpaySubId;
@@ -48,6 +49,7 @@ class Subscription {
     this.whatsappReceiptsLimit = 100,
     this.whatsappRemindersLimit = 30,
     this.smsLimit = 0,
+    this.maxStaff = 1,
     this.razorpaySubId,
     this.razorpayPaymentId,
     this.googlePlayPurchaseToken,
@@ -74,6 +76,7 @@ class Subscription {
       whatsappRemindersLimit:
           (json['whatsapp_reminders_limit'] as int?) ?? 30,
       smsLimit: (json['sms_limit'] as int?) ?? 0,
+      maxStaff: (json['max_staff'] as int?) ?? 1,
       razorpaySubId: json['razorpay_sub_id'] as String?,
       razorpayPaymentId: json['razorpay_payment_id'] as String?,
       googlePlayPurchaseToken:
@@ -103,6 +106,7 @@ class Subscription {
         'whatsapp_receipts_limit': whatsappReceiptsLimit,
         'whatsapp_reminders_limit': whatsappRemindersLimit,
         'sms_limit': smsLimit,
+        'max_staff': maxStaff,
         'razorpay_sub_id': razorpaySubId,
         'razorpay_payment_id': razorpayPaymentId,
         'google_play_purchase_token': googlePlayPurchaseToken,
@@ -215,6 +219,12 @@ class Subscription {
     return whatsappRemindersLimit > planLimit ? whatsappRemindersLimit : planLimit;
   }
 
+  int get currentMaxStaff {
+    final planLimit = SubscriptionPlan.fromTier(effectivePlan).maxStaff;
+    if (planLimit < 0 || maxStaff < 0) return -1;
+    return maxStaff > planLimit ? maxStaff : planLimit;
+  }
+
   /// True if unlimited students are allowed.
   bool get hasUnlimitedStudents => currentMaxStudents < 0;
 
@@ -270,6 +280,7 @@ class Subscription {
         whatsappReceiptsLimit: 100,
         whatsappRemindersLimit: 30,
         smsLimit: 0,
+        maxStaff: 1,
       );
 
   /// Returns a subscription pre-configured for a 30-day Growth trial.
@@ -282,6 +293,7 @@ class Subscription {
         whatsappReceiptsLimit: -1,
         whatsappRemindersLimit: -1,
         smsLimit: 500,
+        maxStaff: -1,
         isTrial: true,
         trialEndsAt: DateTime.now().add(const Duration(days: 30)),
       );
@@ -296,6 +308,7 @@ class Subscription {
     int? whatsappReceiptsLimit,
     int? whatsappRemindersLimit,
     int? smsLimit,
+    int? maxStaff,
     String? razorpaySubId,
     String? razorpayPaymentId,
     String? googlePlayPurchaseToken,
@@ -316,6 +329,7 @@ class Subscription {
       whatsappRemindersLimit:
           whatsappRemindersLimit ?? this.whatsappRemindersLimit,
       smsLimit: smsLimit ?? this.smsLimit,
+      maxStaff: maxStaff ?? this.maxStaff,
       razorpaySubId: razorpaySubId ?? this.razorpaySubId,
       razorpayPaymentId: razorpayPaymentId ?? this.razorpayPaymentId,
       googlePlayPurchaseToken:
@@ -344,6 +358,7 @@ class SubscriptionPlan {
   final int whatsappReceiptsPerMonth;  // -1 = unlimited
   final int whatsappRemindersPerMonth; // -1 = unlimited
   final int smsPerMonth;
+  final int maxStaff;
   final int aiFeatures;             // 0, 3, or 9
   final int reportCount;
   final bool csvExport;
@@ -367,6 +382,7 @@ class SubscriptionPlan {
     required this.whatsappReceiptsPerMonth,
     required this.whatsappRemindersPerMonth,
     required this.smsPerMonth,
+    required this.maxStaff,
     required this.aiFeatures,
     required this.reportCount,
     required this.csvExport,
@@ -401,6 +417,7 @@ class SubscriptionPlan {
     whatsappReceiptsPerMonth: 100,
     whatsappRemindersPerMonth: 30,
     smsPerMonth: 0,
+    maxStaff: 1,
     aiFeatures: 0,
     reportCount: 3,
     csvExport: false,
@@ -425,6 +442,7 @@ class SubscriptionPlan {
     whatsappReceiptsPerMonth: -1,
     whatsappRemindersPerMonth: -1,
     smsPerMonth: 100,
+    maxStaff: 3,
     aiFeatures: 3,
     reportCount: 14,
     csvExport: true,
@@ -449,6 +467,7 @@ class SubscriptionPlan {
     whatsappReceiptsPerMonth: -1,
     whatsappRemindersPerMonth: -1,
     smsPerMonth: 500,
+    maxStaff: -1,
     aiFeatures: 9,
     reportCount: 14,
     csvExport: true,
@@ -473,6 +492,7 @@ class SubscriptionPlan {
     whatsappReceiptsPerMonth: -1,
     whatsappRemindersPerMonth: -1,
     smsPerMonth: 1000,
+    maxStaff: -1,
     aiFeatures: 9,
     reportCount: 14,
     csvExport: true,
