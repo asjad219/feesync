@@ -677,8 +677,19 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
       ),
       child: ElevatedButton(
         onPressed: _isLoading || _selectedStudent == null ? null : () => _savePayment(availableDues),
-        style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent),
-        child: Text(_isLoading ? 'RECORDING...' : 'RECORD PAYMENT'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent, 
+          shadowColor: Colors.transparent,
+          foregroundColor: Colors.white,
+        ),
+        child: Text(
+          _isLoading ? 'RECORDING...' : 'RECORD PAYMENT',
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.w800, 
+            color: Colors.white,
+            letterSpacing: 1.2,
+          ),
+        ),
       ),
     );
   }

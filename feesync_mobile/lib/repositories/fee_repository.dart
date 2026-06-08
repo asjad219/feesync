@@ -46,18 +46,16 @@ class FeeRepository {
     String? categoryId,
     String? studentClass,
   }) async {
-    final query = _client.from('fee_structures').select('*, fee_categories(name)');
+    var query = _client.from('fee_structures').select('*, fee_categories(name)');
 
     if (categoryId != null) {
-      query.eq('category_id', categoryId);
+      query = query.eq('category_id', categoryId);
     }
     if (studentClass != null) {
-      query.eq('class', studentClass);
+      query = query.eq('class', studentClass);
     }
 
-    query.order('name');
-
-    final response = await query;
+    final response = await query.order('name');
     return (response as List).map((json) => FeeStructure.fromJson(json)).toList();
   }
 
@@ -99,9 +97,9 @@ class FeeRepository {
 
   // Fee Assignments
   Future<List<FeeAssignment>> getFeeAssignments({String? studentId}) async {
-    final query = _client.from('fee_assignments').select('*, fee_structures(*)');
+    var query = _client.from('fee_assignments').select('*, fee_structures(*)');
     if (studentId != null) {
-      query.eq('student_id', studentId);
+      query = query.eq('student_id', studentId);
     }
     final response = await query.order('created_at', ascending: false);
     return (response as List).map((json) => FeeAssignment.fromJson(json)).toList();
@@ -114,18 +112,18 @@ class FeeRepository {
     DateTime? startDate,
     DateTime? endDate,
   }) async {
-    final query = _client.from('dues').select('*, fee_structures(*)');
+    var query = _client.from('dues').select('*, fee_structures(*)');
     if (studentId != null) {
-      query.eq('student_id', studentId);
+      query = query.eq('student_id', studentId);
     }
     if (status != null) {
-      query.eq('status', status);
+      query = query.eq('status', status);
     }
     if (startDate != null) {
-      query.gte('due_date', startDate.toIso8601String());
+      query = query.gte('due_date', startDate.toIso8601String());
     }
     if (endDate != null) {
-      query.lte('due_date', endDate.toIso8601String());
+      query = query.lte('due_date', endDate.toIso8601String());
     }
     final response = await query.order('due_date', ascending: true);
     return (response as List).map((json) => Due.fromJson(json)).toList();

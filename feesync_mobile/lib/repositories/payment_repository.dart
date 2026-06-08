@@ -11,23 +11,21 @@ class PaymentRepository {
     DateTime? startDate,
     DateTime? endDate,
   }) async {
-    final query = _client
+    var query = _client
         .from('payments')
         .select('*, students(first_name, last_name, class, admission_number)');
 
     if (studentId != null) {
-      query.eq('student_id', studentId);
+      query = query.eq('student_id', studentId);
     }
     if (startDate != null) {
-      query.gte('payment_date', startDate.toIso8601String());
+      query = query.gte('payment_date', startDate.toIso8601String());
     }
     if (endDate != null) {
-      query.lte('payment_date', endDate.toIso8601String());
+      query = query.lte('payment_date', endDate.toIso8601String());
     }
 
-    query.order('payment_date', ascending: false);
-
-    final response = await query;
+    final response = await query.order('payment_date', ascending: false);
     return (response as List).map((json) => Payment.fromJson(json)).toList();
   }
 
@@ -56,16 +54,16 @@ class PaymentRepository {
     DateTime? startDate,
     DateTime? endDate,
   }) async {
-    final query = _client
+    var query = _client
         .from('payments')
         .select('amount')
         .eq('status', 'completed');
 
     if (startDate != null) {
-      query.gte('payment_date', startDate.toIso8601String());
+      query = query.gte('payment_date', startDate.toIso8601String());
     }
     if (endDate != null) {
-      query.lte('payment_date', endDate.toIso8601String());
+      query = query.lte('payment_date', endDate.toIso8601String());
     }
 
     final response = await query;

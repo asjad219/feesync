@@ -180,69 +180,69 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(
-            path: '/reports',
-            builder: (context, state) => const ReportsScreen(),
-          ),
-          GoRoute(
             path: '/settings',
             builder: (context, state) => const SettingsScreen(),
-          ),
-          GoRoute(
-            path: '/settings/institution',
-            builder: (context, state) => const InstitutionSettingsScreen(),
-          ),
-          GoRoute(
-            path: '/settings/billing',
-            builder: (context, state) => const BillingSettingsScreen(),
-          ),
-          GoRoute(
-            path: '/settings/automation',
-            builder: (context, state) => const AutomationSettingsScreen(),
-          ),
-          GoRoute(
-            path: '/settings/ai',
-            builder: (context, state) => const AiSettingsScreen(),
-          ),
-          GoRoute(
-            path: '/settings/security',
-            builder: (context, state) => const SecuritySettingsScreen(),
-          ),
-          GoRoute(
-            path: '/settings/data',
-            builder: (context, state) => const DataManagementScreen(),
-          ),
-          GoRoute(
-            path: '/settings/data/import',
-            builder: (context, state) => const ImportDataScreen(),
-          ),
-          GoRoute(
-            path: '/settings/data/export',
-            builder: (context, state) => const ExportDataScreen(),
-          ),
-          GoRoute(
-            path: '/settings/subscription',
-            builder: (context, state) => const SubscriptionScreen(),
-          ),
-          GoRoute(
-            path: '/settings/staff',
-            builder: (context, state) => const StaffListScreen(),
-          ),
-          GoRoute(
-            path: '/settings/staff/invite',
-            builder: (context, state) => InviteEditStaffScreen(
-              existingStaff: state.extra as UserProfile?,
-            ),
-          ),
-          GoRoute(
-            path: '/settings/policy',
-            builder: (context, state) => PolicyViewerScreen(
-              type: state.uri.queryParameters['type'] ?? 'terms',
-            ),
           ),
         ],
       ),
 
       // Full-screen routes (Outside Shell)
+      GoRoute(
+        path: '/reports',
+        builder: (context, state) => const ReportsScreen(),
+      ),
+      GoRoute(
+        path: '/settings/institution',
+        builder: (context, state) => const InstitutionSettingsScreen(),
+      ),
+      GoRoute(
+        path: '/settings/billing',
+        builder: (context, state) => const BillingSettingsScreen(),
+      ),
+      GoRoute(
+        path: '/settings/automation',
+        builder: (context, state) => const AutomationSettingsScreen(),
+      ),
+      GoRoute(
+        path: '/settings/ai',
+        builder: (context, state) => const AiSettingsScreen(),
+      ),
+      GoRoute(
+        path: '/settings/security',
+        builder: (context, state) => const SecuritySettingsScreen(),
+      ),
+      GoRoute(
+        path: '/settings/data',
+        builder: (context, state) => const DataManagementScreen(),
+      ),
+      GoRoute(
+        path: '/settings/data/import',
+        builder: (context, state) => const ImportDataScreen(),
+      ),
+      GoRoute(
+        path: '/settings/data/export',
+        builder: (context, state) => const ExportDataScreen(),
+      ),
+      GoRoute(
+        path: '/settings/subscription',
+        builder: (context, state) => const SubscriptionScreen(),
+      ),
+      GoRoute(
+        path: '/settings/staff',
+        builder: (context, state) => const StaffListScreen(),
+      ),
+      GoRoute(
+        path: '/settings/staff/invite',
+        builder: (context, state) => InviteEditStaffScreen(
+          existingStaff: state.extra as UserProfile?,
+        ),
+      ),
+      GoRoute(
+        path: '/settings/policy',
+        builder: (context, state) => PolicyViewerScreen(
+          type: state.uri.queryParameters['type'] ?? 'terms',
+        ),
+      ),
       GoRoute(
         path: '/batches/create',
         builder: (context, state) => BatchCreationScreen(

@@ -11,23 +11,21 @@ class StudentRepository {
     String? studentClass,
     String? section,
   }) async {
-    final query = _client.from('students').select();
+    var query = _client.from('students').select();
 
     if (studentClass != null) {
-      query.eq('class', studentClass);
+      query = query.eq('class', studentClass);
     }
     if (section != null) {
-      query.eq('section', section);
+      query = query.eq('section', section);
     }
     if (search != null && search.isNotEmpty) {
-      query.or(
+      query = query.or(
         'first_name.ilike.%$search%,last_name.ilike.%$search%,admission_number.ilike.%$search%',
       );
     }
 
-    query.order('last_name');
-
-    final response = await query;
+    final response = await query.order('last_name');
     return (response as List).map((json) => Student.fromJson(json)).toList();
   }
 

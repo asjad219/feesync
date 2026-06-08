@@ -62,6 +62,7 @@ class MainShell extends ConsumerWidget {
     if (location.startsWith('/students')) return 2;
     if (location.startsWith('/payments')) return 3;
     if (location.startsWith('/settings')) return 4;
+    if (location.startsWith('/reports')) return 4;
     return 0;
   }
 
