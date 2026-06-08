@@ -20,11 +20,20 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
 
   late TextEditingController _gracePeriodController;
   late TextEditingController _lateFineController;
+  
+  late TextEditingController _earlyPaymentDiscountPercentController;
+  late TextEditingController _earlyPaymentDaysController;
+  
+  late TextEditingController _convenienceFeePercentController;
+  late TextEditingController _taxPercentageController;
 
   int _defaultDueDay = 5;
   bool _autoDueGeneration = true;
   bool _lateFinesEnabled = true;
   bool _partialPaymentsAllowed = true;
+  
+  bool _earlyPaymentDiscountEnabled = false;
+  bool _convenienceFeeEnabled = false;
 
   bool _isInitialized = false;
   bool _isSaving = false;
@@ -34,6 +43,10 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
     if (_isInitialized) {
       _gracePeriodController.dispose();
       _lateFineController.dispose();
+      _earlyPaymentDiscountPercentController.dispose();
+      _earlyPaymentDaysController.dispose();
+      _convenienceFeePercentController.dispose();
+      _taxPercentageController.dispose();
     }
     super.dispose();
   }
@@ -46,11 +59,26 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
     _lateFineController = TextEditingController(
       text: settings.lateFineAmount.toStringAsFixed(0),
     );
+    _earlyPaymentDiscountPercentController = TextEditingController(
+      text: settings.earlyPaymentDiscountPercent.toStringAsFixed(1),
+    );
+    _earlyPaymentDaysController = TextEditingController(
+      text: settings.earlyPaymentDays.toString(),
+    );
+    _convenienceFeePercentController = TextEditingController(
+      text: settings.convenienceFeePercent.toStringAsFixed(1),
+    );
+    _taxPercentageController = TextEditingController(
+      text: settings.taxPercentage.toStringAsFixed(1),
+    );
 
     _defaultDueDay = settings.defaultDueDay;
     _autoDueGeneration = settings.autoDueGeneration;
     _lateFinesEnabled = settings.lateFinesEnabled;
     _partialPaymentsAllowed = settings.partialPaymentsAllowed;
+    
+    _earlyPaymentDiscountEnabled = settings.earlyPaymentDiscountEnabled;
+    _convenienceFeeEnabled = settings.convenienceFeeEnabled;
 
     _isInitialized = true;
   }
@@ -66,6 +94,17 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
       final lateFine = _lateFinesEnabled
           ? (double.tryParse(_lateFineController.text.trim()) ?? 0.0)
           : 0.0;
+          
+      final earlyPaymentPercent = _earlyPaymentDiscountEnabled
+          ? (double.tryParse(_earlyPaymentDiscountPercentController.text.trim()) ?? 0.0)
+          : 0.0;
+      final earlyPaymentDays = _earlyPaymentDiscountEnabled
+          ? (int.tryParse(_earlyPaymentDaysController.text.trim()) ?? 0)
+          : 0;
+      final convenienceFeePercent = _convenienceFeeEnabled
+          ? (double.tryParse(_convenienceFeePercentController.text.trim()) ?? 0.0)
+          : 0.0;
+      final taxPercentage = double.tryParse(_taxPercentageController.text.trim()) ?? 18.0;
 
       final updatedData = {
         'default_due_day': _defaultDueDay,
@@ -74,6 +113,12 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
         'auto_due_generation': _autoDueGeneration,
         'late_fines_enabled': _lateFinesEnabled,
         'partial_payments_allowed': _partialPaymentsAllowed,
+        'early_payment_discount_enabled': _earlyPaymentDiscountEnabled,
+        'early_payment_discount_percent': earlyPaymentPercent,
+        'early_payment_days': earlyPaymentDays,
+        'convenience_fee_enabled': _convenienceFeeEnabled,
+        'convenience_fee_percent': convenienceFeePercent,
+        'tax_percentage': taxPercentage,
       };
 
       await ref.read(settingsProvider.notifier).updateMultipleSettings(updatedData);
@@ -270,6 +315,172 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
                               ? CrossFadeState.showSecond
                               : CrossFadeState.showFirst,
                           duration: const Duration(milliseconds: 250),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  _buildSectionHeader('Early Payment Incentives'),
+                  const SizedBox(height: 12),
+                  GlassCard(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SwitchListTile.adaptive(
+                          value: _earlyPaymentDiscountEnabled,
+                          title: Text(
+                            'Enable Early Payment Discount',
+                            style: GoogleFonts.inter(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                          subtitle: Text(
+                            'Reward parents for paying fees before the due date',
+                            style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11),
+                          ),
+                          secondary: Icon(Icons.stars_rounded, color: AppColors.primary),
+                          activeThumbColor: AppColors.primary,
+                          contentPadding: EdgeInsets.zero,
+                          onChanged: (val) => setState(() => _earlyPaymentDiscountEnabled = val),
+                        ),
+                        AnimatedCrossFade(
+                          firstChild: const SizedBox.shrink(),
+                          secondChild: Column(
+                            children: [
+                              const SizedBox(height: 16),
+                              Divider(color: AppColors.outline.withValues(alpha: 0.1), height: 1),
+                              const SizedBox(height: 16),
+                              _buildNumericTextField(
+                                controller: _earlyPaymentDiscountPercentController,
+                                label: 'Discount Percentage (%)',
+                                icon: Icons.percent_rounded,
+                                hint: 'e.g. 5',
+                                isInteger: false,
+                                enabled: _earlyPaymentDiscountEnabled,
+                                validator: (val) {
+                                  if (!_earlyPaymentDiscountEnabled) return null;
+                                  if (val == null || val.trim().isEmpty) return 'Required';
+                                  final parsed = double.tryParse(val.trim());
+                                  if (parsed == null || parsed < 0 || parsed > 100) return 'Invalid percentage';
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              _buildNumericTextField(
+                                controller: _earlyPaymentDaysController,
+                                label: 'Days Before Due Date',
+                                icon: Icons.calendar_today_rounded,
+                                hint: 'e.g. 7',
+                                isInteger: true,
+                                enabled: _earlyPaymentDiscountEnabled,
+                                validator: (val) {
+                                  if (!_earlyPaymentDiscountEnabled) return null;
+                                  if (val == null || val.trim().isEmpty) return 'Required';
+                                  final parsed = int.tryParse(val.trim());
+                                  if (parsed == null || parsed <= 0) return 'Must be > 0';
+                                  return null;
+                                },
+                              ),
+                            ],
+                          ),
+                          crossFadeState: _earlyPaymentDiscountEnabled
+                              ? CrossFadeState.showSecond
+                              : CrossFadeState.showFirst,
+                          duration: const Duration(milliseconds: 250),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+
+                  _buildSectionHeader('Payment Gateways & Surcharges'),
+                  const SizedBox(height: 12),
+                  GlassCard(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SwitchListTile.adaptive(
+                          value: _convenienceFeeEnabled,
+                          title: Text(
+                            'Enable Convenience Fee',
+                            style: GoogleFonts.inter(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                          subtitle: Text(
+                            'Pass online payment gateway charges to parents',
+                            style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11),
+                          ),
+                          secondary: Icon(Icons.account_balance_rounded, color: AppColors.primary),
+                          activeThumbColor: AppColors.primary,
+                          contentPadding: EdgeInsets.zero,
+                          onChanged: (val) => setState(() => _convenienceFeeEnabled = val),
+                        ),
+                        AnimatedCrossFade(
+                          firstChild: const SizedBox.shrink(),
+                          secondChild: Column(
+                            children: [
+                              const SizedBox(height: 16),
+                              Divider(color: AppColors.outline.withValues(alpha: 0.1), height: 1),
+                              const SizedBox(height: 16),
+                              _buildNumericTextField(
+                                controller: _convenienceFeePercentController,
+                                label: 'Convenience Fee Percentage (%)',
+                                icon: Icons.percent_rounded,
+                                hint: 'e.g. 2.0',
+                                isInteger: false,
+                                enabled: _convenienceFeeEnabled,
+                                validator: (val) {
+                                  if (!_convenienceFeeEnabled) return null;
+                                  if (val == null || val.trim().isEmpty) return 'Required';
+                                  final parsed = double.tryParse(val.trim());
+                                  if (parsed == null || parsed < 0) return 'Invalid percentage';
+                                  return null;
+                                },
+                              ),
+                            ],
+                          ),
+                          crossFadeState: _convenienceFeeEnabled
+                              ? CrossFadeState.showSecond
+                              : CrossFadeState.showFirst,
+                          duration: const Duration(milliseconds: 250),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+
+                  _buildSectionHeader('Tax & Compliance'),
+                  const SizedBox(height: 12),
+                  GlassCard(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildNumericTextField(
+                          controller: _taxPercentageController,
+                          label: 'Default Tax/GST Percentage (%)',
+                          icon: Icons.account_balance_wallet_rounded,
+                          hint: 'e.g. 18.0',
+                          isInteger: false,
+                          enabled: true,
+                          validator: (val) {
+                            if (val == null || val.trim().isEmpty) return 'Required';
+                            final parsed = double.tryParse(val.trim());
+                            if (parsed == null || parsed < 0 || parsed > 100) return 'Invalid percentage';
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Note: Tax is only applied if GST/Tax is enabled in Institution Settings.',
+                          style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11),
                         ),
                       ],
                     ),

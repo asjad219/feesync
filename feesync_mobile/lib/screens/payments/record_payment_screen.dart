@@ -145,6 +145,8 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
       ref.invalidate(studentBalancesProvider);
       ref.invalidate(studentPaymentsProvider(_selectedStudent!.id));
       if (_selectedStudent != null) ref.invalidate(studentDuesProvider(_selectedStudent!.id));
+      ref.invalidate(batchNotifierProvider);
+      ref.invalidate(batchByIdProvider);
 
       if (mounted) {
         _showSuccessDialog(amount);

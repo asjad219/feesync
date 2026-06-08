@@ -30,6 +30,14 @@ class AppSettings {
   final String dashboardLayout;
   final bool glassEffectsEnabled;
 
+  // New Billing Settings
+  final bool earlyPaymentDiscountEnabled;
+  final double earlyPaymentDiscountPercent;
+  final int earlyPaymentDays;
+  final bool convenienceFeeEnabled;
+  final double convenienceFeePercent;
+  final double taxPercentage;
+
   // Message Templates
   final String tplFeeReminder;
   final String tplPaymentReceipt;
@@ -68,6 +76,12 @@ class AppSettings {
     required this.themeMode,
     required this.dashboardLayout,
     required this.glassEffectsEnabled,
+    this.earlyPaymentDiscountEnabled = false,
+    this.earlyPaymentDiscountPercent = 0.0,
+    this.earlyPaymentDays = 0,
+    this.convenienceFeeEnabled = false,
+    this.convenienceFeePercent = 0.0,
+    this.taxPercentage = 18.0,
     required this.tplFeeReminder,
     required this.tplPaymentReceipt,
     required this.tplOverdueNotice,
@@ -107,6 +121,12 @@ class AppSettings {
       themeMode: json['theme_mode'] ?? 'dark_luxury',
       dashboardLayout: json['dashboard_layout'] ?? 'bento',
       glassEffectsEnabled: json['glass_effects_enabled'] ?? true,
+      earlyPaymentDiscountEnabled: json['early_payment_discount_enabled'] ?? false,
+      earlyPaymentDiscountPercent: double.parse((json['early_payment_discount_percent'] ?? 0).toString()),
+      earlyPaymentDays: json['early_payment_days'] ?? 0,
+      convenienceFeeEnabled: json['convenience_fee_enabled'] ?? false,
+      convenienceFeePercent: double.parse((json['convenience_fee_percent'] ?? 0).toString()),
+      taxPercentage: double.parse((json['tax_percentage'] ?? 18).toString()),
       tplFeeReminder: json['tpl_fee_reminder'] ??
           'Hi {parent_name}, this is a reminder that a fee of ₹{amount} is due for {student_name} on {due_date}. Please pay on time to avoid late charges. — {school_name}',
       tplPaymentReceipt: json['tpl_payment_receipt'] ??
@@ -150,6 +170,12 @@ class AppSettings {
       'theme_mode': themeMode,
       'dashboard_layout': dashboardLayout,
       'glass_effects_enabled': glassEffectsEnabled,
+      'early_payment_discount_enabled': earlyPaymentDiscountEnabled,
+      'early_payment_discount_percent': earlyPaymentDiscountPercent,
+      'early_payment_days': earlyPaymentDays,
+      'convenience_fee_enabled': convenienceFeeEnabled,
+      'convenience_fee_percent': convenienceFeePercent,
+      'tax_percentage': taxPercentage,
       'tpl_fee_reminder': tplFeeReminder,
       'tpl_payment_receipt': tplPaymentReceipt,
       'tpl_overdue_notice': tplOverdueNotice,
@@ -187,6 +213,12 @@ class AppSettings {
     String? themeMode,
     String? dashboardLayout,
     bool? glassEffectsEnabled,
+    bool? earlyPaymentDiscountEnabled,
+    double? earlyPaymentDiscountPercent,
+    int? earlyPaymentDays,
+    bool? convenienceFeeEnabled,
+    double? convenienceFeePercent,
+    double? taxPercentage,
     String? tplFeeReminder,
     String? tplPaymentReceipt,
     String? tplOverdueNotice,
@@ -224,6 +256,12 @@ class AppSettings {
       themeMode: themeMode ?? this.themeMode,
       dashboardLayout: dashboardLayout ?? this.dashboardLayout,
       glassEffectsEnabled: glassEffectsEnabled ?? this.glassEffectsEnabled,
+      earlyPaymentDiscountEnabled: earlyPaymentDiscountEnabled ?? this.earlyPaymentDiscountEnabled,
+      earlyPaymentDiscountPercent: earlyPaymentDiscountPercent ?? this.earlyPaymentDiscountPercent,
+      earlyPaymentDays: earlyPaymentDays ?? this.earlyPaymentDays,
+      convenienceFeeEnabled: convenienceFeeEnabled ?? this.convenienceFeeEnabled,
+      convenienceFeePercent: convenienceFeePercent ?? this.convenienceFeePercent,
+      taxPercentage: taxPercentage ?? this.taxPercentage,
       tplFeeReminder: tplFeeReminder ?? this.tplFeeReminder,
       tplPaymentReceipt: tplPaymentReceipt ?? this.tplPaymentReceipt,
       tplOverdueNotice: tplOverdueNotice ?? this.tplOverdueNotice,

@@ -1,11 +1,11 @@
 {
-    "name": "feesync_mobile",
-    "short_name": "feesync_mobile",
+    "name": "FeeSync",
+    "short_name": "FeeSync",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#ffffff",
+    "theme_color": "#ffffff",
+    "description": "FeeSync - School Fee Management",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

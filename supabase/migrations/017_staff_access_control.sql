@@ -18,11 +18,11 @@ LANGUAGE sql
 STABLE
 AS $$
   SELECT CASE p_tier
-    WHEN 'free'      THEN '{"max_students":30,"max_batches":2,"wa_receipts":100,"wa_reminders":30,"sms":0,"max_staff":1}'::jsonb
-    WHEN 'starter'   THEN '{"max_students":200,"max_batches":15,"wa_receipts":-1,"wa_reminders":-1,"sms":100,"max_staff":3}'::jsonb
+    WHEN 'free'      THEN '{"max_students":30,"max_batches":2,"wa_receipts":100,"wa_reminders":30,"sms":0,"max_staff":2}'::jsonb
+    WHEN 'starter'   THEN '{"max_students":200,"max_batches":15,"wa_receipts":-1,"wa_reminders":-1,"sms":100,"max_staff":4}'::jsonb
     WHEN 'growth'    THEN '{"max_students":-1,"max_batches":-1,"wa_receipts":-1,"wa_reminders":-1,"sms":500,"max_staff":-1}'::jsonb
     WHEN 'institute' THEN '{"max_students":-1,"max_batches":-1,"wa_receipts":-1,"wa_reminders":-1,"sms":1000,"max_staff":-1}'::jsonb
-    ELSE             '{"max_students":30,"max_batches":2,"wa_receipts":100,"wa_reminders":30,"sms":0,"max_staff":1}'::jsonb
+    ELSE             '{"max_students":30,"max_batches":2,"wa_receipts":100,"wa_reminders":30,"sms":0,"max_staff":2}'::jsonb
   END;
 $$;
 

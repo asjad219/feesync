@@ -129,11 +129,18 @@ class _ProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasBalance = balance != null && balance!.balance > 0;
-    final String initials = student.fullName.split(' ').map((e) => e.isNotEmpty ? e[0].toUpperCase() : '').take(2).join();
     final String capitalizedName = student.fullName
         .split(' ')
         .map((word) => word.isNotEmpty ? '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}' : '')
         .join(' ');
+        
+    final bool isBoy = student.gender == Gender.male;
+    final bool isGirl = student.gender == Gender.female;
+    final String avatarUrl = isBoy 
+        ? 'https://avatar.iran.liara.run/public/boy?username=${student.id}'
+        : isGirl 
+            ? 'https://avatar.iran.liara.run/public/girl?username=${student.id}'
+            : 'https://avatar.iran.liara.run/public?username=${student.id}';
 
     return GlassCard(
       padding: const EdgeInsets.all(24),
@@ -147,26 +154,42 @@ class _ProfileHeader extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  AppColors.primary,
-                  AppColors.secondary.withValues(alpha: 0.8),
+                  AppColors.primary.withValues(alpha: 0.1),
+                  AppColors.secondary.withValues(alpha: 0.2),
                 ],
               ),
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.2),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
               ],
             ),
             alignment: Alignment.center,
-            child: Text(
-              initials,
-              style: GoogleFonts.manrope(
-                fontSize: 26,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Image.network(
+                avatarUrl,
+                width: 80,
+                height: 80,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  final String initials = student.fullName.split(' ').map((e) => e.isNotEmpty ? e[0].toUpperCase() : '').take(2).join();
+                  return Container(
+                    decoration: BoxDecoration(gradient: AppGradients.primary),
+                    alignment: Alignment.center,
+                    child: Text(
+                      initials,
+                      style: GoogleFonts.manrope(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ),
@@ -677,7 +700,11 @@ class _ActionButtons extends StatelessWidget {
               onPressed: () => context.push('/payments/record', extra: student),
               icon: const Icon(Icons.add_card_rounded),
               label: const Text('RECORD PAYMENT'),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent, 
+                shadowColor: Colors.transparent,
+                foregroundColor: Colors.white,
+              ),
             ),
           ),
         ),

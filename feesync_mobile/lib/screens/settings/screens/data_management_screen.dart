@@ -20,8 +20,6 @@ class DataManagementScreen extends ConsumerStatefulWidget {
 }
 
 class _DataManagementScreenState extends ConsumerState<DataManagementScreen> {
-  bool _isSyncing = false;
-  DateTime? _lastSyncTime;
 
   // Google Drive states
   GoogleSignInAccount? _googleUser;
@@ -364,38 +362,6 @@ class _DataManagementScreenState extends ConsumerState<DataManagementScreen> {
     );
   }
 
-  Future<void> _syncNow() async {
-    setState(() => _isSyncing = true);
-    try {
-      // Invalidate all major providers to force fresh fetch from Supabase
-      ref.invalidate(studentNotifierProvider);
-      ref.invalidate(paymentNotifierProvider);
-      // Short delay to allow providers to start refreshing
-      await Future.delayed(const Duration(milliseconds: 1200));
-      if (mounted) {
-        setState(() {
-          _isSyncing = false;
-          _lastSyncTime = DateTime.now();
-        });
-        _showSuccessSnack('All data synced from Supabase successfully!');
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isSyncing = false);
-        _showErrorSnack('Sync failed: $e');
-      }
-    }
-  }
-
-  String _formatSyncTime(DateTime? dt) {
-    if (dt == null) return 'Not synced yet this session';
-    final now = DateTime.now();
-    final diff = now.difference(dt);
-    if (diff.inSeconds < 60) return 'Just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    return '${diff.inDays}d ago';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -422,90 +388,6 @@ class _DataManagementScreenState extends ConsumerState<DataManagementScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Cloud Sync ────────────────────────────────────────────────
-            _sectionHeader('Cloud Sync'),
-            const SizedBox(height: 12),
-            GlassCard(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Icon(
-                          Icons.cloud_sync_rounded,
-                          color: AppColors.primary,
-                          size: 26,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Sync with Supabase',
-                              style: GoogleFonts.inter(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Last sync: ${_formatSyncTime(_lastSyncTime)}',
-                              style: GoogleFonts.inter(
-                                fontSize: 11,
-                                color: AppColors.textTertiary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _isSyncing ? null : _syncNow,
-                      icon: _isSyncing
-                          ? SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppColors.onPrimaryContainer,
-                              ),
-                            )
-                          : const Icon(Icons.sync_rounded, size: 18),
-                      label: Text(
-                        _isSyncing ? 'Syncing…' : 'Sync Now',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryContainer,
-                        foregroundColor: AppColors.onPrimaryContainer,
-                        minimumSize: const Size(double.infinity, 48),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        elevation: 0,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
 
             // ── Google Drive Backup ───────────────────────────────────────
             _sectionHeader('Google Drive Backup'),

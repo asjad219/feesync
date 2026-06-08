@@ -4,7 +4,7 @@ import 'supabase_provider.dart';
 import 'batch_analytics_provider.dart';
 
 import 'user_provider.dart';
-
+import 'batch_provider.dart';
 final batchAttendanceProvider = FutureProvider.family<List<AttendanceRecord>, String>((ref, batchId) async {
   final client = ref.watch(supabaseClientProvider);
   
@@ -78,6 +78,8 @@ class DailyAttendanceNotifier extends StateNotifier<DailyAttendanceState> {
       // Invalidate both history and analytics to ensure UI updates
       _ref.invalidate(batchAttendanceProvider(_batchId));
       _ref.invalidate(batchAnalyticsProvider(_batchId));
+      _ref.invalidate(batchByIdProvider(_batchId));
+      _ref.invalidate(batchNotifierProvider);
       
       // Reset marking state after successful save
       state = DailyAttendanceState(statuses: {});

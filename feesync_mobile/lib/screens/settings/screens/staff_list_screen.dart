@@ -33,6 +33,13 @@ class StaffListScreen extends ConsumerWidget {
             color: AppColors.textPrimary,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.person_add_rounded, color: AppColors.primary),
+            onPressed: () => context.push('/settings/staff/invite'),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: staffAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -140,12 +147,6 @@ class StaffListScreen extends ConsumerWidget {
             ),
           );
         },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.primary,
-        onPressed: () => context.push('/settings/staff/invite'),
-        icon: const Icon(Icons.person_add_rounded, color: Colors.white),
-        label: Text('Invite Staff', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
     );
   }

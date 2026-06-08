@@ -325,6 +325,8 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
       }
 
       ref.invalidate(studentBalancesProvider);
+      ref.invalidate(batchByIdProvider);
+      ref.invalidate(batchNotifierProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Student saved successfully')));
         context.pop();

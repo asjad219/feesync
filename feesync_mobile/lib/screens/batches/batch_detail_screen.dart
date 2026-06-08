@@ -86,91 +86,118 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
       pinned: true,
       backgroundColor: scaffoldBgColor,
       iconTheme: IconThemeData(color: textPrimaryColor),
-      flexibleSpace: FlexibleSpaceBar(
-        background: Stack(
-          fit: StackFit.expand,
-          children: [
-            // Banner / Background Glow
-            Positioned(
-              top: -100,
-              right: -100,
-              child: Container(
-                width: 300,
-                height: 300,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: batch.color.withValues(alpha: isDark ? 0.2 : 0.15),
+      flexibleSpace: LayoutBuilder(
+        builder: (context, constraints) {
+          final double expandedHeight = 340.0;
+          final double collapsedHeight = kToolbarHeight + MediaQuery.of(context).padding.top;
+          final double scrollRatio = ((constraints.maxHeight - collapsedHeight) / (expandedHeight - collapsedHeight)).clamp(0.0, 1.0);
+          final double opacity = (scrollRatio - 0.3).clamp(0.0, 0.7) / 0.7; // Fade out smoothly
+
+          return FlexibleSpaceBar(
+            title: Opacity(
+              opacity: 1.0 - opacity,
+              child: Text(
+                batch.name,
+                style: GoogleFonts.manrope(
+                  color: textPrimaryColor,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
                 ),
               ),
             ),
-            
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 100, 20, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: batch.color.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Icon(Icons.school, color: batch.color, size: 32),
-                      ),
-                      _AiHealthScore(score: _calculateHealthScore(batch)),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    batch.name,
-                    style: GoogleFonts.manrope(
-                      color: textPrimaryColor,
-                      fontSize: 32,
-                      fontWeight: FontWeight.w800,
+            centerTitle: true,
+            background: Stack(
+              fit: StackFit.expand,
+              children: [
+                // Banner / Background Glow
+                Positioned(
+                  top: -100,
+                  right: -100,
+                  child: Container(
+                    width: 300,
+                    height: 300,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: batch.color.withValues(alpha: isDark ? 0.2 : 0.15),
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          '${batch.subject} • ${batch.teacherName}',
-                          style: GoogleFonts.inter(
-                            color: textSecondaryColor,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
+                ),
+                
+                Opacity(
+                  opacity: opacity,
+                  child: SingleChildScrollView(
+                    physics: const NeverScrollableScrollPhysics(),
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(20, collapsedHeight + 20, 20, 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: batch.color.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Icon(Icons.school, color: batch.color, size: 32),
+                              ),
+                              _AiHealthScore(score: _calculateHealthScore(batch)),
+                            ],
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                          const SizedBox(height: 24),
+                          Text(
+                            batch.name,
+                            style: GoogleFonts.manrope(
+                              color: textPrimaryColor,
+                              fontSize: 32,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  '${batch.subject} • ${batch.teacherName}',
+                                  style: GoogleFonts.inter(
+                                    color: textSecondaryColor,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              StatusBadge(
+                                status: batch.status.name.toUpperCase(),
+                                color: batch.status == BatchStatus.active 
+                                    ? const Color(0xFF10B981) 
+                                    : (batch.status == BatchStatus.upcoming ? const Color(0xFF2563EB) : const Color(0xFF64748B)),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          Row(
+                            children: [
+                              _HeaderStat(label: 'Students', value: '${batch.studentCount}/${batch.maxCapacity}'),
+                              const SizedBox(width: 24),
+                              _HeaderStat(label: 'Revenue', value: '₹${NumberFormat.compact().format(batch.revenueGenerated)}'),
+                              const SizedBox(width: 24),
+                              _HeaderStat(label: 'Attendance', value: '${(batch.attendancePercentage * 100).toInt()}%'),
+                            ],
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      StatusBadge(
-                        status: batch.status.name.toUpperCase(),
-                        color: batch.status == BatchStatus.active 
-                            ? const Color(0xFF10B981) 
-                            : (batch.status == BatchStatus.upcoming ? const Color(0xFF2563EB) : const Color(0xFF64748B)),
-                      ),
-                    ],
+                    ),
                   ),
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      _HeaderStat(label: 'Students', value: '${batch.studentCount}/${batch.maxCapacity}'),
-                      const SizedBox(width: 24),
-                      _HeaderStat(label: 'Revenue', value: '₹${NumberFormat.compact().format(batch.revenueGenerated)}'),
-                      const SizedBox(width: 24),
-                      _HeaderStat(label: 'Attendance', value: '${(batch.attendancePercentage * 100).toInt()}%'),
-                    ],
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        }
       ),
     );
   }
@@ -1031,7 +1058,7 @@ class _HistoryCard extends StatelessWidget {
   }
 }
 
-class _SessionDetailsSheet extends StatelessWidget {
+class _SessionDetailsSheet extends ConsumerStatefulWidget {
   final DateTime date;
   final List<AttendanceRecord> records;
   final Map<String, String> studentNames;
@@ -1043,10 +1070,48 @@ class _SessionDetailsSheet extends StatelessWidget {
   });
 
   @override
+  ConsumerState<_SessionDetailsSheet> createState() => _SessionDetailsSheetState();
+}
+
+class _SessionDetailsSheetState extends ConsumerState<_SessionDetailsSheet> {
+  bool _isUpdating = false;
+
+  Future<void> _toggleStatus(AttendanceRecord record, bool isCurrentlyPresent) async {
+    if (_isUpdating) return;
+    setState(() => _isUpdating = true);
+
+    try {
+      final client = ref.read(supabaseClientProvider);
+      final newStatus = isCurrentlyPresent ? 'absent' : 'present';
+      
+      await client.from('attendance').update({
+        'status': newStatus,
+      }).eq('id', record.id);
+
+      // We need to invalidate everything that depends on this
+      final batchId = record.batchId;
+      ref.invalidate(batchAttendanceProvider(batchId));
+      ref.invalidate(batchAnalyticsProvider(batchId));
+      ref.invalidate(batchByIdProvider(batchId));
+      ref.invalidate(batchNotifierProvider);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Attendance updated')));
+        Navigator.pop(context); // Close the sheet to let it refresh cleanly
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error updating: $e')));
+    } finally {
+      if (mounted) setState(() => _isUpdating = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final bool isDark = AppColors.isDarkMode;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+    final bool isEditable = DateTime.now().difference(widget.date).inDays <= 7;
 
     return Padding(
       padding: const EdgeInsets.all(24),
@@ -1061,44 +1126,59 @@ class _SessionDetailsSheet extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Session Details', style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w800, color: textPrimaryColor)),
-                  Text(DateFormat('MMMM d, yyyy').format(date), style: GoogleFonts.inter(fontSize: 14, color: textTertiaryColor)),
+                  Text(DateFormat('MMMM d, yyyy').format(widget.date), style: GoogleFonts.inter(fontSize: 14, color: textTertiaryColor)),
                 ],
               ),
               IconButton(onPressed: () => Navigator.pop(context), icon: Icon(Icons.close_rounded, color: textTertiaryColor)),
             ],
           ),
+          if (isEditable)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text('Tap a student to toggle status (editable for last 7 days)', style: GoogleFonts.inter(fontSize: 11, color: isDark ? Colors.blueAccent : Colors.blue, fontWeight: FontWeight.bold)),
+            ),
           const SizedBox(height: 24),
           Flexible(
             child: ListView.builder(
               shrinkWrap: true,
-              itemCount: records.length,
+              itemCount: widget.records.length,
               itemBuilder: (context, index) {
-                final r = records[index];
+                final r = widget.records[index];
                 final isPresent = r.status == AttendanceStatus.present;
-                final studentName = studentNames[r.studentId] ?? 'Student';
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 16,
-                        backgroundColor: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
-                        child: Icon(Icons.person_rounded, size: 16, color: textTertiaryColor),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              studentName,
-                              style: TextStyle(color: textPrimaryColor),
-                            ),
-                          ],
+                final studentName = widget.studentNames[r.studentId] ?? 'Student';
+                
+                return InkWell(
+                  onTap: isEditable ? () => _toggleStatus(r, isPresent) : null,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 16,
+                          backgroundColor: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
+                          child: Icon(Icons.person_rounded, size: 16, color: textTertiaryColor),
                         ),
-                      ),
-                      StatusBadge(status: isPresent ? 'PRESENT' : 'ABSENT'),
-                    ],
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                studentName,
+                                style: TextStyle(color: textPrimaryColor),
+                              ),
+                            ],
+                          ),
+                        ),
+                        StatusBadge(status: isPresent ? 'PRESENT' : 'ABSENT'),
+                        if (isEditable)
+                          const Padding(
+                            padding: EdgeInsets.only(left: 8),
+                            child: Icon(Icons.edit_rounded, size: 14, color: Colors.grey),
+                          ),
+                      ],
+                    ),
                   ),
                 );
               },
@@ -1604,6 +1684,8 @@ class _AnalyticsTab extends ConsumerWidget {
               _buildStudentMetrics(analytics),
               const SizedBox(height: 24),
               _buildAiInsights(analytics),
+              const SizedBox(height: 32),
+              _buildAdminDangerZone(context, ref),
             ],
           ),
         ),
@@ -1809,6 +1891,95 @@ class _AnalyticsTab extends ConsumerWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 20),
         child: Text(msg, style: TextStyle(color: textTertiaryColor.withValues(alpha: 0.5), fontSize: 12)),
+      ),
+    );
+  }
+
+  Widget _buildAdminDangerZone(BuildContext context, WidgetRef ref) {
+    final userProfileAsync = ref.watch(currentUserProfileProvider);
+    final user = userProfileAsync.value;
+    
+    // Only show for admins or owners
+    if (user == null || (user.role != 'admin' && user.role != 'owner')) {
+      return const SizedBox.shrink();
+    }
+
+    final bool isDark = AppColors.isDarkMode;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Danger Zone', style: GoogleFonts.manrope(fontSize: 18, fontWeight: FontWeight.w800, color: const Color(0xFFEF4444))),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFFEF4444).withValues(alpha: 0.1) : const Color(0xFFFEE2E2),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.3)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Delete Batch', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFFCA5A5) : const Color(0xFFB91C1C))),
+              const SizedBox(height: 4),
+              Text('Once you delete a batch, there is no going back. Please be certain.', style: GoogleFonts.inter(fontSize: 12, color: isDark ? const Color(0xFFFECACA) : const Color(0xFFDC2626))),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _confirmDeleteBatch(context, ref),
+                  icon: const Icon(Icons.delete_forever_rounded, color: Colors.white, size: 18),
+                  label: const Text('DELETE BATCH', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFEF4444),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _confirmDeleteBatch(BuildContext context, WidgetRef ref) {
+    final bool isDark = AppColors.isDarkMode;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1E1E2C) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Delete Batch?', style: GoogleFonts.manrope(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
+        content: Text('Are you sure you want to delete this batch? All related records might be affected. This action cannot be undone.', 
+          style: GoogleFonts.inter(color: isDark ? Colors.white70 : Colors.black87)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('CANCEL'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context); // close dialog
+              try {
+                await ref.read(batchNotifierProvider.notifier).deleteBatch(batchId);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Batch deleted successfully')));
+                  context.go('/batches'); // Navigate back to batches list
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error deleting batch: $e')));
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+            child: const Text('DELETE', style: TextStyle(color: Colors.white)),
+          ),
+        ],
       ),
     );
   }
