@@ -98,6 +98,40 @@ class _InviteEditStaffScreenState extends ConsumerState<InviteEditStaffScreen> {
     }
   }
 
+  Future<void> _confirmDelete(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surfaceContainer,
+        title: Text('Delete Staff?', style: TextStyle(color: AppColors.textPrimary)),
+        content: Text('Are you sure you want to permanently delete this staff member? They will lose all access.', style: TextStyle(color: AppColors.textSecondary)),
+        actions: [
+          TextButton(onPressed: () => context.pop(false), child: Text('Cancel', style: TextStyle(color: AppColors.textSecondary))),
+          TextButton(onPressed: () => context.pop(true), child: Text('Delete', style: TextStyle(color: AppColors.error))),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      final notifier = ref.read(staffNotifierProvider.notifier);
+      try {
+        await notifier.deleteStaff(widget.existingStaff!.id);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Staff deleted'), backgroundColor: AppColors.success),
+          );
+          context.pop();
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.existingStaff != null;
@@ -221,7 +255,23 @@ class _InviteEditStaffScreenState extends ConsumerState<InviteEditStaffScreen> {
                       ? const CircularProgressIndicator(color: Colors.white)
                       : Text(isEditing ? 'Save Changes' : 'Send Invite', style: GoogleFonts.inter(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
-              )
+              ),
+              if (isEditing) ...[
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.error,
+                      side: BorderSide(color: AppColors.error),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: isLoading ? null : () => _confirmDelete(context),
+                    child: Text('Delete Staff', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

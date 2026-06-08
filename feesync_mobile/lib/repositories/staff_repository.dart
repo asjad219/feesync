@@ -49,4 +49,15 @@ class StaffRepository {
 
     await _client.from('users').update(updates).eq('id', userId);
   }
+
+  Future<void> deleteStaff(String userId) async {
+    final response = await _client.functions.invoke(
+      'delete_staff',
+      body: {'targetUserId': userId},
+    );
+    
+    if (response.status != 200) {
+      throw Exception('Failed to delete staff: ${response.data}');
+    }
+  }
 }

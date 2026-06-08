@@ -51,6 +51,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: GoRouterRefreshStream(
       Supabase.instance.client.auth.onAuthStateChange,
     ),
+    errorBuilder: (context, state) => const SplashScreen(),
     redirect: (context, state) {
       final isLoggedIn = Supabase.instance.client.auth.currentUser != null;
       final isSplashRoute = state.uri.path == '/splash';

@@ -62,6 +62,18 @@ class StaffNotifier extends StateNotifier<AsyncValue<void>> {
       rethrow;
     }
   }
+
+  Future<void> deleteStaff(String userId) async {
+    state = const AsyncValue.loading();
+    try {
+      await _ref.read(staffRepositoryProvider).deleteStaff(userId);
+      _ref.invalidate(staffListProvider);
+      state = const AsyncValue.data(null);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      rethrow;
+    }
+  }
 }
 
 final staffNotifierProvider = StateNotifierProvider<StaffNotifier, AsyncValue<void>>((ref) {
