@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/custom_widgets.dart';
 import '../../core/widgets/paywall_dialog.dart';
+import '../../core/widgets/error_dialog.dart';
 import '../../models/models.dart';
 import '../../providers/providers.dart';
 import '../../providers/subscription_provider.dart';
@@ -332,7 +333,7 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
         context.pop();
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (mounted) showErrorDialog(context, e);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

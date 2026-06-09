@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glass/glass_card.dart';
+import '../../../../core/widgets/error_dialog.dart';
 import '../../../../models/user_profile.dart';
 import '../../../../providers/staff_provider.dart';
 
@@ -91,9 +92,7 @@ class _InviteEditStaffScreenState extends ConsumerState<InviteEditStaffScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
-        );
+        showErrorDialog(context, e);
       }
     }
   }
@@ -124,9 +123,7 @@ class _InviteEditStaffScreenState extends ConsumerState<InviteEditStaffScreen> {
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
-          );
+          showErrorDialog(context, e);
         }
       }
     }

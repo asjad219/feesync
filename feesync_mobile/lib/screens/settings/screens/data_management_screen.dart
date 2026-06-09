@@ -10,6 +10,7 @@ import '../../../providers/student_provider.dart';
 import '../../../providers/payment_provider.dart';
 import '../../../core/widgets/glass/glass_card.dart';
 import '../../../core/utils/google_drive_helper.dart';
+import '../../../core/widgets/error_dialog.dart';
 
 class DataManagementScreen extends ConsumerStatefulWidget {
   const DataManagementScreen({super.key});
@@ -346,20 +347,9 @@ class _DataManagementScreenState extends ConsumerState<DataManagementScreen> {
   }
 
   void _showErrorSnack(String msg) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          msg,
-          style: GoogleFonts.inter(
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
-        backgroundColor: AppColors.error,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    if (mounted) {
+      showErrorDialog(context, msg);
+    }
   }
 
 

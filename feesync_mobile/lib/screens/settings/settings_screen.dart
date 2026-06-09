@@ -11,6 +11,7 @@ import '../../providers/subscription_provider.dart';
 import '../../models/user_profile.dart';
 import '../../models/subscription.dart';
 import '../../core/widgets/glass/glass_card.dart';
+import '../../core/widgets/error_dialog.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -25,9 +26,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       await ref.read(settingsProvider.notifier).updateSetting('theme_mode', theme);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update theme: $e'), backgroundColor: AppColors.error),
-        );
+        showErrorDialog(context, e);
       }
     }
   }

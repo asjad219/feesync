@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../providers/settings_provider.dart';
 import '../../../core/widgets/glass/glass_card.dart';
+import '../../../core/widgets/error_dialog.dart';
 import '../../../models/app_settings.dart';
 
 // ── Template definition ──────────────────────────────────────────────────────
@@ -218,13 +219,7 @@ class _AutomationSettingsScreenState
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save: $e'),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        showErrorDialog(context, e);
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
