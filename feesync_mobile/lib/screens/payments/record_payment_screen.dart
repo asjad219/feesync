@@ -587,7 +587,6 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
       );
     }
     
-    final bool isDark = AppColors.isDarkMode;
     final currencyCode = ref.read(settingsProvider).value?.currency;
     final currencyFormatter = CurrencyFormatter.numberFormat(currencyCode, decimalDigits: 0);
 
