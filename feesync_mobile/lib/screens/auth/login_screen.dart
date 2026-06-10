@@ -61,10 +61,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     width: 64, 
                     height: 64, 
                     decoration: BoxDecoration(
-                      gradient: AppGradients.primary, 
-                      borderRadius: BorderRadius.circular(16)
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [BoxShadow(color: AppColors.primaryContainer.withValues(alpha: 0.15), blurRadius: 20, offset: const Offset(0, 10))]
                     ), 
-                    child: const Icon(Icons.sync_rounded, color: Colors.white, size: 32)
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.asset('assets/logo.png', fit: BoxFit.cover),
+                    ),
                   ),
                   const SizedBox(height: 32),
                   Text('Welcome back', textAlign: TextAlign.center, style: GoogleFonts.manrope(fontSize: 32, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),

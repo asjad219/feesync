@@ -405,8 +405,13 @@ class _OverviewTab extends StatelessWidget {
     final List<Map<String, dynamic>> sessions = [];
     DateTime current = DateTime.now();
     
+    int targetCount = batch.schedules.isNotEmpty 
+        ? batch.schedules.length 
+        : (batch.scheduleDays.isNotEmpty ? batch.scheduleDays.length : 6);
+    if (targetCount < 3) targetCount = 3;
+    
     if (batch.schedules.isNotEmpty) {
-      for (int i = 0; i < 30 && sessions.length < 3; i++) {
+      for (int i = 0; i < 30 && sessions.length < targetCount; i++) {
         final weekdayIndex = current.weekday - 1;
         try {
           final slot = batch.schedules.firstWhere((s) => s.dayOfWeek == weekdayIndex);
@@ -419,7 +424,7 @@ class _OverviewTab extends StatelessWidget {
           ? batch.scheduleDays 
           : [0, 1, 2, 3, 4, 5]; // Mon to Sat
 
-      for (int i = 0; i < 30 && sessions.length < 3; i++) {
+      for (int i = 0; i < 30 && sessions.length < targetCount; i++) {
         final weekdayIndex = current.weekday - 1;
         if (activeDays.contains(weekdayIndex)) {
           sessions.add({'date': DateTime(current.year, current.month, current.day), 'slot': null});

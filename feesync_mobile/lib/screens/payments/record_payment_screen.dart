@@ -30,6 +30,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
   final _notesController = TextEditingController();
   DateTime _paymentDate = DateTime.now();
   String _paymentMode = 'online';
+  bool _isAdvancePayment = false;
   
   final List<String> _selectedDueIds = [];
 
@@ -91,19 +92,26 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
     }
 
     if (_selectedDueIds.isEmpty) {
-      final confirm = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: AppColors.surfaceContainer,
-          title: const Text('Record as Advance?'),
-          content: const Text('No specific fee periods selected. This will be recorded as an advance payment for future dues.'),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('CANCEL')),
-            TextButton(onPressed: () => Navigator.pop(context, true), child: Text('PROCEED', style: TextStyle(color: AppColors.primary))),
-          ],
-        ),
-      );
-      if (confirm != true) return;
+      if (availableDues.isEmpty && !_isAdvancePayment) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please turn on Advance Payment to proceed.')));
+        return;
+      }
+
+      if (availableDues.isNotEmpty) {
+        final confirm = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: AppColors.surfaceContainer,
+            title: const Text('Record as Advance?'),
+            content: const Text('No specific fee periods selected. This will be recorded as an advance payment for future dues.'),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('CANCEL')),
+              TextButton(onPressed: () => Navigator.pop(context, true), child: Text('PROCEED', style: TextStyle(color: AppColors.primary))),
+            ],
+          ),
+        );
+        if (confirm != true) return;
+      }
     }
 
     setState(() => _isLoading = true);
@@ -133,7 +141,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
         'account_id': accountId,
         'student_id': _selectedStudent!.id,
         'amount': amount,
-        'payment_method': _paymentMode,
+        'payment_method': _paymentMode.toUpperCase(),
         'payment_date': _paymentDate.toIso8601String(),
         'notes': _notesController.text.trim().isEmpty 
             ? (_selectedDueIds.isEmpty ? 'Advance Payment' : null) 
@@ -152,10 +160,59 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
         _showSuccessDialog(amount);
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (mounted) _showErrorDialog(e.toString());
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _showErrorDialog(String error) {
+    // Sanitize technical errors slightly for better UX
+    String displayError = error;
+    if (error.contains('PostgrestException')) {
+      displayError = 'A database error occurred while saving the payment. Please try again.';
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surfaceContainer,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(color: AppColors.error.withValues(alpha: 0.1), shape: BoxShape.circle),
+              child: Icon(Icons.error_outline_rounded, color: AppColors.error, size: 64),
+            ),
+            const SizedBox(height: 24),
+            Text('Payment Failed', style: GoogleFonts.manrope(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+            const SizedBox(height: 12),
+            Text(
+              displayError,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(fontSize: 13, color: AppColors.textTertiary),
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  elevation: 0,
+                ),
+                child: Text('TRY AGAIN', style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: Colors.white)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _showSuccessDialog(double amount) {
@@ -186,11 +243,23 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
             if (canShareReceipt) ...[
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton.icon(
+                child: ElevatedButton(
                   onPressed: () => _shareReceipt(amount),
-                  icon: const Icon(Icons.share_rounded, size: 18),
-                  label: const Text('SEND RECEIPT VIA WHATSAPP'),
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF25D366)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF25D366),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.share_rounded, size: 18, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Text(
+                        'SEND RECEIPT VIA WHATSAPP', 
+                        style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: Colors.white)
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -467,6 +536,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
               updatedAt: DateTime.now(),
             );
             _selectedDueIds.clear();
+            _isAdvancePayment = false;
             _amountController.clear();
           });
         },
@@ -475,13 +545,46 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
   }
 
   Widget _buildDuesList(List<Due> dues) {
+    final bool isDark = AppColors.isDarkMode;
     if (dues.isEmpty) {
-      return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(20)),
-      child: Center(child: Text('No pending dues for this student', style: GoogleFonts.inter(color: AppColors.primary, fontWeight: FontWeight.w600))),
-    );
+      return Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(20)),
+            child: Center(child: Text('No pending dues for this student', style: GoogleFonts.inter(color: AppColors.primary, fontWeight: FontWeight.w600))),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.surfaceContainer.withValues(alpha: 0.5) : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.1)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Record as Advance Payment', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                      const SizedBox(height: 4),
+                      Text('Since there are no pending dues, this payment will be added to the student\'s advance balance.', style: GoogleFonts.inter(fontSize: 11, color: AppColors.textTertiary)),
+                    ],
+                  ),
+                ),
+                Switch(
+                  value: _isAdvancePayment,
+                  onChanged: (v) => setState(() => _isAdvancePayment = v),
+                  activeColor: AppColors.primary,
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
     }
     
     final bool isDark = AppColors.isDarkMode;

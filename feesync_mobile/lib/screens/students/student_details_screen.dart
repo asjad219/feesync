@@ -159,12 +159,28 @@ class _ProfileHeader extends StatelessWidget {
                 ),
               ],
             ),
-            child: CircleAvatar(
-              backgroundColor: AppColors.primary.withValues(alpha: 0.2),
-              backgroundImage: NetworkImage(student.gender == Gender.female
-                  ? 'https://avatar.iran.liara.run/public/girl?username=${student.id}'
-                  : 'https://avatar.iran.liara.run/public/boy?username=${student.id}'),
-              onBackgroundImageError: (e, s) {},
+            child: ClipOval(
+              child: Image.network(
+                avatarUrl,
+                width: 80,
+                height: 80,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  final String initials = student.fullName.split(' ').map((e) => e.isNotEmpty ? e[0].toUpperCase() : '').take(2).join();
+                  return Container(
+                    decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.2)),
+                    alignment: Alignment.center,
+                    child: Text(
+                      initials,
+                      style: GoogleFonts.manrope(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
           ),
           const SizedBox(width: 20),
@@ -619,30 +635,49 @@ class _PaymentTile extends ConsumerWidget {
         title: Text('Revert Payment?', style: GoogleFonts.manrope(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
         content: Text('Are you sure you want to revert this payment? This will mark it as cancelled and adjust the student\'s outstanding balance.', 
           style: GoogleFonts.inter(color: AppColors.textTertiary)),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('CANCEL'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context); // close dialog
-              try {
-                await ref.read(paymentNotifierProvider.notifier).updatePayment(payment.id, {'status': 'cancelled'});
-                ref.invalidate(studentPaymentsProvider(student.id));
-                ref.invalidate(studentBalanceByIdProvider(student.id));
-                ref.invalidate(studentBalancesProvider);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment reverted successfully')));
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error reverting payment: $e')));
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('REVERT', style: TextStyle(color: Colors.white)),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    Navigator.pop(context); // close dialog
+                    try {
+                      await ref.read(paymentNotifierProvider.notifier).updatePayment(payment.id, {'status': 'cancelled'});
+                      ref.invalidate(studentPaymentsProvider(student.id));
+                      ref.invalidate(studentBalanceByIdProvider(student.id));
+                      ref.invalidate(studentBalancesProvider);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment reverted successfully')));
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error reverting payment: $e')));
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 0,
+                  ),
+                  child: Text('REVERT', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: Text('CANCEL', style: GoogleFonts.inter(color: AppColors.textTertiary, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
           ),
         ],
       ),

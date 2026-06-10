@@ -58,8 +58,14 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               Container(
                 width: 100,
                 height: 100,
-                decoration: BoxDecoration(gradient: AppGradients.primary, borderRadius: BorderRadius.circular(28), boxShadow: [BoxShadow(color: AppColors.primaryContainer.withValues(alpha: 0.3), blurRadius: 40, offset: const Offset(0, 20))]),
-                child: const Icon(Icons.sync_rounded, size: 56, color: Colors.white),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(28), 
+                  boxShadow: [BoxShadow(color: AppColors.primaryContainer.withValues(alpha: 0.15), blurRadius: 40, offset: const Offset(0, 20))]
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: Image.asset('assets/logo.png', fit: BoxFit.cover),
+                ),
               ),
               const SizedBox(height: 32),
               Text('FeeSync Pro', style: GoogleFonts.manrope(fontSize: 32, fontWeight: FontWeight.w800, color: AppColors.textPrimary, letterSpacing: -1)),

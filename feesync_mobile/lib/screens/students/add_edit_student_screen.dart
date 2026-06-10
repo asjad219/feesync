@@ -410,6 +410,7 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
                     hint: autoRollNumber ? 'Auto-generated' : 'Roll number', 
                     icon: Icons.tag_rounded,
                     enabled: !autoRollNumber,
+                    isRequired: !autoRollNumber,
                   )),
                   const SizedBox(width: 16),
                   Expanded(child: _buildBatchDropdown(batchesAsync)),
@@ -420,7 +421,7 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
                 children: [
                   Expanded(child: _buildDatePicker(label: 'JOINING DATE', date: _joiningDate, onTap: _selectJoiningDate)),
                   const SizedBox(width: 16),
-                  Expanded(child: _buildField(label: 'DISCOUNT (₹)', controller: _discountController, hint: '0', icon: Icons.percent_rounded, keyboardType: TextInputType.number)),
+                  Expanded(child: _buildField(label: 'DISCOUNT (₹)', controller: _discountController, hint: '0', icon: Icons.percent_rounded, keyboardType: TextInputType.number, isRequired: false)),
                 ],
               ),
               const SizedBox(height: 24),
@@ -429,7 +430,7 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
               if (collectParentDetails) ...[
                 _SectionHeader(title: 'Parent/Guardian', subtitle: 'Primary contact for fee reminders and updates'),
                 const SizedBox(height: 24),
-                _buildField(label: 'PARENT NAME', controller: _parentNameController, hint: 'Full name', icon: Icons.family_restroom_rounded),
+                _buildField(label: 'PARENT NAME', controller: _parentNameController, hint: 'Full name', icon: Icons.family_restroom_rounded, isRequired: false),
                 const SizedBox(height: 24),
               ] else ...[
                 _SectionHeader(title: 'Contact Information', subtitle: 'Primary contact for fee reminders and updates'),
@@ -442,7 +443,8 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
                     controller: _parentPhoneController, 
                     hint: 'Phone no.', 
                     icon: Icons.phone_android_rounded, 
-                    keyboardType: TextInputType.phone
+                    keyboardType: TextInputType.phone,
+                    isRequired: false,
                   )),
                   const SizedBox(width: 16),
                   Expanded(child: _buildField(
@@ -450,12 +452,13 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
                     controller: _parentEmailController, 
                     hint: 'Email address', 
                     icon: Icons.email_outlined, 
-                    keyboardType: TextInputType.emailAddress
+                    keyboardType: TextInputType.emailAddress,
+                    isRequired: false,
                   )),
                 ],
               ),
               const SizedBox(height: 24),
-              _buildField(label: 'ADDRESS', controller: _addressController, hint: 'Residential address', icon: Icons.location_on_outlined, maxLines: 3),
+              _buildField(label: 'ADDRESS', controller: _addressController, hint: 'Residential address', icon: Icons.location_on_outlined, maxLines: 3, isRequired: false),
               const SizedBox(height: 64),
               _buildSaveButton(),
             ],
@@ -604,7 +607,7 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
     );
   }
 
-  Widget _buildField({required String label, required TextEditingController controller, required String hint, required IconData icon, int maxLines = 1, TextInputType? keyboardType, bool enabled = true}) {
+  Widget _buildField({required String label, required TextEditingController controller, required String hint, required IconData icon, int maxLines = 1, TextInputType? keyboardType, bool enabled = true, bool isRequired = true}) {
     final bool isDark = AppColors.isDarkMode;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
@@ -655,7 +658,7 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
               fontSize: 14,
             ),
           ),
-          validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+          validator: isRequired ? (v) => v?.isEmpty ?? true ? 'Required' : null : null,
         ),
       ],
     );
