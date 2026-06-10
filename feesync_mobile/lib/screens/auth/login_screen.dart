@@ -54,19 +54,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 48),
-            Container(
-              width: 64, 
-              height: 64, 
-              decoration: BoxDecoration(
-                gradient: AppGradients.primary, 
-                borderRadius: BorderRadius.circular(16)
-              ), 
-              child: const Icon(Icons.sync_rounded, color: Colors.white, size: 32)
+            Center(
+              child: Column(
+                children: [
+                  Container(
+                    width: 64, 
+                    height: 64, 
+                    decoration: BoxDecoration(
+                      gradient: AppGradients.primary, 
+                      borderRadius: BorderRadius.circular(16)
+                    ), 
+                    child: const Icon(Icons.sync_rounded, color: Colors.white, size: 32)
+                  ),
+                  const SizedBox(height: 32),
+                  Text('Welcome back', textAlign: TextAlign.center, style: GoogleFonts.manrope(fontSize: 32, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                  const SizedBox(height: 8),
+                  Text('Login to your administrator account', textAlign: TextAlign.center, style: GoogleFonts.inter(fontSize: 14, color: AppColors.textTertiary)),
+                ],
+              ),
             ),
-            const SizedBox(height: 32),
-            Text('Welcome back', style: GoogleFonts.manrope(fontSize: 32, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
-            const SizedBox(height: 8),
-            Text('Login to your administrator account', style: GoogleFonts.inter(fontSize: 14, color: AppColors.textTertiary)),
             const SizedBox(height: 48),
             _buildField(label: 'EMAIL ADDRESS', controller: _emailController, hint: 'admin@feesync.com', icon: Icons.email_outlined),
             const SizedBox(height: 24),

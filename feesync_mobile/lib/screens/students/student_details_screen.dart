@@ -150,47 +150,21 @@ class _ProfileHeader extends StatelessWidget {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppColors.primary.withValues(alpha: 0.1),
-                  AppColors.secondary.withValues(alpha: 0.2),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(20),
+              shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.1),
+                  color: AppColors.primary.withValues(alpha: 0.15),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
               ],
             ),
-            alignment: Alignment.center,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Image.network(
-                avatarUrl,
-                width: 80,
-                height: 80,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  final String initials = student.fullName.split(' ').map((e) => e.isNotEmpty ? e[0].toUpperCase() : '').take(2).join();
-                  return Container(
-                    decoration: BoxDecoration(gradient: AppGradients.primary),
-                    alignment: Alignment.center,
-                    child: Text(
-                      initials,
-                      style: GoogleFonts.manrope(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
-                    ),
-                  );
-                },
-              ),
+            child: CircleAvatar(
+              backgroundColor: AppColors.primary.withValues(alpha: 0.2),
+              backgroundImage: NetworkImage(student.gender == Gender.female
+                  ? 'https://avatar.iran.liara.run/public/girl?username=${student.id}'
+                  : 'https://avatar.iran.liara.run/public/boy?username=${student.id}'),
+              onBackgroundImageError: (e, s) {},
             ),
           ),
           const SizedBox(width: 20),
@@ -525,7 +499,18 @@ class _RecentPaymentsList extends StatelessWidget {
           children: [
             Text('Recent Payments', style: GoogleFonts.manrope(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
             GestureDetector(
-              onTap: () => context.push('/payments?studentId=$studentId'),
+              onTap: () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (context) => _StudentPaymentHistorySheet(
+                    studentId: studentId,
+                    student: student,
+                    currencyFormatter: currencyFormatter,
+                  ),
+                );
+              },
               child: Text('View All', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primary)),
             ),
           ],
@@ -549,14 +534,24 @@ class _RecentPaymentsList extends StatelessWidget {
   }
 }
 
-class _PaymentTile extends StatelessWidget {
+class _PaymentTile extends ConsumerWidget {
   final Payment payment;
   final Student student;
   final NumberFormat currencyFormatter;
-  const _PaymentTile({required this.payment, required this.student, required this.currencyFormatter});
+  final bool isHistoryView;
+  const _PaymentTile({
+    required this.payment, 
+    required this.student, 
+    required this.currencyFormatter,
+    this.isHistoryView = false,
+  });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    Color statusColor = AppColors.success;
+    if (payment.status == PaymentStatus.pending) statusColor = AppColors.tertiary;
+    if (payment.status == PaymentStatus.cancelled || payment.status == PaymentStatus.refunded) statusColor = AppColors.error;
+
     return GlassCard(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -566,26 +561,88 @@ class _PaymentTile extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1), 
+              color: statusColor.withValues(alpha: 0.1), 
               borderRadius: BorderRadius.circular(12)
             ),
-            child: Icon(Icons.receipt_rounded, color: AppColors.primary, size: 20),
+            child: Icon(
+              payment.status == PaymentStatus.completed ? Icons.receipt_rounded : 
+              (payment.status == PaymentStatus.cancelled ? Icons.cancel_rounded : Icons.pending_actions_rounded), 
+              color: statusColor, size: 20
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(currencyFormatter.format(payment.amount), style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                Row(
+                  children: [
+                    Text(currencyFormatter.format(payment.amount), style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                    if (payment.status != PaymentStatus.completed) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
+                        child: Text(payment.status.name.toUpperCase(), style: TextStyle(fontSize: 9, color: statusColor, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ],
+                ),
                 Text('${payment.paymentMethod.name.toUpperCase()} • ${DateFormat('MMM d, yyyy').format(payment.paymentDate)}',
                     style: GoogleFonts.inter(fontSize: 11, color: AppColors.textTertiary)),
               ],
             ),
           ),
-          IconButton(
-            onPressed: () => _sharePastReceipt(context),
-            icon: Icon(Icons.share_rounded, size: 20, color: AppColors.primary),
-            tooltip: 'Share Receipt',
+          if (payment.status == PaymentStatus.completed)
+            IconButton(
+              onPressed: () => _sharePastReceipt(context),
+              icon: Icon(Icons.share_rounded, size: 20, color: AppColors.primary),
+              tooltip: 'Share Receipt',
+            ),
+          if (isHistoryView && payment.status == PaymentStatus.completed)
+            IconButton(
+              onPressed: () => _confirmRevert(context, ref),
+              icon: Icon(Icons.undo_rounded, size: 20, color: AppColors.error),
+              tooltip: 'Revert Payment',
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmRevert(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surfaceContainer,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Revert Payment?', style: GoogleFonts.manrope(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+        content: Text('Are you sure you want to revert this payment? This will mark it as cancelled and adjust the student\'s outstanding balance.', 
+          style: GoogleFonts.inter(color: AppColors.textTertiary)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('CANCEL'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context); // close dialog
+              try {
+                await ref.read(paymentNotifierProvider.notifier).updatePayment(payment.id, {'status': 'cancelled'});
+                ref.invalidate(studentPaymentsProvider(student.id));
+                ref.invalidate(studentBalanceByIdProvider(student.id));
+                ref.invalidate(studentBalancesProvider);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment reverted successfully')));
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error reverting payment: $e')));
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('REVERT', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -754,6 +811,67 @@ class _CircleIconButton extends StatelessWidget {
           border: Border.all(color: color.withValues(alpha: 0.2))
         ),
         child: Icon(icon, color: color, size: 24),
+      ),
+    );
+  }
+}
+
+class _StudentPaymentHistorySheet extends ConsumerWidget {
+  final String studentId;
+  final Student student;
+  final NumberFormat currencyFormatter;
+
+  const _StudentPaymentHistorySheet({
+    required this.studentId,
+    required this.student,
+    required this.currencyFormatter,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final paymentsAsync = ref.watch(studentPaymentsProvider(studentId));
+    final bool isDark = AppColors.isDarkMode;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
+      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.8),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Payment History', style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+              IconButton(onPressed: () => Navigator.pop(context), icon: Icon(Icons.close_rounded, color: AppColors.textTertiary)),
+            ],
+          ),
+          const SizedBox(height: 20),
+          paymentsAsync.when(
+            data: (payments) {
+              if (payments.isEmpty) {
+                return const Expanded(child: Center(child: Text('No payments found')));
+              }
+              return Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: payments.length,
+                  itemBuilder: (context, index) {
+                    final p = payments[index];
+                    return _PaymentTile(payment: p, student: student, currencyFormatter: currencyFormatter, isHistoryView: true);
+                  },
+                ),
+              );
+            },
+            loading: () => const Expanded(child: Center(child: CircularProgressIndicator())),
+            error: (e, _) => Expanded(child: Center(child: Text('Error: $e'))),
+          ),
+        ],
       ),
     );
   }

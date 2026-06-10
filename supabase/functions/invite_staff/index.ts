@@ -68,7 +68,14 @@ serve(async (req) => {
     // Invite user via auth admin API
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
       email,
-      { data: { full_name: fullName } }
+      { 
+        data: { 
+          full_name: fullName, 
+          onboarding_complete: true, 
+          needs_password_set: true 
+        },
+        redirectTo: 'feesync://reset-password'
+      }
     )
 
     if (authError) throw authError

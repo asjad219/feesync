@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'schedule.dart';
 
 enum BatchStatus {
   active,
@@ -25,10 +26,15 @@ class Batch {
   final double pendingDues;
   
   // Schedule Fields
+  final List<ScheduleSlot> schedules;
   final List<int> scheduleDays;
   final String startTime;
   final String endTime;
   final String room;
+
+  // Settings Fields
+  final bool autoRollNumber;
+  final bool collectParentDetails;
 
   Batch({
     required this.id,
@@ -47,10 +53,13 @@ class Batch {
     this.attendancePercentage = 0.0,
     this.revenueGenerated = 0.0,
     this.pendingDues = 0.0,
+    this.schedules = const [],
     this.scheduleDays = const [],
     this.startTime = '16:00',
     this.endTime = '17:30',
     this.room = 'Room 101',
+    this.autoRollNumber = false,
+    this.collectParentDetails = true,
   });
 
   double get capacityPercentage => (studentCount / maxCapacity).clamp(0.0, 1.0);
@@ -82,12 +91,17 @@ class Batch {
       attendancePercentage: (json['attendance_percentage'] as num? ?? 0.0).toDouble(),
       revenueGenerated: (json['revenue_generated'] as num? ?? 0.0).toDouble(),
       pendingDues: (json['pending_dues'] as num? ?? 0.0).toDouble(),
+      schedules: json['schedules'] != null 
+          ? (json['schedules'] as List).map((e) => ScheduleSlot.fromJson(e)).toList()
+          : [],
       scheduleDays: json['schedule_days'] != null && json['schedule_days'].toString().isNotEmpty
           ? (json['schedule_days'] as String).split(',').map((e) => int.parse(e.trim())).toList()
           : [],
       startTime: json['start_time'] ?? '16:00',
       endTime: json['end_time'] ?? '17:30',
       room: json['room'] ?? 'Room 101',
+      autoRollNumber: json['auto_roll_number'] ?? false,
+      collectParentDetails: json['collect_parent_details'] ?? true,
     );
   }
 
@@ -109,10 +123,13 @@ class Batch {
       'attendance_percentage': attendancePercentage,
       'revenue_generated': revenueGenerated,
       'pending_dues': pendingDues,
+      'schedules': schedules.map((e) => e.toJson()).toList(),
       'schedule_days': scheduleDays.join(','),
       'start_time': startTime,
       'end_time': endTime,
       'room': room,
+      'auto_roll_number': autoRollNumber,
+      'collect_parent_details': collectParentDetails,
     };
   }
 
@@ -133,10 +150,13 @@ class Batch {
     double? attendancePercentage,
     double? revenueGenerated,
     double? pendingDues,
+    List<ScheduleSlot>? schedules,
     List<int>? scheduleDays,
     String? startTime,
     String? endTime,
     String? room,
+    bool? autoRollNumber,
+    bool? collectParentDetails,
   }) {
     return Batch(
       id: id ?? this.id,
@@ -155,10 +175,13 @@ class Batch {
       attendancePercentage: attendancePercentage ?? this.attendancePercentage,
       revenueGenerated: revenueGenerated ?? this.revenueGenerated,
       pendingDues: pendingDues ?? this.pendingDues,
+      schedules: schedules ?? this.schedules,
       scheduleDays: scheduleDays ?? this.scheduleDays,
       startTime: startTime ?? this.startTime,
       endTime: endTime ?? this.endTime,
       room: room ?? this.room,
+      autoRollNumber: autoRollNumber ?? this.autoRollNumber,
+      collectParentDetails: collectParentDetails ?? this.collectParentDetails,
     );
   }
 }

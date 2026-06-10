@@ -66,6 +66,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           metadata['onboarding_center_setup_complete'] == true;
       final rawStep = metadata['onboarding_step']?.toString() ?? 'intro';
       final onboardingStep = rawStep.replaceAll('_', '-');
+      final needsPasswordSet = metadata['needs_password_set'] == true;
 
       if (isSplashRoute) {
         return null;
@@ -73,6 +74,12 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       if (!isLoggedIn && !isAuthRoute) {
         return '/login';
+      }
+
+      if (isLoggedIn) {
+        if (needsPasswordSet && state.uri.path != '/update-password') {
+          return '/update-password';
+        }
       }
 
       if (isLoggedIn && isAuthRoute) {
@@ -85,7 +92,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         return '/dashboard';
       }
 
-      if (isLoggedIn && !onboardingComplete && !isOnboardingRoute) {
+      if (isLoggedIn && !onboardingComplete && !isOnboardingRoute && !needsPasswordSet) {
         return '/onboarding/$onboardingStep';
       }
 

@@ -302,6 +302,12 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
         }
       }
 
+      String? finalRollNumber = _rollNumberController.text.trim();
+      if (selectedBatch.autoRollNumber && widget.studentId == null && finalRollNumber.isEmpty) {
+        final prefix = selectedBatch.name.toUpperCase().replaceAll(' ', '');
+        finalRollNumber = '$prefix-${selectedBatch.studentCount + 1}';
+      }
+
       final data = {
         'account_id': accountId,
         'first_name': _firstNameController.text.trim(),
@@ -313,7 +319,7 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
         'parent_phone': formattedPhone,
         'parent_email': _parentEmailController.text.trim().isEmpty ? null : _parentEmailController.text.trim(),
         'address': _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
-        'roll_number': _rollNumberController.text.trim().isEmpty ? null : _rollNumberController.text.trim(),
+        'roll_number': finalRollNumber?.isEmpty == true ? null : finalRollNumber,
         'joining_date': _joiningDate.toIso8601String().split('T')[0],
         'discount_amount': double.tryParse(_discountController.text) ?? 0,
         'gender': _gender.name,
@@ -348,6 +354,16 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
     final Color scaffoldBgColor = isDark ? const Color(0xFF0D0D1A) : const Color(0xFFF8FAFC);
     final Color textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final Color primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
+
+    final batches = batchesAsync.value ?? [];
+    Batch? selectedBatch;
+    if (_selectedBatchId != null && batches.isNotEmpty) {
+      try {
+        selectedBatch = batches.firstWhere((b) => b.id == _selectedBatchId);
+      } catch (_) {}
+    }
+    final autoRollNumber = selectedBatch?.autoRollNumber ?? false;
+    final collectParentDetails = selectedBatch?.collectParentDetails ?? true;
 
     return Scaffold(
       backgroundColor: scaffoldBgColor,
@@ -388,7 +404,13 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
               const SizedBox(height: 24),
               Row(
                 children: [
-                  Expanded(child: _buildField(label: 'ROLL NO', controller: _rollNumberController, hint: 'Roll number', icon: Icons.tag_rounded)),
+                  Expanded(child: _buildField(
+                    label: 'ROLL NO', 
+                    controller: _rollNumberController, 
+                    hint: autoRollNumber ? 'Auto-generated' : 'Roll number', 
+                    icon: Icons.tag_rounded,
+                    enabled: !autoRollNumber,
+                  )),
                   const SizedBox(width: 16),
                   Expanded(child: _buildBatchDropdown(batchesAsync)),
                 ],
@@ -404,15 +426,32 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
               const SizedBox(height: 24),
               _buildGenderPicker(),
               const SizedBox(height: 48),
-              _SectionHeader(title: 'Parent/Guardian', subtitle: 'Primary contact for fee reminders and updates'),
-              const SizedBox(height: 24),
-              _buildField(label: 'PARENT NAME', controller: _parentNameController, hint: 'Full name', icon: Icons.family_restroom_rounded),
-              const SizedBox(height: 24),
+              if (collectParentDetails) ...[
+                _SectionHeader(title: 'Parent/Guardian', subtitle: 'Primary contact for fee reminders and updates'),
+                const SizedBox(height: 24),
+                _buildField(label: 'PARENT NAME', controller: _parentNameController, hint: 'Full name', icon: Icons.family_restroom_rounded),
+                const SizedBox(height: 24),
+              ] else ...[
+                _SectionHeader(title: 'Contact Information', subtitle: 'Primary contact for fee reminders and updates'),
+                const SizedBox(height: 24),
+              ],
               Row(
                 children: [
-                  Expanded(child: _buildField(label: 'PHONE', controller: _parentPhoneController, hint: 'Phone no.', icon: Icons.phone_android_rounded, keyboardType: TextInputType.phone)),
+                  Expanded(child: _buildField(
+                    label: collectParentDetails ? 'PHONE' : 'STUDENT PHONE', 
+                    controller: _parentPhoneController, 
+                    hint: 'Phone no.', 
+                    icon: Icons.phone_android_rounded, 
+                    keyboardType: TextInputType.phone
+                  )),
                   const SizedBox(width: 16),
-                  Expanded(child: _buildField(label: 'EMAIL', controller: _parentEmailController, hint: 'Email address', icon: Icons.email_outlined, keyboardType: TextInputType.emailAddress)),
+                  Expanded(child: _buildField(
+                    label: collectParentDetails ? 'EMAIL' : 'STUDENT EMAIL', 
+                    controller: _parentEmailController, 
+                    hint: 'Email address', 
+                    icon: Icons.email_outlined, 
+                    keyboardType: TextInputType.emailAddress
+                  )),
                 ],
               ),
               const SizedBox(height: 24),
@@ -565,7 +604,7 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
     );
   }
 
-  Widget _buildField({required String label, required TextEditingController controller, required String hint, required IconData icon, int maxLines = 1, TextInputType? keyboardType}) {
+  Widget _buildField({required String label, required TextEditingController controller, required String hint, required IconData icon, int maxLines = 1, TextInputType? keyboardType, bool enabled = true}) {
     final bool isDark = AppColors.isDarkMode;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
@@ -584,7 +623,8 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
           controller: controller,
           maxLines: maxLines,
           keyboardType: keyboardType,
-          style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w500, color: textPrimaryColor),
+          enabled: enabled,
+          style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w500, color: enabled ? textPrimaryColor : textTertiaryColor),
           decoration: InputDecoration(
             hintText: hint,
             prefixIcon: Icon(icon, size: 20, color: textTertiaryColor),

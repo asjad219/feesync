@@ -118,6 +118,7 @@ class StudentBalance {
   final String? parentName;
   final String? parentPhone;
   final String? parentEmail;
+  final Gender? gender;
   final double totalFeeAmount;
   final double totalPaidAmount;
   final double balance;
@@ -135,6 +136,7 @@ class StudentBalance {
     this.parentName,
     this.parentPhone,
     this.parentEmail,
+    this.gender,
     required this.totalFeeAmount,
     required this.totalPaidAmount,
     required this.balance,
@@ -156,6 +158,10 @@ class StudentBalance {
       parentName: json['parent_name'],
       parentPhone: json['parent_phone'],
       parentEmail: json['parent_email'],
+      gender: json['gender'] != null ? Gender.values.firstWhere(
+        (e) => e.name == json['gender'],
+        orElse: () => Gender.other,
+      ) : null,
       totalFeeAmount: double.parse(json['total_fee_amount'].toString()),
       totalPaidAmount: double.parse(json['total_paid_amount'].toString()),
       balance: double.parse(json['balance'].toString()),

@@ -401,24 +401,33 @@ class _OverviewTab extends StatelessWidget {
     required this.onEditTap,
   });
 
-  List<DateTime> _generateUpcomingDates(Batch batch) {
-    final List<DateTime> dates = [];
+  List<Map<String, dynamic>> _generateUpcomingSessions(Batch batch) {
+    final List<Map<String, dynamic>> sessions = [];
     DateTime current = DateTime.now();
     
-    // If the batch has no schedule days selected, fallback to Mon-Sat (original logic)
-    final activeDays = batch.scheduleDays.isNotEmpty 
-        ? batch.scheduleDays 
-        : [0, 1, 2, 3, 4, 5]; // Mon to Sat
-
-    // Loop through the next 30 days to find the next 3 matching occurrences
-    for (int i = 0; i < 30 && dates.length < 3; i++) {
-      final weekdayIndex = current.weekday - 1;
-      if (activeDays.contains(weekdayIndex)) {
-        dates.add(DateTime(current.year, current.month, current.day));
+    if (batch.schedules.isNotEmpty) {
+      for (int i = 0; i < 30 && sessions.length < 3; i++) {
+        final weekdayIndex = current.weekday - 1;
+        try {
+          final slot = batch.schedules.firstWhere((s) => s.dayOfWeek == weekdayIndex);
+          sessions.add({'date': DateTime(current.year, current.month, current.day), 'slot': slot});
+        } catch (_) {}
+        current = current.add(const Duration(days: 1));
       }
-      current = current.add(const Duration(days: 1));
+    } else {
+      final activeDays = batch.scheduleDays.isNotEmpty 
+          ? batch.scheduleDays 
+          : [0, 1, 2, 3, 4, 5]; // Mon to Sat
+
+      for (int i = 0; i < 30 && sessions.length < 3; i++) {
+        final weekdayIndex = current.weekday - 1;
+        if (activeDays.contains(weekdayIndex)) {
+          sessions.add({'date': DateTime(current.year, current.month, current.day), 'slot': null});
+        }
+        current = current.add(const Duration(days: 1));
+      }
     }
-    return dates;
+    return sessions;
   }
 
   String _formatTimeString(String timeStr) {
@@ -439,7 +448,7 @@ class _OverviewTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isDark = AppColors.isDarkMode;
-    final dates = _generateUpcomingDates(batch);
+    final sessions = _generateUpcomingSessions(batch);
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textSecondaryColor = isDark ? const Color(0xFFC3C6D7) : const Color(0xFF475569);
     final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
@@ -453,8 +462,12 @@ class _OverviewTab extends StatelessWidget {
           const SizedBox(height: 28),
           _buildSectionHeader('Upcoming Schedule'),
           const SizedBox(height: 12),
-          ...dates.map((date) {
+          ...sessions.map((session) {
+            final date = session['date'] as DateTime;
+            final slot = session['slot'] as ScheduleSlot?;
             final isToday = date.day == DateTime.now().day && date.month == DateTime.now().month;
+            final startTime = slot?.startTime ?? batch.startTime;
+            final endTime = slot?.endTime ?? batch.endTime;
             
             return GlassCard(
               margin: const EdgeInsets.only(bottom: 12),
@@ -512,7 +525,7 @@ class _OverviewTab extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${_formatTimeString(batch.startTime)} - ${_formatTimeString(batch.endTime)} • ${batch.room}',
+                          '${_formatTimeString(startTime)} - ${_formatTimeString(endTime)}',
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             color: textSecondaryColor,
@@ -574,11 +587,6 @@ class _OverviewTab extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(title, style: GoogleFonts.manrope(color: textPrimaryColor, fontSize: 18, fontWeight: FontWeight.w700)),
-        TextButton(
-          onPressed: () {}, 
-          style: TextButton.styleFrom(foregroundColor: batch.color),
-          child: const Text('View All'),
-        ),
       ],
     );
   }
@@ -666,16 +674,20 @@ class _StudentListTile extends StatelessWidget {
           children: [
             CircleAvatar(
               backgroundColor: primaryColor.withValues(alpha: 0.2),
-              child: Text(student.firstName[0], style: TextStyle(color: primaryColor)),
+              backgroundImage: NetworkImage(student.gender == Gender.female
+                  ? 'https://avatar.iran.liara.run/public/girl?username=${student.id}'
+                  : 'https://avatar.iran.liara.run/public/boy?username=${student.id}'),
+              onBackgroundImageError: (e, s) {},
             ),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${student.firstName} ${student.lastName}', style: TextStyle(color: textPrimaryColor, fontWeight: FontWeight.bold)),
-                  if (student.rollNumber != null && student.rollNumber!.isNotEmpty)
-                    Text('Roll No: ${student.rollNumber}', style: TextStyle(color: textTertiaryColor, fontSize: 11)),
+                  Text(
+                    '${student.firstName} ${student.lastName}' + (student.rollNumber != null && student.rollNumber!.isNotEmpty ? ' • Roll: ${student.rollNumber}' : ''),
+                    style: TextStyle(color: textPrimaryColor, fontWeight: FontWeight.bold),
+                  ),
                   Text(
                     'Dues: ₹${student.balance}', 
                     style: TextStyle(
@@ -976,6 +988,9 @@ class _AttendanceHistoryView extends ConsumerWidget {
     final bool isDark = AppColors.isDarkMode;
     showModalBottomSheet(
       context: context,
+      isDismissible: false,
+      enableDrag: false,
+      isScrollControlled: true,
       backgroundColor: isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) => _SessionDetailsSheet(date: date, records: records, studentNames: studentNames),
@@ -1074,35 +1089,52 @@ class _SessionDetailsSheet extends ConsumerStatefulWidget {
 }
 
 class _SessionDetailsSheetState extends ConsumerState<_SessionDetailsSheet> {
-  bool _isUpdating = false;
+  bool _isEditMode = false;
+  bool _isSaving = false;
+  late Map<String, bool> _localStatuses;
 
-  Future<void> _toggleStatus(AttendanceRecord record, bool isCurrentlyPresent) async {
-    if (_isUpdating) return;
-    setState(() => _isUpdating = true);
+  @override
+  void initState() {
+    super.initState();
+    _localStatuses = {
+      for (var r in widget.records) r.id: r.status == AttendanceStatus.present
+    };
+  }
+
+  Future<void> _saveChanges() async {
+    if (_isSaving) return;
+    setState(() => _isSaving = true);
 
     try {
       final client = ref.read(supabaseClientProvider);
-      final newStatus = isCurrentlyPresent ? 'absent' : 'present';
       
-      await client.from('attendance').update({
-        'status': newStatus,
-      }).eq('id', record.id);
+      for (var r in widget.records) {
+        final wasPresent = r.status == AttendanceStatus.present;
+        final isNowPresent = _localStatuses[r.id] ?? false;
+        
+        if (wasPresent != isNowPresent) {
+          await client.from('attendance').update({
+            'status': isNowPresent ? 'present' : 'absent',
+          }).eq('id', r.id);
+        }
+      }
 
-      // We need to invalidate everything that depends on this
-      final batchId = record.batchId;
-      ref.invalidate(batchAttendanceProvider(batchId));
-      ref.invalidate(batchAnalyticsProvider(batchId));
-      ref.invalidate(batchByIdProvider(batchId));
-      ref.invalidate(batchNotifierProvider);
+      if (widget.records.isNotEmpty) {
+        final batchId = widget.records.first.batchId;
+        ref.invalidate(batchAttendanceProvider(batchId));
+        ref.invalidate(batchAnalyticsProvider(batchId));
+        ref.invalidate(batchByIdProvider(batchId));
+        ref.invalidate(batchNotifierProvider);
+      }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Attendance updated')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Attendance updated successfully')));
         Navigator.pop(context); // Close the sheet to let it refresh cleanly
       }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error updating: $e')));
     } finally {
-      if (mounted) setState(() => _isUpdating = false);
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
@@ -1111,10 +1143,11 @@ class _SessionDetailsSheetState extends ConsumerState<_SessionDetailsSheet> {
     final bool isDark = AppColors.isDarkMode;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+    final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
     final bool isEditable = DateTime.now().difference(widget.date).inDays <= 7;
 
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1129,62 +1162,151 @@ class _SessionDetailsSheetState extends ConsumerState<_SessionDetailsSheet> {
                   Text(DateFormat('MMMM d, yyyy').format(widget.date), style: GoogleFonts.inter(fontSize: 14, color: textTertiaryColor)),
                 ],
               ),
-              IconButton(onPressed: () => Navigator.pop(context), icon: Icon(Icons.close_rounded, color: textTertiaryColor)),
+              if (!_isEditMode)
+                IconButton(
+                  onPressed: () => Navigator.pop(context), 
+                  icon: Icon(Icons.close_rounded, color: textTertiaryColor)
+                ),
             ],
           ),
+          const SizedBox(height: 16),
           if (isEditable)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text('Tap a student to toggle status (editable for last 7 days)', style: GoogleFonts.inter(fontSize: 11, color: isDark ? Colors.blueAccent : Colors.blue, fontWeight: FontWeight.bold)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  _isEditMode ? 'Modify attendance:' : 'Session records are locked after 7 days.',
+                  style: GoogleFonts.inter(
+                    fontSize: 12, 
+                    color: isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B),
+                  ),
+                ),
+                if (!_isEditMode)
+                  TextButton.icon(
+                    onPressed: () => setState(() => _isEditMode = true),
+                    icon: Icon(Icons.edit_rounded, size: 16, color: primaryColor),
+                    label: Text('Edit', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
+                  ),
+              ],
             ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           Flexible(
             child: ListView.builder(
               shrinkWrap: true,
               itemCount: widget.records.length,
               itemBuilder: (context, index) {
                 final r = widget.records[index];
-                final isPresent = r.status == AttendanceStatus.present;
+                final isPresent = _localStatuses[r.id] ?? false;
                 final studentName = widget.studentNames[r.studentId] ?? 'Student';
                 
-                return InkWell(
-                  onTap: isEditable ? () => _toggleStatus(r, isPresent) : null,
-                  borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 16,
-                          backgroundColor: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
-                          child: Icon(Icons.person_rounded, size: 16, color: textTertiaryColor),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                studentName,
-                                style: TextStyle(color: textPrimaryColor),
-                              ),
-                            ],
-                          ),
-                        ),
-                        StatusBadge(status: isPresent ? 'PRESENT' : 'ABSENT'),
-                        if (isEditable)
-                          const Padding(
-                            padding: EdgeInsets.only(left: 8),
-                            child: Icon(Icons.edit_rounded, size: 14, color: Colors.grey),
-                          ),
-                      ],
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.02),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _isEditMode && isPresent 
+                          ? const Color(0xFF10B981).withValues(alpha: 0.3) 
+                          : (_isEditMode && !isPresent 
+                              ? const Color(0xFFEF4444).withValues(alpha: 0.3)
+                              : Colors.transparent),
                     ),
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 16,
+                        backgroundColor: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
+                        child: Icon(Icons.person_rounded, size: 16, color: textTertiaryColor),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          studentName,
+                          style: TextStyle(color: textPrimaryColor, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      if (_isEditMode)
+                        Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () => setState(() => _localStatuses[r.id] = true),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: isPresent ? const Color(0xFF10B981) : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: isPresent ? const Color(0xFF10B981) : textTertiaryColor.withValues(alpha: 0.3)),
+                                ),
+                                child: Text('P', style: TextStyle(color: isPresent ? Colors.white : textTertiaryColor, fontWeight: FontWeight.bold, fontSize: 12)),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () => setState(() => _localStatuses[r.id] = false),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: !isPresent ? const Color(0xFFEF4444) : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: !isPresent ? const Color(0xFFEF4444) : textTertiaryColor.withValues(alpha: 0.3)),
+                                ),
+                                child: Text('A', style: TextStyle(color: !isPresent ? Colors.white : textTertiaryColor, fontWeight: FontWeight.bold, fontSize: 12)),
+                              ),
+                            ),
+                          ],
+                        )
+                      else
+                        StatusBadge(status: isPresent ? 'PRESENT' : 'ABSENT'),
+                    ],
                   ),
                 );
               },
             ),
           ),
-          const SizedBox(height: 24),
+          if (_isEditMode) ...[
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: _isSaving ? null : () {
+                      setState(() {
+                        _isEditMode = false;
+                        // Reset local statuses
+                        _localStatuses = {
+                          for (var r in widget.records) r.id: r.status == AttendanceStatus.present
+                        };
+                      });
+                    },
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: Text('Cancel', style: TextStyle(color: textTertiaryColor, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  flex: 2,
+                  child: ElevatedButton(
+                    onPressed: _isSaving ? null : _saveChanges,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      elevation: 0,
+                    ),
+                    child: _isSaving 
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : const Text('Save Changes', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -1211,7 +1333,10 @@ class _AttendanceRosterTile extends ConsumerWidget {
         children: [
           CircleAvatar(
             backgroundColor: primaryColor.withValues(alpha: 0.2),
-            child: Text(student.firstName[0], style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
+            backgroundImage: NetworkImage(student.gender == Gender.female
+                ? 'https://avatar.iran.liara.run/public/girl?username=${student.id}'
+                : 'https://avatar.iran.liara.run/public/boy?username=${student.id}'),
+            onBackgroundImageError: (e, s) {},
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -1219,14 +1344,9 @@ class _AttendanceRosterTile extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${student.firstName} ${student.lastName}',
+                  '${student.firstName} ${student.lastName}' + (student.rollNumber != null && student.rollNumber!.isNotEmpty ? ' • Roll: ${student.rollNumber}' : ''),
                   style: TextStyle(color: textPrimaryColor, fontWeight: FontWeight.bold),
                 ),
-                if (student.rollNumber != null && student.rollNumber!.isNotEmpty)
-                  Text(
-                    'Roll No: ${student.rollNumber}',
-                    style: TextStyle(color: textTertiaryColor, fontSize: 11),
-                  ),
               ],
             ),
           ),
@@ -1522,13 +1642,21 @@ class _DefaulterTile extends StatelessWidget {
               CircleAvatar(
                 radius: 18,
                 backgroundColor: surfaceContainerLowColor,
-                child: Text(student.firstName[0], style: TextStyle(fontSize: 12, color: textTertiaryColor)),
+                backgroundImage: NetworkImage(student.gender == Gender.female
+                    ? 'https://avatar.iran.liara.run/public/girl?username=${student.id}'
+                    : 'https://avatar.iran.liara.run/public/boy?username=${student.id}'),
+                onBackgroundImageError: (e, s) {},
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(
-                  student.fullName,
-                  style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: textPrimaryColor),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      student.fullName + (student.rollNumber != null && student.rollNumber!.isNotEmpty ? ' • Roll: ${student.rollNumber}' : ''),
+                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: textPrimaryColor),
+                    ),
+                  ],
                 ),
               ),
               Text(

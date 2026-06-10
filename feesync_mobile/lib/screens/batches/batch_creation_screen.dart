@@ -64,18 +64,42 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
       _capacityController.text = batch.maxCapacity.toString();
       _feeController.text = batch.monthlyFee.toString();
       _selectedColor = batch.colorHex ?? '#2563EB';
+      _autoRollNumber = batch.autoRollNumber;
+      _collectParentDetails = batch.collectParentDetails;
       
       // Load Schedule
       _selectedDays.clear();
-      _selectedDays.addAll(batch.scheduleDays);
+      _daySchedules.clear();
       
-      if (batch.startTime.contains(':')) {
-        final parts = batch.startTime.split(':');
-        _startTime = TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
-      }
-      if (batch.endTime.contains(':')) {
-        final parts = batch.endTime.split(':');
-        _endTime = TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+      if (batch.schedules.isNotEmpty) {
+        for (var s in batch.schedules) {
+          _selectedDays.add(s.dayOfWeek);
+          final startParts = s.startTime.split(':');
+          final endParts = s.endTime.split(':');
+          _daySchedules[s.dayOfWeek] = {
+            'start': TimeOfDay(hour: int.parse(startParts[0]), minute: int.parse(startParts[1])),
+            'end': TimeOfDay(hour: int.parse(endParts[0]), minute: int.parse(endParts[1])),
+          };
+        }
+      } else {
+        // Fallback for legacy data
+        _selectedDays.addAll(batch.scheduleDays);
+        TimeOfDay defaultStart = const TimeOfDay(hour: 16, minute: 0);
+        TimeOfDay defaultEnd = const TimeOfDay(hour: 17, minute: 30);
+        if (batch.startTime.contains(':')) {
+          final parts = batch.startTime.split(':');
+          defaultStart = TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+        }
+        if (batch.endTime.contains(':')) {
+          final parts = batch.endTime.split(':');
+          defaultEnd = TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+        }
+        for (var day in _selectedDays) {
+          _daySchedules[day] = {
+            'start': defaultStart,
+            'end': defaultEnd,
+          };
+        }
       }
 
       setState(() {});
@@ -92,9 +116,10 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
   final _feeController = TextEditingController(text: '1000');
   String _selectedColor = '#2563EB';
   String _feeType = 'monthly';
+  bool _autoRollNumber = false;
+  bool _collectParentDetails = true;
   final List<int> _selectedDays = [];
-  TimeOfDay _startTime = const TimeOfDay(hour: 16, minute: 0);
-  TimeOfDay _endTime = const TimeOfDay(hour: 17, minute: 30);
+  final Map<int, Map<String, TimeOfDay>> _daySchedules = {};
 
   String _formatTime(TimeOfDay time) {
     final now = DateTime.now();
@@ -102,11 +127,12 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
     return DateFormat.jm().format(dt);
   }
 
-  Future<void> _selectTime(bool isStart) async {
+  Future<void> _selectTime(int day, bool isStart) async {
     final bool isDark = AppColors.isDarkMode;
+    final currentTime = _daySchedules[day]![isStart ? 'start' : 'end']!;
     final TimeOfDay? picked = await showTimePicker(
       context: context,
-      initialTime: isStart ? _startTime : _endTime,
+      initialTime: currentTime,
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -125,17 +151,13 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
     );
     if (picked != null) {
       setState(() {
-        if (isStart) {
-          _startTime = picked;
-        } else {
-          _endTime = picked;
-        }
+        _daySchedules[day]![isStart ? 'start' : 'end'] = picked;
       });
     }
   }
 
   void _nextStep() {
-    if (_currentStep < 4) {
+    if (_currentStep < 5) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -166,8 +188,16 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
     }
 
     try {
-      final String startTimeStr = '${_startTime.hour.toString().padLeft(2, '0')}:${_startTime.minute.toString().padLeft(2, '0')}';
-      final String endTimeStr = '${_endTime.hour.toString().padLeft(2, '0')}:${_endTime.minute.toString().padLeft(2, '0')}';
+      final schedulesJson = _selectedDays.map((day) {
+        final times = _daySchedules[day]!;
+        final startStr = '${times['start']!.hour.toString().padLeft(2, '0')}:${times['start']!.minute.toString().padLeft(2, '0')}';
+        final endStr = '${times['end']!.hour.toString().padLeft(2, '0')}:${times['end']!.minute.toString().padLeft(2, '0')}';
+        return {
+          'day_of_week': day,
+          'start_time': startStr,
+          'end_time': endStr,
+        };
+      }).toList();
 
       if (widget.batchId == null) {
         final newBatch = {
@@ -179,10 +209,13 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
           'monthly_fee': double.tryParse(_feeController.text) ?? 1000.0,
           'color_hex': _selectedColor,
           'status': 'active',
-          'schedule_days': _selectedDays.join(','),
-          'start_time': startTimeStr,
-          'end_time': endTimeStr,
+          'schedules': schedulesJson,
+          'schedule_days': _selectedDays.join(','), // Fallback
+          'start_time': schedulesJson.isNotEmpty ? schedulesJson.first['start_time'] : '16:00', // Fallback
+          'end_time': schedulesJson.isNotEmpty ? schedulesJson.first['end_time'] : '17:30', // Fallback
           'room': 'Room 101',
+          'auto_roll_number': _autoRollNumber,
+          'collect_parent_details': _collectParentDetails,
           'created_at': DateTime.now().toIso8601String(),
         };
         await ref.read(batchNotifierProvider.notifier).createBatch(newBatch);
@@ -194,9 +227,12 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
           'max_capacity': int.tryParse(_capacityController.text) ?? 20,
           'monthly_fee': double.tryParse(_feeController.text) ?? 1000.0,
           'color_hex': _selectedColor,
-          'schedule_days': _selectedDays.join(','),
-          'start_time': startTimeStr,
-          'end_time': endTimeStr,
+          'schedules': schedulesJson,
+          'schedule_days': _selectedDays.join(','), // Fallback
+          'start_time': schedulesJson.isNotEmpty ? schedulesJson.first['start_time'] : '16:00', // Fallback
+          'end_time': schedulesJson.isNotEmpty ? schedulesJson.first['end_time'] : '17:30', // Fallback
+          'auto_roll_number': _autoRollNumber,
+          'collect_parent_details': _collectParentDetails,
         };
         await ref.read(batchNotifierProvider.notifier).updateBatch(widget.batchId!, updatedData);
       }
@@ -248,6 +284,7 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
                 _buildBasicInfoStep(isDark, textPrimaryColor, primaryColor),
                 _buildScheduleStep(isDark, textPrimaryColor, primaryColor),
                 _buildCapacityFeeStep(isDark, textPrimaryColor, primaryColor),
+                _buildSettingsStep(isDark, textPrimaryColor, primaryColor),
                 _buildVisualsStep(isDark, textPrimaryColor),
                 _buildConfirmationStep(isDark, textPrimaryColor),
               ],
@@ -263,7 +300,7 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Row(
-        children: List.generate(5, (index) {
+        children: List.generate(6, (index) {
           final isActive = index <= _currentStep;
           return Expanded(
             child: Container(
@@ -352,8 +389,20 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
                         setState(() {
                           if (isSelected) {
                             _selectedDays.remove(index);
+                            _daySchedules.remove(index);
                           } else {
                             _selectedDays.add(index);
+                            // Set default times or reuse first available if any
+                            TimeOfDay defaultStart = const TimeOfDay(hour: 16, minute: 0);
+                            TimeOfDay defaultEnd = const TimeOfDay(hour: 17, minute: 30);
+                            if (_daySchedules.isNotEmpty) {
+                              defaultStart = _daySchedules.values.first['start']!;
+                              defaultEnd = _daySchedules.values.first['end']!;
+                            }
+                            _daySchedules[index] = {
+                              'start': defaultStart,
+                              'end': defaultEnd,
+                            };
                           }
                         });
                       },
@@ -393,15 +442,57 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          GestureDetector(
-            onTap: () => _selectTime(true),
-            child: _buildTimePicker('Start Time', _formatTime(_startTime), isDark, textPrimaryColor, surfaceColor),
-          ),
-          const SizedBox(height: 12),
-          GestureDetector(
-            onTap: () => _selectTime(false),
-            child: _buildTimePicker('End Time', _formatTime(_endTime), isDark, textPrimaryColor, surfaceColor),
-          ),
+          if (_selectedDays.isNotEmpty) ...[
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Set Timings',
+                style: GoogleFonts.inter(
+                  color: isDark ? const Color(0xFFC3C6D7) : const Color(0xFF475569),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            ..._selectedDays.map((day) {
+              final days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8, bottom: 4, left: 4),
+                    child: Text(
+                      days[day],
+                      style: GoogleFonts.inter(
+                        color: textPrimaryColor, 
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => _selectTime(day, true),
+                          child: _buildTimePicker('Start', _formatTime(_daySchedules[day]!['start']!), isDark, textPrimaryColor, surfaceColor),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => _selectTime(day, false),
+                          child: _buildTimePicker('End', _formatTime(_daySchedules[day]!['end']!), isDark, textPrimaryColor, surfaceColor),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              );
+            }).toList(),
+          ],
         ],
       ),
     );
@@ -560,6 +651,91 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
     );
   }
 
+  Widget _buildSettingsStep(bool isDark, Color textPrimaryColor, Color primaryColor) {
+    final textSecondaryColor = isDark ? const Color(0xFFC3C6D7) : const Color(0xFF475569);
+    final surfaceColor = isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF);
+
+    return _StepWrapper(
+      title: 'Batch Settings',
+      subtitle: 'Configure roll number generation and parent contact requirements.',
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: surfaceColor.withValues(alpha: isDark ? 0.75 : 0.9),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Auto Generate Roll Numbers',
+                        style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: textPrimaryColor, fontSize: 15),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Automatically assign roll numbers when adding students.',
+                        style: GoogleFonts.inter(color: textSecondaryColor, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch(
+                  value: _autoRollNumber,
+                  activeColor: primaryColor,
+                  onChanged: (val) => setState(() => _autoRollNumber = val),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: surfaceColor.withValues(alpha: isDark ? 0.75 : 0.9),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Collect Parent Details',
+                        style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: textPrimaryColor, fontSize: 15),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Turn this OFF for adult students (e.g., Yoga class) to use the student\'s own phone number for due alerts and communication.',
+                        style: GoogleFonts.inter(color: textSecondaryColor, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch(
+                  value: _collectParentDetails,
+                  activeColor: primaryColor,
+                  onChanged: (val) => setState(() => _collectParentDetails = val),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildConfirmationStep(bool isDark, Color textPrimaryColor) {
     final surfaceColor = isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF);
 
@@ -590,7 +766,7 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
             _buildReviewRow('Teacher', _teacherController.text, isDark, textPrimaryColor),
             _buildReviewRow('Schedule', _selectedDays.isEmpty 
               ? 'Not set' 
-              : '${_selectedDays.length} days (${_formatTime(_startTime)} - ${_formatTime(_endTime)})', isDark, textPrimaryColor),
+              : '${_selectedDays.length} days selected (Various timings)', isDark, textPrimaryColor),
             _buildReviewRow('Capacity', '${_capacityController.text} Students', isDark, textPrimaryColor),
             _buildReviewRow('Fee', '₹${_feeController.text} (${_feeType == 'monthly' ? 'Monthly' : 'Course-wise'})', isDark, textPrimaryColor),
             const SizedBox(height: 20),
@@ -654,7 +830,7 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
                 minimumSize: const Size.fromHeight(50),
               ),
               child: Text(
-                _currentStep == 4 ? (widget.batchId == null ? 'Create Batch' : 'Save Changes') : 'Next Step',
+                _currentStep == 5 ? (widget.batchId == null ? 'Create Batch' : 'Save Changes') : 'Next Step',
                 style: GoogleFonts.inter(fontWeight: FontWeight.w700),
               ),
             ),

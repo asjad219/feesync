@@ -36,6 +36,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
       await Supabase.instance.client.auth.updateUser(
         UserAttributes(
           password: _passwordController.text,
+          data: {'needs_password_set': false},
         ),
       );
 
