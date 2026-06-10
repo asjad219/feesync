@@ -137,11 +137,16 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
         }
       }
 
+      String dbPaymentMethod = 'other';
+      if (_paymentMode == 'online') dbPaymentMethod = 'mobile_money';
+      else if (_paymentMode == 'cash') dbPaymentMethod = 'cash';
+      else if (_paymentMode == 'bank') dbPaymentMethod = 'bank_transfer';
+
       final paymentData = {
         'account_id': accountId,
         'student_id': _selectedStudent!.id,
         'amount': amount,
-        'payment_method': _paymentMode.toUpperCase(),
+        'payment_method': dbPaymentMethod,
         'payment_date': _paymentDate.toIso8601String(),
         'notes': _notesController.text.trim().isEmpty 
             ? (_selectedDueIds.isEmpty ? 'Advance Payment' : null) 
