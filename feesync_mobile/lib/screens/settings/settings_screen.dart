@@ -30,9 +30,115 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       }
     }
   }
+  void _showThemeSelector(BuildContext context, String currentTheme) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: AppColors.darkBg,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'App Theme',
+                style: GoogleFonts.manrope(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildThemeOption(
+                context, 
+                title: 'Light', 
+                icon: Icons.light_mode_rounded, 
+                iconColor: const Color(0xFFFBBF24),
+                isSelected: currentTheme == 'light',
+                onTap: () {
+                  _updateThemeMode('light');
+                  Navigator.pop(context);
+                },
+              ),
+              const SizedBox(height: 12),
+              _buildThemeOption(
+                context, 
+                title: 'Dark', 
+                icon: Icons.dark_mode_rounded, 
+                iconColor: const Color(0xFF8B5CF6),
+                isSelected: currentTheme == 'dark_luxury',
+                onTap: () {
+                  _updateThemeMode('dark_luxury');
+                  Navigator.pop(context);
+                },
+              ),
+              const SizedBox(height: 12),
+              _buildThemeOption(
+                context, 
+                title: 'System Default', 
+                icon: Icons.brightness_auto_rounded, 
+                iconColor: const Color(0xFF06B6D4),
+                isSelected: currentTheme == 'system',
+                onTap: () {
+                  _updateThemeMode('system');
+                  Navigator.pop(context);
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
-
-
+  Widget _buildThemeOption(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required Color iconColor,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: isSelected ? iconColor.withValues(alpha: 0.1) : AppColors.surfaceContainer,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? iconColor : AppColors.outline.withValues(alpha: 0.1),
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: iconColor),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                title,
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? iconColor : AppColors.textPrimary,
+                ),
+              ),
+            ),
+            if (isSelected)
+              Icon(Icons.check_circle_rounded, color: iconColor),
+          ],
+        ),
+      ),
+    );
+  }
   @override
   Widget build(BuildContext context) {
     final userProfile = ref.watch(currentUserProfileProvider);
@@ -142,11 +248,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 data: (settings) {
                   final isLight = settings.themeMode.toLowerCase() == 'light';
                   return _SettingsItem(
-                    icon: isLight ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-                    iconColor: isLight ? const Color(0xFF1E293B) : const Color(0xFFFBBF24),
+                    icon: Icons.palette_rounded,
+                    iconColor: const Color(0xFFF59E0B),
                     title: 'App Theme',
-                    subtitle: isLight ? 'Switch to Dark Mode' : 'Switch to Light Mode',
-                    onTap: () => _updateThemeMode(isLight ? 'dark_luxury' : 'light'),
+                    subtitle: settings.themeMode == 'light' ? 'Light Mode' : settings.themeMode == 'system' ? 'System Default' : 'Dark Mode',
+                    onTap: () => _showThemeSelector(context, settings.themeMode),
                   );
                 },
                 loading: () => const SizedBox.shrink(),

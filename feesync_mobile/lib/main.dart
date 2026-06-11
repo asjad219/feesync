@@ -62,9 +62,23 @@ class FeeSyncApp extends ConsumerWidget {
 
     final router = ref.watch(routerProvider);
     final settingsAsync = ref.watch(settingsProvider);
-    final themeMode = settingsAsync.value?.themeMode.toLowerCase() ?? 'dark_luxury';
-    final isLight = themeMode.contains('light');
-    AppColors.isDarkMode = !isLight;
+    final themeModeStr = settingsAsync.value?.themeMode.toLowerCase() ?? 'light';
+    
+    ThemeMode appThemeMode;
+    if (themeModeStr == 'system') {
+      appThemeMode = ThemeMode.system;
+      // We can't know the exact brightness here perfectly without context, but 
+      // AppColors.isDarkMode is mainly used inside widgets that rebuild. 
+      // However, we should try to guess based on PlatformDispatcher.
+      AppColors.isDarkMode = PlatformDispatcher.instance.platformBrightness == Brightness.dark;
+    } else if (themeModeStr.contains('light')) {
+      appThemeMode = ThemeMode.light;
+      AppColors.isDarkMode = false;
+    } else {
+      appThemeMode = ThemeMode.dark;
+      AppColors.isDarkMode = true;
+    }
+
     final appTitle = settingsAsync.value?.centerName.isNotEmpty == true
         ? settingsAsync.value!.centerName
         : 'FeeSync';
@@ -72,7 +86,9 @@ class FeeSyncApp extends ConsumerWidget {
     return MaterialApp.router(
       title: appTitle,
       debugShowCheckedModeBanner: false,
-      theme: isLight ? AppTheme.lightTheme : AppTheme.darkTheme,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: appThemeMode,
       routerConfig: router,
       builder: (context, child) {
         return AppLockGuard(child: child!);

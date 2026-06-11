@@ -378,6 +378,22 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
               const SizedBox(height: 16),
 
               _buildUsageRow(
+                icon: Icons.class_rounded,
+                iconColor: const Color(0xFF8B5CF6),
+                label: 'Active Batches',
+                used: data.activeBatchCount,
+                max: sub.currentMaxBatches,
+                ratio: data.batchUsageRatio,
+                isNearLimit: data.batchUsageRatio >= 0.8,
+                isAtLimit: data.isAtBatchLimit,
+                limitName: 'batch',
+              ),
+              const SizedBox(height: 16),
+
+              Divider(color: AppColors.outline.withValues(alpha: 0.1), height: 1),
+              const SizedBox(height: 16),
+
+              _buildUsageRow(
                 icon: Icons.admin_panel_settings_rounded,
                 iconColor: const Color(0xFFF59E0B),
                 label: 'Active Staff',
@@ -679,7 +695,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
       default:
         highlights = [
           'Up to 20 active students',
-          '1 Batch / class limit',
+          '1 Batch limit',
           '200 WhatsApp Receipts per month',
           '50 WhatsApp Reminders per month',
           'Basic Reports access (5 types)',

@@ -91,8 +91,7 @@ class SubscriptionRepository {
       final response = await _client
           .from('students')
           .select('id')
-          .eq('account_id', uid)
-          .eq('status', 'active');
+          .eq('account_id', uid);
       return (response as List).length;
     } catch (_) {
       try {
@@ -100,8 +99,7 @@ class SubscriptionRepository {
         final response = await _client
             .from('students')
             .select('id')
-            .eq('owner_id', uid)
-            .eq('status', 'active');
+            .eq('owner_id', uid);
         return (response as List).length;
       } catch (e) {
         debugPrint('[SubscriptionRepo] getActiveStudentCount error: $e');
@@ -127,7 +125,7 @@ class SubscriptionRepository {
         final response = await _client
             .from('batches')
             .select('id')
-            .eq('owner_id', uid);
+            .eq('account_id', uid);
         return (response as List).length;
       } catch (e) {
         debugPrint('[SubscriptionRepo] getActiveBatchCount error: $e');
