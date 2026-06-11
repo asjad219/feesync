@@ -137,10 +137,10 @@ class _ProfileHeader extends StatelessWidget {
     final bool isBoy = student.gender == Gender.male;
     final bool isGirl = student.gender == Gender.female;
     final String avatarUrl = isBoy 
-        ? 'https://avatar.iran.liara.run/public/boy?username=${student.id}'
+        ? 'https://api.dicebear.com/9.x/adventurer/png?seed=${student.id}m'
         : isGirl 
-            ? 'https://avatar.iran.liara.run/public/girl?username=${student.id}'
-            : 'https://avatar.iran.liara.run/public?username=${student.id}';
+            ? 'https://api.dicebear.com/9.x/adventurer/png?seed=${student.id}f'
+            : 'https://api.dicebear.com/9.x/bottts/png?seed=${student.id}';
 
     return GlassCard(
       padding: const EdgeInsets.all(24),
@@ -263,8 +263,8 @@ class _MetricsSection extends StatelessWidget {
             ),
             const SizedBox(width: 16),
             _MetricCard(
-              label: 'OUTSTANDING',
-              value: currencyFormatter.format(balance!.balance),
+              label: balance!.balance < 0 ? 'ADVANCE' : 'OUTSTANDING',
+              value: currencyFormatter.format(balance!.balance.abs()),
               color: balance!.balance > 0 ? AppColors.error : AppColors.success,
               icon: balance!.balance > 0 ? Icons.warning_amber_rounded : Icons.verified_rounded,
               iconBgColor: balance!.balance > 0 ? AppColors.error : AppColors.success,
@@ -611,7 +611,7 @@ class _PaymentTile extends ConsumerWidget {
           ),
           if (payment.status == PaymentStatus.completed)
             IconButton(
-              onPressed: () => _sharePastReceipt(context),
+              onPressed: () => _sharePastReceipt(context, ref),
               icon: Icon(Icons.share_rounded, size: 20, color: AppColors.primary),
               tooltip: 'Share Receipt',
             ),
@@ -684,15 +684,19 @@ class _PaymentTile extends ConsumerWidget {
     );
   }
 
-  void _sharePastReceipt(BuildContext context) async {
+  void _sharePastReceipt(BuildContext context, WidgetRef ref) async {
     final invoiceNo = payment.receiptNumber ?? 'INV-${payment.id.substring(0, 8)}';
     
+    final accountProfile = ref.read(accountProfileProvider).value;
+    final institutionName = accountProfile?.schoolName ?? accountProfile?.name ?? 'Institution';
+
     final textReceipt = ReceiptService.generateTextReceipt(
       student: student,
       amount: payment.amount,
       paymentMode: payment.paymentMethod.name,
       date: payment.paymentDate,
       invoiceNo: invoiceNo,
+      institutionName: institutionName,
     );
 
     final pdfFile = await ReceiptService.generatePdfReceipt(
@@ -701,6 +705,7 @@ class _PaymentTile extends ConsumerWidget {
       paymentMode: payment.paymentMethod.name,
       date: payment.paymentDate,
       invoiceNo: invoiceNo,
+      institutionName: institutionName,
     );
 
     String phone = student.parentPhone ?? '';

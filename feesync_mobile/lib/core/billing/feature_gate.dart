@@ -11,6 +11,7 @@ class FeatureGate {
   final Subscription subscription;
   final int activeStudentCount;
   final int activeBatchCount;
+  final int activeStaffCount;
   final int waReceiptsUsedThisMonth;
   final int waRemindersUsedThisMonth;
 
@@ -18,6 +19,7 @@ class FeatureGate {
     required this.subscription,
     required this.activeStudentCount,
     required this.activeBatchCount,
+    this.activeStaffCount = 0,
     this.waReceiptsUsedThisMonth = 0,
     this.waRemindersUsedThisMonth = 0,
   });
@@ -59,6 +61,28 @@ class FeatureGate {
     return remaining < 0 ? 0 : remaining;
   }
 
+  // ── Staff limits ───────────────────────────────────────────────────────────
+
+  /// True if the user can add more staff.
+  bool get canAddStaff {
+    if (subscription.hasUnlimitedStaff) return true;
+    return activeStaffCount < subscription.maxStaff;
+  }
+
+  /// How many more staff the user can add (-1 = unlimited).
+  int get remainingStaffSlots {
+    if (subscription.hasUnlimitedStaff) return -1;
+    final remaining = subscription.maxStaff - activeStaffCount;
+    return remaining < 0 ? 0 : remaining;
+  }
+
+  /// Staff usage as a fraction (0.0–1.0). Returns 0.0 for unlimited.
+  double get staffUsageFraction {
+    if (subscription.hasUnlimitedStaff) return 0.0;
+    if (subscription.maxStaff == 0) return 1.0;
+    return (activeStaffCount / subscription.maxStaff).clamp(0.0, 1.0);
+  }
+
   // ── WhatsApp limits ────────────────────────────────────────────────────────
 
   /// True if the user can send another WhatsApp receipt.
@@ -87,16 +111,8 @@ class FeatureGate {
 
   // ── Feature flags ──────────────────────────────────────────────────────────
 
-  bool get canUseAiFeatures       => subscription.canUseAiFeatures;
-  bool get canUseAllAiFeatures    => subscription.canUseAllAiFeatures;
-  bool get canUseRazorpay         => subscription.canUseRazorpay;
-  bool get canUseRazorpayAutoDebit => subscription.canUseRazorpayAutoDebit;
-  bool get canExportCsv           => subscription.canExportCsv;
-  bool get canScheduleEmailReports => subscription.canScheduleEmailReports;
-  bool get hasPrioritySupport     => subscription.hasPrioritySupport;
 
-  /// Number of report types the user can access.
-  int get reportAccessCount       => subscription.reportAccessCount;
+  bool get canExportCsv           => subscription.canExportCsv;
 
   /// True if the user is on any paid plan.
   bool get hasPaidAccess          => subscription.hasPaidAccess;
@@ -117,6 +133,15 @@ class FeatureGate {
 
   /// True if the batch limit is exactly reached.
   bool get isAtBatchLimit => !canAddBatch;
+
+  /// True if the staff count is at or near the limit (>= 80% usage).
+  bool get isNearStaffLimit {
+    if (subscription.hasUnlimitedStaff) return false;
+    return staffUsageFraction >= 0.8;
+  }
+
+  /// True if the staff limit is exactly reached.
+  bool get isAtStaffLimit => !canAddStaff;
 
   /// Returns the recommended upgrade plan tier for the current user.
   /// Returns null if user is already on the highest plan.
@@ -145,5 +170,11 @@ class FeatureGate {
   String get batchLimitStatus {
     if (subscription.hasUnlimitedBatches) return 'Unlimited batches';
     return '$activeBatchCount / ${subscription.currentMaxBatches} batches used';
+  }
+
+  /// Human-readable limit status for staff usage.
+  String get staffLimitStatus {
+    if (subscription.hasUnlimitedStaff) return 'Unlimited staff';
+    return '$activeStaffCount / ${subscription.maxStaff} staff used';
   }
 }

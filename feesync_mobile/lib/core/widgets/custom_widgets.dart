@@ -15,8 +15,8 @@ class StatusBadge extends StatelessWidget {
 
   Color _getStatusColor() {
     if (color != null) return color!;
-    if (status == 'OVERDUE') return AppColors.error;
-    if (status == 'PENDING') return AppColors.tertiary;
+    if (status == 'OVERDUE' || status == 'HIGH RISK') return AppColors.error;
+    if (status == 'PENDING' || status == 'AT RISK') return const Color(0xFFF59E0B); // Amber/Warning color
     return AppColors.primary;
   }
 

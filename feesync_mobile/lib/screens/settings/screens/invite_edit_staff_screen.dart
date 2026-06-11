@@ -5,8 +5,10 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glass/glass_card.dart';
 import '../../../../core/widgets/error_dialog.dart';
+import '../../../../core/widgets/paywall_dialog.dart';
 import '../../../../models/user_profile.dart';
 import '../../../../providers/staff_provider.dart';
+import '../../../../providers/subscription_provider.dart';
 
 class InviteEditStaffScreen extends ConsumerStatefulWidget {
   final UserProfile? existingStaff;
@@ -48,6 +50,21 @@ class _InviteEditStaffScreenState extends ConsumerState<InviteEditStaffScreen> {
         }
       });
     }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // ── Paywall check (add-new mode only) ──────────────────────────────────
+      if (widget.existingStaff == null) {
+        final data = await ref.read(subscriptionScreenDataProvider.future);
+        if (!data.canAddStaff && mounted) {
+          await showPaywallDialog(
+            context,
+            ref,
+            trigger: PaywallTrigger.staffLimit,
+          );
+          if (mounted) context.pop();
+        }
+      }
+    });
   }
 
   @override

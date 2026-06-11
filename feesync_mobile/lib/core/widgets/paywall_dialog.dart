@@ -7,7 +7,7 @@ import '../../models/subscription.dart';
 import '../../providers/subscription_provider.dart';
 
 /// Describes which limit was hit — controls copy & icon in the dialog.
-enum PaywallTrigger { studentLimit, batchLimit }
+enum PaywallTrigger { studentLimit, batchLimit, staffLimit }
 
 /// Shows a premium paywall bottom sheet when a free-plan limit is hit.
 /// Returns `true` if the user upgrades (navigate to subscription screen),
@@ -36,15 +36,32 @@ class _PaywallSheet extends StatelessWidget {
     final dataAsync = ref.watch(subscriptionScreenDataProvider);
     final plan = SubscriptionPlan.free;
     final isStudent = trigger == PaywallTrigger.studentLimit;
+    final isStaff = trigger == PaywallTrigger.staffLimit;
 
-    final int limit = isStudent ? plan.maxStudents : plan.maxBatches;
-    final String itemName = isStudent ? 'students' : 'batches';
-    final IconData icon =
-        isStudent ? Icons.people_alt_rounded : Icons.layers_rounded;
+    final int limit = isStudent
+        ? plan.maxStudents
+        : isStaff
+            ? plan.maxStaff
+            : plan.maxBatches;
+            
+    final String itemName = isStudent
+        ? 'students'
+        : isStaff
+            ? 'staff members'
+            : 'batches';
+            
+    final IconData icon = isStudent
+        ? Icons.people_alt_rounded
+        : isStaff
+            ? Icons.admin_panel_settings_rounded
+            : Icons.layers_rounded;
 
     final int currentCount = dataAsync.whenOrNull(
-          data: (d) =>
-              isStudent ? d.activeStudentCount : d.activeBatchCount,
+          data: (d) => isStudent
+              ? d.activeStudentCount
+              : isStaff
+                  ? d.activeStaffCount
+                  : d.activeBatchCount,
         ) ??
         limit;
 
@@ -101,7 +118,11 @@ class _PaywallSheet extends StatelessWidget {
 
           // ─── Headline ─────────────────────────────────────────────────────
           Text(
-            isStudent ? 'Student Limit Reached!' : 'Batch Limit Reached!',
+            isStudent
+                ? 'Student Limit Reached!'
+                : isStaff
+                    ? 'Staff Limit Reached!'
+                    : 'Batch Limit Reached!',
             style: GoogleFonts.manrope(
               fontSize: 22,
               fontWeight: FontWeight.w800,
@@ -130,7 +151,9 @@ class _PaywallSheet extends StatelessWidget {
                 TextSpan(
                   text: isStudent
                       ? '. You currently have $currentCount active student${currentCount == 1 ? '' : 's'}.'
-                      : '. You currently have $currentCount batch${currentCount == 1 ? '' : 'es'}.',
+                      : isStaff
+                          ? '. You currently have $currentCount active staff member${currentCount == 1 ? '' : 's'}.'
+                          : '. You currently have $currentCount batch${currentCount == 1 ? '' : 'es'}.',
                 ),
               ],
             ),
@@ -143,8 +166,10 @@ class _PaywallSheet extends StatelessWidget {
             color: const Color(0xFF2563EB),
             text: isStudent
                 ? 'Starter: up to 200 students'
-                : 'Starter: up to 15 batches',
-            highlight: 'Starter',
+                : isStaff
+                    ? 'Growth: up to 5 staff members'
+                    : 'Starter: up to 15 batches',
+            highlight: isStaff ? 'Growth' : 'Starter',
           ),
           const SizedBox(height: 10),
           _buildBenefitRow(
@@ -152,8 +177,10 @@ class _PaywallSheet extends StatelessWidget {
             color: const Color(0xFF8B5CF6),
             text: isStudent
                 ? 'Growth: unlimited students'
-                : 'Growth: unlimited batches',
-            highlight: 'Growth',
+                : isStaff
+                    ? 'Institute: unlimited staff members'
+                    : 'Growth: unlimited batches',
+            highlight: isStaff ? 'Institute' : 'Growth',
           ),
           const SizedBox(height: 10),
           _buildBenefitRow(

@@ -141,8 +141,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               _SettingsItem(
                 icon: Icons.auto_awesome_rounded,
                 iconColor: const Color(0xFF8B5CF6),
-                title: 'AI Intelligence',
-                subtitle: 'Smart due patterns, OCR bills camera tools',
+                title: 'Smart Features',
+                subtitle: 'Defaulter risk profiling, smart auto-formatting',
                 onTap: () => context.push('/settings/ai'),
               ),
               _SettingsItem(

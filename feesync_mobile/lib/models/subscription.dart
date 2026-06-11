@@ -69,7 +69,7 @@ class Subscription {
       validUntil: json['valid_until'] != null
           ? DateTime.tryParse(json['valid_until'] as String)
           : null,
-      maxStudents: (json['max_students'] as int?) ?? 30,
+      maxStudents: (json['max_students'] as int?) ?? 20,
       maxBatches: (json['max_batches'] as int?) ?? 2,
       whatsappReceiptsLimit:
           (json['whatsapp_receipts_limit'] as int?) ?? 100,
@@ -141,6 +141,9 @@ class Subscription {
     if (isTrialActive) return planTier;
     return 'free';
   }
+
+  /// True if the subscription allows unlimited staff.
+  bool get hasUnlimitedStaff => maxStaff < 0;
 
   /// Human-readable plan label.
   String get planLabel {
@@ -239,34 +242,8 @@ class Subscription {
 
   // ── Feature gates by effective plan ───────────────────────────────────────
 
-  bool get canUseAiFeatures =>
-      effectivePlan == 'starter' ||
-      effectivePlan == 'growth' ||
-      effectivePlan == 'institute';
-
-  bool get canUseAllAiFeatures =>
-      effectivePlan == 'growth' || effectivePlan == 'institute';
-
-  bool get canUseRazorpay =>
-      effectivePlan != 'free';
-
-  bool get canUseRazorpayAutoDebit =>
-      effectivePlan == 'growth' || effectivePlan == 'institute';
-
   bool get canExportCsv =>
       effectivePlan != 'free';
-
-  bool get canScheduleEmailReports =>
-      effectivePlan == 'growth' || effectivePlan == 'institute';
-
-  bool get hasPrioritySupport =>
-      effectivePlan == 'growth' || effectivePlan == 'institute';
-
-  bool get hasWhatsappSupport =>
-      effectivePlan == 'growth' || effectivePlan == 'institute';
-
-  int get reportAccessCount =>
-      effectivePlan == 'free' ? 3 : 14;
 
   // ── Defaults ───────────────────────────────────────────────────────────────
 
@@ -275,7 +252,7 @@ class Subscription {
         id: '',
         ownerId: ownerId,
         planTier: 'free',
-        maxStudents: 30,
+        maxStudents: 20,
         maxBatches: 2,
         whatsappReceiptsLimit: 100,
         whatsappRemindersLimit: 30,
@@ -357,18 +334,13 @@ class SubscriptionPlan {
   final int maxBatches;             // -1 = unlimited
   final int whatsappReceiptsPerMonth;  // -1 = unlimited
   final int whatsappRemindersPerMonth; // -1 = unlimited
-  final int smsPerMonth;
   final int maxStaff;
-  final int aiFeatures;             // 0, 3, or 9
-  final int reportCount;
   final bool csvExport;
-  final bool razorpayPaymentLinks;
-  final bool razorpayAutoDebit;
-  final bool scheduledEmailReports;
-  final bool prioritySupport;
-  final bool whatsappSupport;
-  final bool parentApp;
-  final bool staffAccounts;
+  final bool biometricAuth;
+  final bool supportSystem;
+  final bool cloudBackup;
+  final bool dueReminders;
+  final bool invoiceSend;
 
   const SubscriptionPlan({
     required this.tier,
@@ -381,18 +353,13 @@ class SubscriptionPlan {
     required this.maxBatches,
     required this.whatsappReceiptsPerMonth,
     required this.whatsappRemindersPerMonth,
-    required this.smsPerMonth,
     required this.maxStaff,
-    required this.aiFeatures,
-    required this.reportCount,
     required this.csvExport,
-    required this.razorpayPaymentLinks,
-    required this.razorpayAutoDebit,
-    required this.scheduledEmailReports,
-    required this.prioritySupport,
-    required this.whatsappSupport,
-    required this.parentApp,
-    required this.staffAccounts,
+    required this.biometricAuth,
+    required this.supportSystem,
+    required this.cloudBackup,
+    required this.dueReminders,
+    required this.invoiceSend,
   });
 
   // ── Google Play product IDs ──────────────────────────────────────────────
@@ -412,72 +379,57 @@ class SubscriptionPlan {
     monthlyPrice: 0,
     annualPrice: 0,
     annualMonthlyEquivalent: 0,
-    maxStudents: 30,
+    maxStudents: 20,
     maxBatches: 2,
     whatsappReceiptsPerMonth: 100,
     whatsappRemindersPerMonth: 30,
-    smsPerMonth: 0,
     maxStaff: 1,
-    aiFeatures: 0,
-    reportCount: 3,
     csvExport: false,
-    razorpayPaymentLinks: false,
-    razorpayAutoDebit: false,
-    scheduledEmailReports: false,
-    prioritySupport: false,
-    whatsappSupport: false,
-    parentApp: false,
-    staffAccounts: false,
+    biometricAuth: true,
+    supportSystem: false,
+    cloudBackup: false,
+    dueReminders: true,
+    invoiceSend: true,
   );
 
   static const SubscriptionPlan starter = SubscriptionPlan(
     tier: 'starter',
     name: 'Starter',
     tagline: 'Professional Solo Operator',
-    monthlyPrice: 199,
-    annualPrice: 1790,       // 2 months free vs 199×12=2388
-    annualMonthlyEquivalent: 149,
-    maxStudents: 200,
-    maxBatches: 15,
+    monthlyPrice: 299,
+    annualPrice: 2990,       // 2 months free vs 299×12=3588
+    annualMonthlyEquivalent: 249,
+    maxStudents: 150,
+    maxBatches: 10,
     whatsappReceiptsPerMonth: -1,
     whatsappRemindersPerMonth: -1,
-    smsPerMonth: 100,
     maxStaff: 3,
-    aiFeatures: 3,
-    reportCount: 14,
     csvExport: true,
-    razorpayPaymentLinks: true,
-    razorpayAutoDebit: false,
-    scheduledEmailReports: false,
-    prioritySupport: false,
-    whatsappSupport: false,
-    parentApp: false,
-    staffAccounts: false,
+    biometricAuth: true,
+    supportSystem: true,
+    cloudBackup: true,
+    dueReminders: true,
+    invoiceSend: true,
   );
 
   static const SubscriptionPlan growth = SubscriptionPlan(
     tier: 'growth',
     name: 'Growth',
-    tagline: 'Scale with AI',
-    monthlyPrice: 499,
-    annualPrice: 3990,       // saves ₹2,000 vs 499×12=5988
-    annualMonthlyEquivalent: 332,
+    tagline: 'Scale with Pro',
+    monthlyPrice: 999,
+    annualPrice: 9990,       // saves vs 999×12=11988
+    annualMonthlyEquivalent: 832,
     maxStudents: -1,
     maxBatches: -1,
     whatsappReceiptsPerMonth: -1,
     whatsappRemindersPerMonth: -1,
-    smsPerMonth: 500,
     maxStaff: -1,
-    aiFeatures: 9,
-    reportCount: 14,
     csvExport: true,
-    razorpayPaymentLinks: true,
-    razorpayAutoDebit: true,
-    scheduledEmailReports: true,
-    prioritySupport: true,
-    whatsappSupport: true,
-    parentApp: true,
-    staffAccounts: false,
+    biometricAuth: true,
+    supportSystem: true,
+    cloudBackup: true,
+    dueReminders: true,
+    invoiceSend: true,
   );
 
   static const SubscriptionPlan institute = SubscriptionPlan(
@@ -491,18 +443,13 @@ class SubscriptionPlan {
     maxBatches: -1,
     whatsappReceiptsPerMonth: -1,
     whatsappRemindersPerMonth: -1,
-    smsPerMonth: 1000,
     maxStaff: -1,
-    aiFeatures: 9,
-    reportCount: 14,
     csvExport: true,
-    razorpayPaymentLinks: true,
-    razorpayAutoDebit: true,
-    scheduledEmailReports: true,
-    prioritySupport: true,
-    whatsappSupport: true,
-    parentApp: true,
-    staffAccounts: true,
+    biometricAuth: true,
+    supportSystem: true,
+    cloudBackup: true,
+    dueReminders: true,
+    invoiceSend: true,
   );
 
   static const List<SubscriptionPlan> all = [
@@ -533,12 +480,6 @@ class SubscriptionPlan {
 
   String get waRemindersLabel =>
       whatsappRemindersPerMonth < 0 ? 'Unlimited' : '$whatsappRemindersPerMonth/mo';
-
-  String get aiLabel => aiFeatures == 0
-      ? 'None'
-      : aiFeatures == 9
-          ? 'All 9 features'
-          : '$aiFeatures features';
 
   String get annualSavingLabel {
     if (monthlyPrice == 0) return '';

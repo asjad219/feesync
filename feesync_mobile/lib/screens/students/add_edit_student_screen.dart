@@ -308,18 +308,33 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
         finalRollNumber = '$prefix-${selectedBatch.studentCount + 1}';
       }
 
+      String capitalize(String s) => s.isEmpty ? '' : s.split(' ').map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}').join(' ');
+      
+      final settings = ref.read(settingsProvider).value;
+      final smartFormatting = settings?.ocrEnabled ?? false;
+
+      var fName = _firstNameController.text.trim();
+      var lName = _lastNameController.text.trim();
+      var pName = _parentNameController.text.trim();
+      
+      if (smartFormatting) {
+        fName = capitalize(fName);
+        lName = capitalize(lName);
+        pName = capitalize(pName);
+      }
+
       final data = {
         'account_id': accountId,
-        'first_name': _firstNameController.text.trim(),
-        'last_name': _lastNameController.text.trim(),
+        'first_name': fName,
+        'last_name': lName,
         'admission_number': DateTime.now().millisecondsSinceEpoch.toString(), // Internal ID
         'class': selectedBatch.name,
         'batch_id': _selectedBatchId,
-        'parent_name': _parentNameController.text.trim().isEmpty ? null : _parentNameController.text.trim(),
+        'parent_name': pName.isEmpty ? null : pName,
         'parent_phone': formattedPhone,
         'parent_email': _parentEmailController.text.trim().isEmpty ? null : _parentEmailController.text.trim(),
         'address': _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
-        'roll_number': finalRollNumber?.isEmpty == true ? null : finalRollNumber,
+        'roll_number': finalRollNumber.isEmpty ? null : finalRollNumber,
         'joining_date': _joiningDate.toIso8601String().split('T')[0],
         'discount_amount': double.tryParse(_discountController.text) ?? 0,
         'gender': _gender.name,

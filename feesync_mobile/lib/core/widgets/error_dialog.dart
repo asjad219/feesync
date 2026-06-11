@@ -86,8 +86,19 @@ ParsedError parseError(BuildContext context, dynamic error) {
     );
   }
 
-  // 5. Auth / RLS / Permission
-  if (contains(['invalid_credentials', 'invalid login credentials', 'unauthorized', 'permission denied', 'row-level security'])) {
+  // 5. Invalid Credentials
+  if (contains(['invalid_credentials', 'invalid login credentials'])) {
+    return ParsedError(
+      title: 'Invalid Credentials',
+      message: 'The email or password you entered is incorrect.',
+      hotfix: 'Please check your email and password and try again. If you forgot your password, use the "Forgot Password" option.',
+      icon: Icons.no_accounts_rounded,
+      color: const Color(0xFFEF4444),
+    );
+  }
+
+  // 6. RLS / Permission
+  if (contains(['unauthorized', 'permission denied', 'row-level security'])) {
     return ParsedError(
       title: 'Permission Denied',
       message: 'You do not have the required permissions to perform this action.',

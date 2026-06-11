@@ -42,7 +42,7 @@ class PaymentRepository {
   Future<List<Payment>> getRecentPayments({int limit = 10}) async {
     final response = await _client
         .from('payments')
-        .select('*, students(first_name, last_name, class)')
+        .select('*, students(first_name, last_name, class, admission_number)')
         .eq('status', 'completed')
         .order('created_at', ascending: false)
         .limit(limit);

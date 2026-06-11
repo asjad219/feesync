@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../providers/settings_provider.dart';
-import '../../../providers/local_settings_provider.dart';
 import '../../../core/widgets/glass/glass_card.dart';
 import '../../../models/app_settings.dart';
 
@@ -16,22 +15,16 @@ class AiSettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
-  bool _aiReminders = true;
   bool _aiPredictions = true;
-  bool _ocrEnabled = true;
+  bool _smartFormatting = true;
   
-  double _confidenceThreshold = 0.8;
   bool _isInitialized = false;
   bool _isSaving = false;
 
   void _initFields(AppSettings settings) {
     if (_isInitialized) return;
-    _aiReminders = settings.aiRemindersEnabled;
     _aiPredictions = settings.aiPredictionsEnabled;
-    _ocrEnabled = settings.ocrEnabled;
-    
-    final localSettings = ref.read(localSettingsProvider);
-    _confidenceThreshold = localSettings.aiConfidenceThreshold;
+    _smartFormatting = settings.ocrEnabled; // Repurposed unused OCR boolean for smart formatting
     
     _isInitialized = true;
   }
@@ -40,19 +33,17 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
     setState(() => _isSaving = true);
     try {
       final updatedData = {
-        'ai_reminders_enabled': _aiReminders,
         'ai_predictions_enabled': _aiPredictions,
-        'ocr_enabled': _ocrEnabled,
+        'ocr_enabled': _smartFormatting,
       };
 
       await ref.read(settingsProvider.notifier).updateMultipleSettings(updatedData);
-      await ref.read(localSettingsProvider.notifier).updateAiConfidenceThreshold(_confidenceThreshold);
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'AI Engine parameters updated!',
+              'Smart features updated!',
               style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppColors.onSuccess),
             ),
             backgroundColor: AppColors.success,
@@ -65,7 +56,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to update AI settings: $e'),
+            content: Text('Failed to update settings: $e'),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
           ),
@@ -90,7 +81,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
           onPressed: () => context.pop(),
         ),
         title: Text(
-          'AI Intelligence',
+          'Smart Features',
           style: GoogleFonts.manrope(
             fontSize: 20,
             fontWeight: FontWeight.w800,
@@ -108,28 +99,16 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildSectionHeader('Smart Automations'),
+                _buildSectionHeader('Automated Analysis'),
                 const SizedBox(height: 12),
                 GlassCard(
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
                       SwitchListTile.adaptive(
-                        value: _aiReminders,
-                        title: Text('Neural Reminders timing', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
-                        subtitle: Text('Analyze parent activity pattern to schedule WhatsApp alerts when they are most active', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
-                        secondary: Icon(Icons.psychology_rounded, color: AppColors.primary),
-                        activeThumbColor: AppColors.primary,
-                        contentPadding: EdgeInsets.zero,
-                        onChanged: (val) => setState(() => _aiReminders = val),
-                      ),
-                      const SizedBox(height: 8),
-                      Divider(color: AppColors.outline.withValues(alpha: 0.1), height: 1),
-                      const SizedBox(height: 8),
-                      SwitchListTile.adaptive(
                         value: _aiPredictions,
-                        title: Text('Payment Defaulter Prediction', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
-                        subtitle: Text('Generate proactive risk metrics for late payments by scanning invoice delay histories', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
+                        title: Text('Defaulter Risk Profiling', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
+                        subtitle: Text('Automatically analyze pending balances to flag High Risk and Medium Risk accounts in the student list.', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
                         secondary: Icon(Icons.online_prediction_rounded, color: AppColors.primary),
                         activeThumbColor: AppColors.primary,
                         contentPadding: EdgeInsets.zero,
@@ -140,68 +119,20 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                 ),
                 const SizedBox(height: 28),
                 
-                _buildSectionHeader('Computer Vision'),
+                _buildSectionHeader('Data Integrity Engine'),
                 const SizedBox(height: 12),
                 GlassCard(
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
                       SwitchListTile.adaptive(
-                        value: _ocrEnabled,
-                        title: Text('OCR Bank slip scanner', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
-                        subtitle: Text('Extract check numbers, deposit slips & bank logs directly from device camera snapshots', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
-                        secondary: Icon(Icons.document_scanner_rounded, color: AppColors.primary),
+                        value: _smartFormatting,
+                        title: Text('Smart Auto-Capitalization', style: GoogleFonts.inter(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
+                        subtitle: Text('Automatically correct lowercase letters and format names to Title Case during student data entry to keep records clean.', style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11)),
+                        secondary: Icon(Icons.text_format_rounded, color: AppColors.primary),
                         activeThumbColor: AppColors.primary,
                         contentPadding: EdgeInsets.zero,
-                        onChanged: (val) => setState(() => _ocrEnabled = val),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 28),
-                
-                _buildSectionHeader('Confidence & Engine Threshold'),
-                const SizedBox(height: 12),
-                GlassCard(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Decision confidence rating',
-                            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-                          ),
-                          Text(
-                            '${(_confidenceThreshold * 100).toStringAsFixed(0)}%',
-                            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.primary),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Minimum safety rating needed before AI triggers automated due date alerts or auto adjustments.',
-                        style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11),
-                      ),
-                      const SizedBox(height: 16),
-                      SliderTheme(
-                        data: SliderTheme.of(context).copyWith(
-                          trackHeight: 4,
-                          activeTrackColor: AppColors.primary,
-                          inactiveTrackColor: AppColors.outline.withValues(alpha: 0.2),
-                          thumbColor: AppColors.primary,
-                          overlayColor: AppColors.primary.withValues(alpha: 0.2),
-                          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
-                        ),
-                        child: Slider(
-                          value: _confidenceThreshold,
-                          min: 0.5,
-                          max: 0.95,
-                          divisions: 9,
-                          onChanged: (val) => setState(() => _confidenceThreshold = val),
-                        ),
+                        onChanged: (val) => setState(() => _smartFormatting = val),
                       ),
                     ],
                   ),

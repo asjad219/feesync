@@ -68,7 +68,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 ),
               ),
               const SizedBox(height: 32),
-              Text('FeeSync Pro', style: GoogleFonts.manrope(fontSize: 32, fontWeight: FontWeight.w800, color: AppColors.textPrimary, letterSpacing: -1)),
+              Text('FeeSync', style: GoogleFonts.manrope(fontSize: 32, fontWeight: FontWeight.w800, color: AppColors.textPrimary, letterSpacing: -1)),
               const SizedBox(height: 8),
               Text('INTELLIGENT FEE MANAGEMENT', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 3, color: AppColors.textTertiary)),
             ],

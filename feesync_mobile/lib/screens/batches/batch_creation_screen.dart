@@ -8,6 +8,7 @@ import '../../../core/widgets/paywall_dialog.dart';
 import '../../../providers/batch_provider.dart';
 import '../../../providers/user_provider.dart';
 import '../../../providers/subscription_provider.dart';
+import '../../../providers/settings_provider.dart';
 
 class BatchCreationScreen extends ConsumerStatefulWidget {
   final String? batchId;
@@ -66,6 +67,10 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
       _selectedColor = batch.colorHex ?? '#2563EB';
       _autoRollNumber = batch.autoRollNumber;
       _collectParentDetails = batch.collectParentDetails;
+      _feeType = batch.feeType;
+      _useGlobalBilling = batch.useGlobalBilling;
+      _customDueDay = batch.customDueDay ?? 5;
+      _customAutoDueGeneration = batch.customAutoDueGeneration ?? true;
       
       // Load Schedule
       _selectedDays.clear();
@@ -118,6 +123,9 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
   String _feeType = 'monthly';
   bool _autoRollNumber = false;
   bool _collectParentDetails = true;
+  bool _useGlobalBilling = true;
+  int _customDueDay = 5;
+  bool _customAutoDueGeneration = true;
   final List<int> _selectedDays = [];
   final Map<int, Map<String, TimeOfDay>> _daySchedules = {};
 
@@ -216,6 +224,10 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
           'room': 'Room 101',
           'auto_roll_number': _autoRollNumber,
           'collect_parent_details': _collectParentDetails,
+          'fee_type': _feeType,
+          'use_global_billing': _useGlobalBilling,
+          'custom_due_day': _useGlobalBilling ? null : _customDueDay,
+          'custom_auto_due_generation': _useGlobalBilling ? null : _customAutoDueGeneration,
           'created_at': DateTime.now().toIso8601String(),
         };
         await ref.read(batchNotifierProvider.notifier).createBatch(newBatch);
@@ -233,6 +245,10 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
           'end_time': schedulesJson.isNotEmpty ? schedulesJson.first['end_time'] : '17:30', // Fallback
           'auto_roll_number': _autoRollNumber,
           'collect_parent_details': _collectParentDetails,
+          'fee_type': _feeType,
+          'use_global_billing': _useGlobalBilling,
+          'custom_due_day': _useGlobalBilling ? null : _customDueDay,
+          'custom_auto_due_generation': _useGlobalBilling ? null : _customAutoDueGeneration,
         };
         await ref.read(batchNotifierProvider.notifier).updateBatch(widget.batchId!, updatedData);
       }
@@ -491,7 +507,7 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
                   const SizedBox(height: 8),
                 ],
               );
-            }).toList(),
+            }),
           ],
         ],
       ),
@@ -500,6 +516,10 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
 
   Widget _buildCapacityFeeStep(bool isDark, Color textPrimaryColor, Color primaryColor) {
     final textSecondaryColor = isDark ? const Color(0xFFC3C6D7) : const Color(0xFF475569);
+    final surfaceColor = isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF);
+    final settingsAsync = ref.watch(settingsProvider);
+    final defaultDueDay = settingsAsync.valueOrNull?.defaultDueDay ?? 5;
+    final defaultAutoDue = settingsAsync.valueOrNull?.autoDueGeneration ?? true;
 
     return _StepWrapper(
       title: 'Capacity & Fees',
@@ -523,9 +543,123 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
           Row(
             children: [
               _buildChoiceChip('Monthly', _feeType == 'monthly', () => setState(() => _feeType = 'monthly'), isDark, primaryColor),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
+              _buildChoiceChip('Quarterly', _feeType == 'quarterly', () => setState(() => _feeType = 'quarterly'), isDark, primaryColor),
+              const SizedBox(width: 8),
               _buildChoiceChip('Course Wise', _feeType == 'course_wise', () => setState(() => _feeType = 'course_wise'), isDark, primaryColor),
             ],
+          ),
+          const SizedBox(height: 28),
+          Text(
+            'Billing & Rollover Rules',
+            style: GoogleFonts.inter(
+              color: textSecondaryColor,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: surfaceColor.withValues(alpha: isDark ? 0.75 : 0.9),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Use Global Settings',
+                            style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: textPrimaryColor, fontSize: 15),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Apply institution default billing rules.',
+                            style: GoogleFonts.inter(color: textSecondaryColor, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch(
+                      value: _useGlobalBilling,
+                      activeThumbColor: primaryColor,
+                      onChanged: (val) => setState(() => _useGlobalBilling = val),
+                    ),
+                  ],
+                ),
+                if (_useGlobalBilling) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: primaryColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.info_outline_rounded, color: primaryColor, size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Default: Due on the ${defaultDueDay}th of the month. Auto-Rollover is ${defaultAutoDue ? 'ON' : 'OFF'}.',
+                            style: GoogleFonts.inter(color: primaryColor, fontSize: 12, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ] else ...[
+                  const SizedBox(height: 16),
+                  Divider(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1)),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Custom Due Day',
+                    style: GoogleFonts.inter(color: textPrimaryColor, fontWeight: FontWeight.w600, fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<int>(
+                    initialValue: _customDueDay,
+                    items: List.generate(28, (i) => i + 1).map((d) => DropdownMenuItem(
+                      value: d,
+                      child: Text('$d of the month', style: GoogleFonts.inter(color: textPrimaryColor, fontSize: 14)),
+                    )).toList(),
+                    onChanged: (val) {
+                      if (val != null) setState(() => _customDueDay = val);
+                    },
+                    dropdownColor: isDark ? const Color(0xFF1E1E2C) : Colors.white,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Auto Generate Dues (Rollover)',
+                          style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: textPrimaryColor, fontSize: 14),
+                        ),
+                      ),
+                      Switch(
+                        value: _customAutoDueGeneration,
+                        activeThumbColor: primaryColor,
+                        onChanged: (val) => setState(() => _customAutoDueGeneration = val),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
           ),
         ],
       ),
@@ -689,7 +823,7 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
                 ),
                 Switch(
                   value: _autoRollNumber,
-                  activeColor: primaryColor,
+                  activeThumbColor: primaryColor,
                   onChanged: (val) => setState(() => _autoRollNumber = val),
                 ),
               ],
@@ -725,7 +859,7 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
                 ),
                 Switch(
                   value: _collectParentDetails,
-                  activeColor: primaryColor,
+                  activeThumbColor: primaryColor,
                   onChanged: (val) => setState(() => _collectParentDetails = val),
                 ),
               ],

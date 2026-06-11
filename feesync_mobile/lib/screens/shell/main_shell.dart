@@ -23,7 +23,7 @@ class MainShell extends ConsumerWidget {
 
     return Scaffold(
       extendBody: false,
-      backgroundColor: AppColors.darkBg,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onHorizontalDragEnd: (details) {
@@ -102,7 +102,7 @@ class _StyledBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final borderColor = isDark 
         ? Colors.white.withValues(alpha: 0.08) 
         : Colors.black.withValues(alpha: 0.06);

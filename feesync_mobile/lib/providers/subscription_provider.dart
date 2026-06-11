@@ -38,6 +38,12 @@ final activeBatchCountProvider = FutureProvider<int>((ref) async {
   return repo.getActiveBatchCount();
 });
 
+/// Provides the active staff count for the current owner.
+final activeStaffCountProvider = FutureProvider<int>((ref) async {
+  final repo = ref.watch(subscriptionRepositoryProvider);
+  return repo.getActiveStaffCount();
+});
+
 /// Provides the current month's usage for the active user.
 final currentMonthUsageProvider = FutureProvider<Map<String, int>>((ref) async {
   final repo = ref.watch(usageRepositoryProvider);
@@ -56,12 +62,14 @@ final featureGateProvider = FutureProvider<FeatureGate>((ref) async {
   final sub          = await ref.watch(subscriptionProvider.future);
   final studentCount = await ref.watch(activeStudentCountProvider.future);
   final batchCount   = await ref.watch(activeBatchCountProvider.future);
+  final staffCount   = await ref.watch(activeStaffCountProvider.future);
   final usage        = await ref.watch(currentMonthUsageProvider.future);
 
   return FeatureGate(
     subscription:              sub,
     activeStudentCount:        studentCount,
     activeBatchCount:          batchCount,
+    activeStaffCount:          staffCount,
     waReceiptsUsedThisMonth:   usage['whatsapp_receipts_used'] ?? 0,
     waRemindersUsedThisMonth:  usage['whatsapp_reminders_used'] ?? 0,
   );
@@ -76,11 +84,13 @@ final subscriptionScreenDataProvider =
   final sub          = await ref.watch(subscriptionProvider.future);
   final studentCount = await ref.watch(activeStudentCountProvider.future);
   final batchCount   = await ref.watch(activeBatchCountProvider.future);
+  final staffCount   = await ref.watch(activeStaffCountProvider.future);
   final usage        = await ref.watch(currentMonthUsageProvider.future);
   return SubscriptionScreenData(
     subscription:       sub,
     activeStudentCount: studentCount,
     activeBatchCount:   batchCount,
+    activeStaffCount:   staffCount,
     usage:              usage,
   );
 });
@@ -91,12 +101,14 @@ class SubscriptionScreenData {
   final Subscription subscription;
   final int activeStudentCount;
   final int activeBatchCount;
+  final int activeStaffCount;
   final Map<String, int> usage;
 
   const SubscriptionScreenData({
     required this.subscription,
     required this.activeStudentCount,
     required this.activeBatchCount,
+    required this.activeStaffCount,
     this.usage = const {},
   });
 
@@ -138,6 +150,24 @@ class SubscriptionScreenData {
   bool get canAddBatch {
     if (subscription.hasUnlimitedBatches) return true;
     return activeBatchCount < subscription.currentMaxBatches;
+  }
+
+  // ─── Staff limit ────────────────────────────────────────────────────────────
+
+  double get staffUsageRatio {
+    final max = subscription.maxStaff;
+    if (max < 0) return 0.0;
+    if (max == 0) return 1.0;
+    return (activeStaffCount / max).clamp(0.0, 1.0);
+  }
+
+  bool get isNearStaffLimit => staffUsageRatio >= 0.80;
+  bool get isAtStaffLimit   => staffUsageRatio >= 1.0;
+
+  /// True if adding one more staff is allowed.
+  bool get canAddStaff {
+    if (subscription.hasUnlimitedStaff) return true;
+    return activeStaffCount < subscription.maxStaff;
   }
 
   // ─── WhatsApp Limits ────────────────────────────────────────────────────────

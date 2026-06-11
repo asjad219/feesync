@@ -63,6 +63,24 @@ class SubscriptionRepository {
 
   // ── Usage counts ──────────────────────────────────────────────────────────
 
+  /// Returns the active staff count for the current owner.
+  Future<int> getActiveStaffCount() async {
+    final uid = _ownerId;
+    if (uid == null) return 0;
+
+    try {
+      final response = await _client
+          .from('users')
+          .select('id')
+          .eq('account_id', uid)
+          .eq('is_active', true);
+      return (response as List).length;
+    } catch (e) {
+      debugPrint('[SubscriptionRepo] getActiveStaffCount error: $e');
+      return 0;
+    }
+  }
+
   /// Returns the active student count for the current owner.
   Future<int> getActiveStudentCount() async {
     final uid = _ownerId;

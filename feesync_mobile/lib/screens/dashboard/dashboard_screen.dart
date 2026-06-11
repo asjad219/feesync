@@ -33,7 +33,7 @@ class DashboardScreen extends ConsumerWidget {
     final currencyCode = settingsAsync.value?.currency;
     final currencyFormatter = CurrencyFormatter.numberFormat(currencyCode, decimalDigits: 0);
 
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final Color primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
     final Color scaffoldBgColor = isDark ? const Color(0xFF0D0D1A) : const Color(0xFFF8FAFC);
     final Color textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
@@ -132,7 +132,7 @@ class _DashboardTopBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
     final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
@@ -297,30 +297,35 @@ class _GreetingHeader extends StatelessWidget {
     } else if (hour < 17) {
       greeting = 'Good afternoon';
     }
-    final dateFormatted = DateFormat('EEEE, MMMM d').format(now);
-    final bool isDark = AppColors.isDarkMode;
+    
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
-    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '$greeting, Admin 👋',
-          style: GoogleFonts.manrope(
-            fontSize: 26,
-            fontWeight: FontWeight.w800,
-            color: textPrimaryColor,
-            letterSpacing: -0.6,
-          ),
+        Row(
+          children: [
+            Text(
+              '$greeting, Admin',
+              style: GoogleFonts.manrope(
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                color: textPrimaryColor,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Text('👋', style: TextStyle(fontSize: 22)),
+          ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         Text(
-          dateFormatted,
+          DateFormat('EEEE, MMMM d').format(now),
           style: GoogleFonts.inter(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: textTertiaryColor,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B),
           ),
         ),
       ],
@@ -513,11 +518,11 @@ class _BentoStatsGrid extends StatelessWidget {
           children: [
             Expanded(
               child: StatCard(
-                title: 'Pending Fees',
-                value: currencyFormatter.format(stats.pendingFees),
-                icon: Icons.pending_actions_rounded,
-                iconColor: const Color(0xFFFFB4AB),
-                iconBackgroundColor: const Color(0xFF93000A),
+                title: stats.pendingFees < 0 ? 'Advance Fees' : 'Pending Fees',
+                value: currencyFormatter.format(stats.pendingFees.abs()),
+                icon: stats.pendingFees < 0 ? Icons.account_balance_wallet_rounded : Icons.pending_actions_rounded,
+                iconColor: stats.pendingFees < 0 ? const Color(0xFF10B981) : const Color(0xFFFFB4AB),
+                iconBackgroundColor: stats.pendingFees < 0 ? const Color(0xFF064E3B) : const Color(0xFF93000A),
               ),
             ),
             const SizedBox(width: 16),

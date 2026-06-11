@@ -373,37 +373,26 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                 limitName: 'student',
               ),
               const SizedBox(height: 16),
+
               Divider(color: AppColors.outline.withValues(alpha: 0.1), height: 1),
               const SizedBox(height: 16),
+
               _buildUsageRow(
-                icon: Icons.auto_awesome_rounded,
-                iconColor: const Color(0xFF8B5CF6),
-                label: 'AI Features',
-                used: _getPlanByTier(sub.effectivePlan).aiFeatures == 0
-                    ? 0
-                    : _getPlanByTier(sub.effectivePlan).aiFeatures,
-                max: _getPlanByTier(sub.effectivePlan).aiFeatures,
-                suffix: sub.isFree
-                    ? 'Not available'
-                    : '${_getPlanByTier(sub.effectivePlan).aiFeatures} features',
-                isSimpleLabel: true,
+                icon: Icons.admin_panel_settings_rounded,
+                iconColor: const Color(0xFFF59E0B),
+                label: 'Active Staff',
+                used: data.activeStaffCount,
+                max: sub.maxStaff,
+                ratio: data.staffUsageRatio,
+                isNearLimit: data.isNearStaffLimit,
+                isAtLimit: data.isAtStaffLimit,
+                limitName: 'staff',
               ),
               const SizedBox(height: 16),
+
               Divider(color: AppColors.outline.withValues(alpha: 0.1), height: 1),
               const SizedBox(height: 16),
-              _buildUsageRow(
-                icon: Icons.receipt_long_rounded,
-                iconColor: const Color(0xFF10B981),
-                label: 'Reports Access',
-                used: _getPlanByTier(sub.effectivePlan).reportCount,
-                max: 14,
-                suffix:
-                    '${_getPlanByTier(sub.effectivePlan).reportCount} of 14 reports',
-                isSimpleLabel: true,
-              ),
-              const SizedBox(height: 16),
-              Divider(color: AppColors.outline.withValues(alpha: 0.1), height: 1),
-              const SizedBox(height: 16),
+
               _buildUsageRow(
                 icon: Icons.chat_rounded,
                 iconColor: const Color(0xFF25D366),
@@ -1287,7 +1276,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
-          'Subscriptions are billed through Google Play. Prices are in INR and include applicable taxes.',
+          'Payment integration coming soon. Prices are in INR and include applicable taxes.',
           style: GoogleFonts.inter(
             fontSize: 11,
             color: AppColors.textTertiary,
@@ -1447,21 +1436,16 @@ final _comparisonRows = <_ComparisonRow>[
     if (p.whatsappRemindersPerMonth == -1) return 'Unlimited';
     return '${p.whatsappRemindersPerMonth}/mo';
   }),
-  _ComparisonRow('SMS Fallback', (p) {
-    if (p.smsPerMonth == 0) return '✗';
-    return '${p.smsPerMonth}/mo';
+  _ComparisonRow('Staff Accounts', (p) {
+    if (p.maxStaff == -1) return 'Unlimited';
+    return '${p.maxStaff} staff';
   }),
-  _ComparisonRow('Reports', (p) => '${p.reportCount} types'),
-  _ComparisonRow('AI Features', (p) {
-    if (p.aiFeatures == 0) return '✗';
-    return '${p.aiFeatures} features';
-  }),
+  _ComparisonRow('Biometric Auth', (p) => p.biometricAuth ? '✓' : '✗'),
+  _ComparisonRow('Support System', (p) => p.supportSystem ? '✓' : '✗'),
+  _ComparisonRow('Cloud Backup', (p) => p.cloudBackup ? '✓' : '✗'),
+  _ComparisonRow('Due Reminders', (p) => p.dueReminders ? '✓' : '✗'),
+  _ComparisonRow('Invoice Send', (p) => p.invoiceSend ? '✓' : '✗'),
   _ComparisonRow('CSV Export', (p) => p.csvExport ? '✓' : '✗'),
-  _ComparisonRow('Razorpay Links', (p) => p.razorpayPaymentLinks ? '✓' : '✗'),
-  _ComparisonRow('Auto-Debit', (p) => p.razorpayAutoDebit ? '✓' : '✗'),
-  _ComparisonRow('Scheduled Reports', (p) => p.scheduledEmailReports ? '✓' : '✗'),
-  _ComparisonRow('Priority Support', (p) => p.prioritySupport ? '✓' : '✗'),
-  _ComparisonRow('WhatsApp Support', (p) => p.whatsappSupport ? '✓' : '✗'),
 ];
 
 // ─── FAQ items ────────────────────────────────────────────────────────────────
@@ -1475,7 +1459,7 @@ class _FaqItem {
 final _faqItems = <_FaqItem>[
   _FaqItem(
     'How does billing work?',
-    'FeeSync uses Google Play Billing for all in-app subscriptions. Your subscription is charged to your Google account on the same day each month. Annual plans are charged upfront and save you 2 months of cost.',
+    'Payment integration is coming soon. Once launched, you will be able to subscribe directly within the app securely.',
   ),
   _FaqItem(
     'Can I upgrade or downgrade at any time?',
@@ -1490,16 +1474,12 @@ final _faqItems = <_FaqItem>[
     'Absolutely. If you cancel or downgrade, your data is preserved in read-only mode for 7 days. You can export your data to CSV or Excel at any time while you have access.',
   ),
   _FaqItem(
-    'Can I pay via UPI or Razorpay instead of Google Play?',
-    'For in-app subscriptions on Android, Google requires that Google Play Billing be used. If you prefer to pay via Razorpay/UPI, log in to the FeeSync web dashboard and subscribe from there.',
-  ),
-  _FaqItem(
     'What\'s the refund policy?',
-    'Refunds are governed by Google Play\'s refund policy. You can request a refund within 48 hours of purchase via the Play Store. We also offer a prorated refund for annual plans within the first 14 days — contact support.',
+    'Refund policies will be available once our payment integration goes live. We aim to provide fair, prorated options.',
   ),
   _FaqItem(
     'Do WhatsApp messages cost extra?',
-    'No. WhatsApp notifications are included in your plan limits. The Starter plan includes unlimited receipts and reminders. Free plan includes 200 receipts and 50 reminders per month.',
+    'No. WhatsApp notifications are included in your plan limits. The Starter plan includes unlimited receipts and reminders. Free plan includes 100 receipts and 30 reminders per month.',
   ),
   _FaqItem(
     'How does the referral program work?',
@@ -1578,7 +1558,7 @@ class _UpgradeSheet extends StatelessWidget {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                        'Google Play checkout will open for ${plan.name} plan.',
+                        'Payment integration coming soon',
                         style: GoogleFonts.inter(fontWeight: FontWeight.w600),
                       ),
                       behavior: SnackBarBehavior.floating,
@@ -1590,7 +1570,7 @@ class _UpgradeSheet extends StatelessWidget {
           const SizedBox(height: 12),
           Center(
             child: Text(
-              'Subscriptions managed via Google Play',
+              'Subscriptions will be managed securely in-app',
               style: GoogleFonts.inter(
                 fontSize: 11,
                 color: AppColors.textTertiary,
@@ -1665,8 +1645,8 @@ class _PlanOptionCard extends StatelessWidget {
                   ),
                   Text(
                     isGrowth
-                        ? 'Unlimited students + all 9 AI features'
-                        : 'Up to ${plan.maxStudents} students + ${plan.aiFeatures} AI features',
+                        ? 'Unlimited students + Cloud Backup & Support'
+                        : 'Up to ${plan.maxStudents} students + Backup',
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       color: isGrowth

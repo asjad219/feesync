@@ -36,6 +36,12 @@ class Batch {
   final bool autoRollNumber;
   final bool collectParentDetails;
 
+  // Billing & Rollover
+  final String feeType;
+  final bool useGlobalBilling;
+  final int? customDueDay;
+  final bool? customAutoDueGeneration;
+
   Batch({
     required this.id,
     required this.accountId,
@@ -60,6 +66,10 @@ class Batch {
     this.room = 'Room 101',
     this.autoRollNumber = false,
     this.collectParentDetails = true,
+    this.feeType = 'monthly',
+    this.useGlobalBilling = true,
+    this.customDueDay,
+    this.customAutoDueGeneration,
   });
 
   double get capacityPercentage => (studentCount / maxCapacity).clamp(0.0, 1.0);
@@ -102,6 +112,10 @@ class Batch {
       room: json['room'] ?? 'Room 101',
       autoRollNumber: json['auto_roll_number'] ?? false,
       collectParentDetails: json['collect_parent_details'] ?? true,
+      feeType: json['fee_type'] ?? 'monthly',
+      useGlobalBilling: json['use_global_billing'] ?? true,
+      customDueDay: json['custom_due_day'],
+      customAutoDueGeneration: json['custom_auto_due_generation'],
     );
   }
 
@@ -130,6 +144,10 @@ class Batch {
       'room': room,
       'auto_roll_number': autoRollNumber,
       'collect_parent_details': collectParentDetails,
+      'fee_type': feeType,
+      'use_global_billing': useGlobalBilling,
+      if (customDueDay != null) 'custom_due_day': customDueDay,
+      if (customAutoDueGeneration != null) 'custom_auto_due_generation': customAutoDueGeneration,
     };
   }
 
@@ -157,6 +175,10 @@ class Batch {
     String? room,
     bool? autoRollNumber,
     bool? collectParentDetails,
+    String? feeType,
+    bool? useGlobalBilling,
+    int? customDueDay,
+    bool? customAutoDueGeneration,
   }) {
     return Batch(
       id: id ?? this.id,
@@ -182,6 +204,10 @@ class Batch {
       room: room ?? this.room,
       autoRollNumber: autoRollNumber ?? this.autoRollNumber,
       collectParentDetails: collectParentDetails ?? this.collectParentDetails,
+      feeType: feeType ?? this.feeType,
+      useGlobalBilling: useGlobalBilling ?? this.useGlobalBilling,
+      customDueDay: customDueDay ?? this.customDueDay,
+      customAutoDueGeneration: customAutoDueGeneration ?? this.customAutoDueGeneration,
     );
   }
 }

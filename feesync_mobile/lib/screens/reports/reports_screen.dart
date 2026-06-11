@@ -20,6 +20,7 @@ class ReportsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(dashboardStatsProvider);
     final monthlyAsync = ref.watch(monthlyCollectionDataProvider);
+    final classStatsAsync = ref.watch(classCollectionDataProvider);
     final settingsAsync = ref.watch(settingsProvider);
     final currencyCode = settingsAsync.value?.currency;
     final currencyFormatter = CurrencyFormatter.numberFormat(currencyCode, decimalDigits: 0);
@@ -85,13 +86,20 @@ class ReportsScreen extends ConsumerWidget {
                       csvBuffer.writeln('Metric,Value');
                       csvBuffer.writeln('Total Students,${stats.totalStudents}');
                       csvBuffer.writeln('Total Revenue (Collected),${stats.totalFeesCollected}');
-                      csvBuffer.writeln('Outstanding Dues,${stats.pendingFees}');
+                      csvBuffer.writeln('${stats.pendingFees < 0 ? 'Advance Dues' : 'Outstanding Dues'},${stats.pendingFees.abs()}');
                       csvBuffer.writeln('Collection Rate,${stats.collectionRate.toStringAsFixed(1)}%');
                       csvBuffer.writeln();
                       csvBuffer.writeln('Revenue Trend');
                       csvBuffer.writeln('Month,Amount');
                       for (final m in monthly) {
                         csvBuffer.writeln('${m.month},${m.amount}');
+                      }
+                      csvBuffer.writeln();
+                      csvBuffer.writeln('Class Performance');
+                      csvBuffer.writeln('Class,Collected,Pending/Advance');
+                      final classStats = classStatsAsync.value ?? [];
+                      for (final c in classStats) {
+                        csvBuffer.writeln('${c.className},${c.collected},${c.pending}');
                       }
                       
                       final dir = await getApplicationDocumentsDirectory();
@@ -132,7 +140,7 @@ class ReportsScreen extends ConsumerWidget {
                         'Last Updated: ${DateFormat('yyyy-MM-dd HH:mm').format(stats.lastUpdated)}\n\n'
                         '• Total Students: ${stats.totalStudents}\n'
                         '• Total Revenue (Collected): ${currencyFormatter.format(stats.totalFeesCollected)}\n'
-                        '• Outstanding Dues: ${currencyFormatter.format(stats.pendingFees)}\n'
+                        '• ${stats.pendingFees < 0 ? 'Advance Dues' : 'Outstanding Dues'}: ${currencyFormatter.format(stats.pendingFees.abs())}\n'
                         '• Collection Rate: ${stats.collectionRate.toStringAsFixed(1)}%\n\n'
                         'Generated from FeeSync app settings analytics.';
                     SharePlus.instance.share(
@@ -154,12 +162,16 @@ class ReportsScreen extends ConsumerWidget {
       ),
       body: statsAsync.when(
         data: (stats) => monthlyAsync.when(
-          data: (monthly) => _buildBody(context, stats, monthly, currencyFormatter, currencySymbol),
+          data: (monthly) => classStatsAsync.when(
+            data: (classStats) => _buildBody(context, stats, monthly, classStats, currencyFormatter, currencySymbol),
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (err, _) => const Center(child: Text('Error loading class stats')),
+          ),
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, _) => Center(child: Text('Error loading charts')),
+          error: (err, _) => const Center(child: Text('Error loading charts')),
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('Error loading stats')),
+        error: (err, _) => const Center(child: Text('Error loading stats')),
       ),
     );
   }
@@ -168,6 +180,7 @@ class ReportsScreen extends ConsumerWidget {
     BuildContext context,
     dynamic stats,
     List<dynamic> monthly,
+    List<dynamic> classStats,
     NumberFormat currencyFormatter,
     String currencySymbol,
   ) {
@@ -180,7 +193,7 @@ class ReportsScreen extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
+              const Expanded(
                 child: _SectionHeader(title: 'Overview', subtitle: 'Snapshot of your financial performance'),
               ),
               const _CycleFilterDropdown(),
@@ -192,6 +205,8 @@ class ReportsScreen extends ConsumerWidget {
           _RevenueChartCard(monthly: monthly),
           const SizedBox(height: 32),
           _StatusDistributionCard(stats: stats, currencySymbol: currencySymbol),
+          const SizedBox(height: 32),
+          _ClassPerformanceCard(classStats: classStats, currencyFormatter: currencyFormatter),
         ],
       ),
     );
@@ -218,11 +233,11 @@ class _KeyMetricsGrid extends StatelessWidget {
             ),
             const SizedBox(width: 16),
             _MetricMiniCard(
-              label: 'OUTSTANDING', 
-              value: currencyFormatter.format(stats.pendingFees), 
-              color: AppColors.error,
-              icon: Icons.warning_amber_rounded,
-              iconBgColor: AppColors.error,
+              label: stats.pendingFees < 0 ? 'ADVANCE' : 'OUTSTANDING', 
+              value: currencyFormatter.format(stats.pendingFees.abs()), 
+              color: stats.pendingFees < 0 ? AppColors.success : AppColors.error,
+              icon: stats.pendingFees < 0 ? Icons.account_balance_wallet_rounded : Icons.warning_amber_rounded,
+              iconBgColor: stats.pendingFees < 0 ? AppColors.success : AppColors.error,
             ),
           ],
         ),
@@ -396,8 +411,8 @@ class _StatusDistributionCard extends StatelessWidget {
                     sectionsSpace: 0,
                     centerSpaceRadius: 35,
                     sections: [
-                      PieChartSectionData(color: AppColors.primary, value: stats.totalFeesCollected, radius: 12, title: ''),
-                      PieChartSectionData(color: AppColors.error.withValues(alpha: 0.2), value: stats.pendingFees, radius: 12, title: ''),
+                      PieChartSectionData(color: AppColors.primary, value: stats.totalFeesCollected < 0 ? 0 : stats.totalFeesCollected, radius: 12, title: ''),
+                      PieChartSectionData(color: AppColors.error.withValues(alpha: 0.2), value: stats.pendingFees < 0 ? 0 : stats.pendingFees, radius: 12, title: ''),
                     ],
                   ),
                 ),
@@ -408,7 +423,11 @@ class _StatusDistributionCard extends StatelessWidget {
                   children: [
                     _LegendItem(label: 'Paid', value: '$currencySymbol${(stats.totalFeesCollected / 1000).toStringAsFixed(1)}k', color: AppColors.primary),
                     const SizedBox(height: 12),
-                    _LegendItem(label: 'Pending', value: '$currencySymbol${(stats.pendingFees / 1000).toStringAsFixed(1)}k', color: AppColors.error),
+                    _LegendItem(
+                      label: stats.pendingFees < 0 ? 'Advance' : 'Pending', 
+                      value: '$currencySymbol${(stats.pendingFees.abs() / 1000).toStringAsFixed(1)}k', 
+                      color: stats.pendingFees < 0 ? AppColors.success : AppColors.error,
+                    ),
                   ],
                 ),
               ),
@@ -506,6 +525,75 @@ class _CycleFilterDropdown extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ClassPerformanceCard extends StatelessWidget {
+  final List<dynamic> classStats;
+  final NumberFormat currencyFormatter;
+
+  const _ClassPerformanceCard({required this.classStats, required this.currencyFormatter});
+
+  @override
+  Widget build(BuildContext context) {
+    if (classStats.isEmpty) return const SizedBox.shrink();
+
+    return GlassCard(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Class Performance', style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+          const SizedBox(height: 24),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: classStats.length,
+            separatorBuilder: (context, index) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Divider(color: AppColors.outline.withValues(alpha: 0.1), height: 1),
+            ),
+            itemBuilder: (context, index) {
+              final stat = classStats[index];
+              return Row(
+                children: [
+                  Container(
+                    width: 44, height: 44,
+                    decoration: BoxDecoration(color: AppColors.primaryContainer.withValues(alpha: 0.3), shape: BoxShape.circle),
+                    child: Center(
+                      child: Text(
+                        stat.className.isNotEmpty ? stat.className.substring(0, 1).toUpperCase() : '?', 
+                        style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w800, fontSize: 16)
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(stat.className, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Text('Paid: ${currencyFormatter.format(stat.collected)}', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.success)),
+                            const SizedBox(width: 16),
+                            Text(
+                              '${stat.pending < 0 ? 'Adv' : 'Pend'}: ${currencyFormatter.format(stat.pending.abs())}', 
+                              style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: stat.pending < 0 ? AppColors.success : AppColors.error)
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
       ),
     );
   }

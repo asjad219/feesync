@@ -288,12 +288,16 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
     
     setState(() => _isLoading = true);
     try {
+      final accountProfile = ref.read(accountProfileProvider).value;
+      final institutionName = accountProfile?.schoolName ?? accountProfile?.name ?? 'Institution';
+
       final textReceipt = ReceiptService.generateTextReceipt(
         student: student,
         amount: amount,
         paymentMode: _paymentMode,
         date: _paymentDate,
         invoiceNo: invoiceNo,
+        institutionName: institutionName,
       );
 
       final pdfFile = await ReceiptService.generatePdfReceipt(
@@ -302,6 +306,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
         paymentMode: _paymentMode,
         date: _paymentDate,
         invoiceNo: invoiceNo,
+        institutionName: institutionName,
       );
 
       String cleanPhone = (student.parentPhone ?? '').replaceAll(RegExp(r'[^0-9]'), '');

@@ -26,8 +26,14 @@ class _StudentListScreenState extends ConsumerState<StudentListScreen> {
     super.dispose();
   }
 
-  String _getPaymentStatus(double balance) {
-    if (balance > 0) return 'OVERDUE';
+  String _getPaymentStatus(double balance, {bool aiPredictionsEnabled = false}) {
+    if (balance > 0) {
+      if (aiPredictionsEnabled) {
+        if (balance >= 5000) return 'HIGH RISK';
+        if (balance >= 1000) return 'AT RISK';
+      }
+      return 'OVERDUE';
+    }
     return 'PAID';
   }
 
@@ -118,6 +124,8 @@ class _StudentListScreenState extends ConsumerState<StudentListScreen> {
   Widget build(BuildContext context) {
     final studentBalancesAsync = ref.watch(studentBalancesProvider);
     final selectedClass = ref.watch(studentClassFilterProvider);
+    final settingsAsync = ref.watch(settingsProvider);
+    final aiPredictionsEnabled = settingsAsync.value?.aiPredictionsEnabled ?? false;
 
     return Scaffold(
       backgroundColor: AppColors.darkBg,
@@ -178,7 +186,7 @@ class _StudentListScreenState extends ConsumerState<StudentListScreen> {
                     student.studentClass == classFilter;
 
                 final matchesStatus = statusFilter == null ||
-                    _getPaymentStatus(student.balance) == statusFilter;
+                    _getPaymentStatus(student.balance, aiPredictionsEnabled: aiPredictionsEnabled) == statusFilter;
 
                 return matchesSearch && matchesClass && matchesStatus;
               }).toList();
@@ -229,7 +237,7 @@ class _StudentListScreenState extends ConsumerState<StudentListScreen> {
                                     className: student.studentClass,
                                     admissionNo: student.admissionNumber,
                                     balance: student.balance.abs(),
-                                    status: _getPaymentStatus(student.balance),
+                                    status: _getPaymentStatus(student.balance, aiPredictionsEnabled: aiPredictionsEnabled),
                                     onTap: () => context.push('/students/${student.id}'),
                                   );
                                 },
