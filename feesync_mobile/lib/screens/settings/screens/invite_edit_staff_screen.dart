@@ -81,12 +81,23 @@ class _InviteEditStaffScreenState extends ConsumerState<InviteEditStaffScreen> {
 
     try {
       if (widget.existingStaff == null) {
+        final featureGate = await ref.read(featureGateProvider.future);
+        if (!featureGate.canAddStaff) {
+          if (mounted) {
+            await showPaywallDialog(context, ref, trigger: PaywallTrigger.staffLimit);
+          }
+          return;
+        }
+
         await notifier.inviteStaff(
           email: _emailController.text.trim(),
           fullName: _nameController.text.trim(),
           role: _selectedRole,
           permissions: _permissions,
         );
+        ref.invalidate(activeStaffCountProvider);
+        ref.invalidate(subscriptionScreenDataProvider);
+        ref.invalidate(featureGateProvider);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Staff invited successfully'), backgroundColor: AppColors.success),

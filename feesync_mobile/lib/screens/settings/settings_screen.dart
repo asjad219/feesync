@@ -138,6 +138,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             _buildSectionHeader('Preferences & Intelligence'),
             const SizedBox(height: 12),
             _buildSettingsGroup([
+              settingsAsync.when(
+                data: (settings) {
+                  final isLight = settings.themeMode.toLowerCase() == 'light';
+                  return _SettingsItem(
+                    icon: isLight ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                    iconColor: isLight ? const Color(0xFF1E293B) : const Color(0xFFFBBF24),
+                    title: 'App Theme',
+                    subtitle: isLight ? 'Switch to Dark Mode' : 'Switch to Light Mode',
+                    onTap: () => _updateThemeMode(isLight ? 'dark_luxury' : 'light'),
+                  );
+                },
+                loading: () => const SizedBox.shrink(),
+                error: (_, _) => const SizedBox.shrink(),
+              ),
               _SettingsItem(
                 icon: Icons.auto_awesome_rounded,
                 iconColor: const Color(0xFF8B5CF6),

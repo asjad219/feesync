@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS app_settings (
   auto_receipt_enabled BOOLEAN DEFAULT true,
   
   -- UI Customization
-  theme_mode TEXT DEFAULT 'dark_luxury',
+  theme_mode TEXT DEFAULT 'light',
   dashboard_layout TEXT DEFAULT 'bento',
   glass_effects_enabled BOOLEAN DEFAULT true,
   

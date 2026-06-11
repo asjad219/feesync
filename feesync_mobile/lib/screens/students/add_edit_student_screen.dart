@@ -341,7 +341,18 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
       };
 
       if (widget.studentId == null) {
+        final featureGate = await ref.read(featureGateProvider.future);
+        if (!featureGate.canAddStudent) {
+          if (mounted) {
+            setState(() => _isLoading = false);
+            await showPaywallDialog(context, ref, trigger: PaywallTrigger.studentLimit);
+          }
+          return;
+        }
         await ref.read(studentRepositoryProvider).createStudent(data);
+        ref.invalidate(activeStudentCountProvider);
+        ref.invalidate(subscriptionScreenDataProvider);
+        ref.invalidate(featureGateProvider);
       } else {
         await ref.read(studentRepositoryProvider).updateStudent(widget.studentId!, data);
       }

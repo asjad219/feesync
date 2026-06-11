@@ -118,7 +118,7 @@ class AppSettings {
       whatsappEnabled: json['whatsapp_enabled'] ?? true,
       smsFallbackEnabled: json['sms_fallback_enabled'] ?? true,
       autoReceiptEnabled: json['auto_receipt_enabled'] ?? true,
-      themeMode: json['theme_mode'] ?? 'dark_luxury',
+      themeMode: json['theme_mode'] ?? 'light',
       dashboardLayout: json['dashboard_layout'] ?? 'bento',
       glassEffectsEnabled: json['glass_effects_enabled'] ?? true,
       earlyPaymentDiscountEnabled: json['early_payment_discount_enabled'] ?? false,

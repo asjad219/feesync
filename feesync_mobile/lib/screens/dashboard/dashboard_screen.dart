@@ -9,6 +9,7 @@ import '../../core/utils/currency_formatter.dart';
 import '../../models/dashboard_stats.dart';
 import '../../providers/dashboard_provider.dart';
 import '../../providers/settings_provider.dart';
+import '../../providers/user_provider.dart';
 import '../../widgets/dashboard/monthly_analytics_chart.dart';
 import '../../widgets/dashboard/recent_transactions_widget.dart';
 import '../../widgets/dashboard/stat_card.dart';
@@ -283,11 +284,11 @@ class _DashboardTopBar extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
-class _GreetingHeader extends StatelessWidget {
+class _GreetingHeader extends ConsumerWidget {
   const _GreetingHeader();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final now = DateTime.now();
     final hour = now.hour;
     String greeting = 'Good evening';
@@ -301,13 +302,16 @@ class _GreetingHeader extends StatelessWidget {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     
+    final userProfile = ref.watch(currentUserProfileProvider).value;
+    final userName = userProfile?.fullName.split(' ').first ?? 'Admin';
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             Text(
-              '$greeting, Admin',
+              '$greeting, $userName',
               style: GoogleFonts.manrope(
                 fontSize: 24,
                 fontWeight: FontWeight.w800,

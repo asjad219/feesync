@@ -107,6 +107,9 @@ class StudentDetailsScreen extends ConsumerWidget {
             onPressed: () async {
               await ref.read(studentRepositoryProvider).deleteStudent(studentId);
               ref.invalidate(studentBalancesProvider);
+              ref.invalidate(activeStudentCountProvider);
+              ref.invalidate(subscriptionScreenDataProvider);
+              ref.invalidate(featureGateProvider);
               if (context.mounted) {
                 Navigator.pop(context);
                 context.pop();
@@ -134,13 +137,11 @@ class _ProfileHeader extends StatelessWidget {
         .map((word) => word.isNotEmpty ? '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}' : '')
         .join(' ');
         
-    final bool isBoy = student.gender == Gender.male;
-    final bool isGirl = student.gender == Gender.female;
-    final String avatarUrl = isBoy 
-        ? 'https://api.dicebear.com/9.x/adventurer/png?seed=${student.id}m'
-        : isGirl 
-            ? 'https://api.dicebear.com/9.x/adventurer/png?seed=${student.id}f'
-            : 'https://api.dicebear.com/9.x/bottts/png?seed=${student.id}';
+    final String initials = student.fullName
+        .split(' ')
+        .map((e) => e.isNotEmpty ? e[0].toUpperCase() : '')
+        .take(2)
+        .join();
 
     return GlassCard(
       padding: const EdgeInsets.all(24),
@@ -160,26 +161,23 @@ class _ProfileHeader extends StatelessWidget {
               ],
             ),
             child: ClipOval(
-              child: Image.network(
-                avatarUrl,
-                width: 80,
-                height: 80,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  final String initials = student.fullName.split(' ').map((e) => e.isNotEmpty ? e[0].toUpperCase() : '').take(2).join();
-                  return Container(
-                    decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.2)),
-                    alignment: Alignment.center,
-                    child: Text(
-                      initials,
-                      style: GoogleFonts.manrope(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  );
-                },
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF2563EB), Color(0xFF7C3AED)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  initials,
+                  style: GoogleFonts.manrope(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
           ),

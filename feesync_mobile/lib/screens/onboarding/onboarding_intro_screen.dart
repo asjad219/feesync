@@ -36,7 +36,7 @@ class OnboardingIntroScreen extends StatelessWidget {
                 children: [
                   const _IllustrationCard(),
                   const Spacer(),
-                  Text('FeeSync Pro', style: GoogleFonts.manrope(fontSize: 32, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                  Text('FeeSync', style: GoogleFonts.manrope(fontSize: 32, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
                   const SizedBox(height: 16),
                   Text('Precision Fee Management', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.textSecondary, letterSpacing: 0.5)),
                   const SizedBox(height: 32),

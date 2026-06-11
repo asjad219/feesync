@@ -208,6 +208,14 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
       }).toList();
 
       if (widget.batchId == null) {
+        final featureGate = await ref.read(featureGateProvider.future);
+        if (!featureGate.canAddBatch) {
+          if (mounted) {
+            await showPaywallDialog(context, ref, trigger: PaywallTrigger.batchLimit);
+          }
+          return;
+        }
+
         final newBatch = {
           'account_id': userProfile.accountId,
           'name': _nameController.text,
@@ -231,6 +239,9 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
           'created_at': DateTime.now().toIso8601String(),
         };
         await ref.read(batchNotifierProvider.notifier).createBatch(newBatch);
+        ref.invalidate(activeBatchCountProvider);
+        ref.invalidate(subscriptionScreenDataProvider);
+        ref.invalidate(featureGateProvider);
       } else {
         final updatedData = {
           'name': _nameController.text,
