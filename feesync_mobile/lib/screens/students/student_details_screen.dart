@@ -11,6 +11,7 @@ import '../../models/student.dart';
 import '../../models/payment.dart';
 import '../../models/batch.dart';
 import '../../providers/providers.dart';
+import '../../providers/subscription_provider.dart';
 import '../../core/utils/receipt_service.dart';
 import '../../core/widgets/glass/glass_card.dart';
 
