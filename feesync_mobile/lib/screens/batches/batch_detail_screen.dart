@@ -8,6 +8,8 @@ import '../../../core/widgets/custom_widgets.dart';
 import '../../../core/widgets/glass/glass_card.dart';
 import '../../../providers/providers.dart';
 import '../../../models/models.dart';
+import '../../../providers/local_settings_provider.dart';
+import '../../../services/app_lock_service.dart';
 import 'package:intl/intl.dart';
 
 class BatchDetailScreen extends ConsumerStatefulWidget {
@@ -33,17 +35,47 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
   }
 
   @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final batchAsync = ref.watch(batchByIdProvider(widget.batchId));
+    final analytics = ref.watch(batchAnalyticsProvider(widget.batchId)).valueOrNull;
+    final students = ref.watch(batchStudentsProvider(widget.batchId)).valueOrNull;
+
     final bool isDark = AppColors.isDarkMode;
     final Color scaffoldBgColor = isDark ? const Color(0xFF0D0D1A) : const Color(0xFFF8FAFC);
 
     return Scaffold(
       backgroundColor: scaffoldBgColor,
       body: batchAsync.when(
-        data: (batch) => batch == null 
-            ? const Center(child: Text('Batch not found')) 
-            : _buildContent(batch),
+        data: (batch) {
+          if (batch == null) return const Center(child: Text('Batch not found'));
+          
+          double actualAttendance = batch.attendancePercentage;
+          double actualRevenue = batch.revenueGenerated;
+          double actualPending = batch.pendingDues;
+
+          if (analytics != null && analytics.attendanceTrend.isNotEmpty) {
+            actualAttendance = analytics.attendanceTrend.values.reduce((a, b) => a + b) / analytics.attendanceTrend.length;
+          }
+          
+          if (students != null && students.isNotEmpty) {
+            actualRevenue = students.fold<double>(0.0, (sum, s) => sum + s.totalPaidAmount);
+            actualPending = students.fold<double>(0.0, (sum, s) => sum + s.balance);
+          }
+
+          final displayBatch = batch.copyWith(
+            attendancePercentage: actualAttendance,
+            revenueGenerated: actualRevenue,
+            pendingDues: actualPending,
+          );
+
+          return _buildContent(displayBatch);
+        },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => Center(child: Text('Error: $err')),
       ),
@@ -62,7 +94,15 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
           _OverviewTab(
             batch: batch,
             onAttendanceTap: () => _tabController.animateTo(2),
-            onAddStudentTap: () => context.push('/students/add?batchId=${batch.id}'),
+            onAddStudentTap: () async {
+              // Navigate to add student with this batch pre-selected
+              await context.push('/students/add?batchId=${batch.id}');
+              // Refresh data upon returning
+              ref.invalidate(batchStudentsProvider(batch.id));
+              ref.invalidate(batchAnalyticsProvider(batch.id));
+              ref.invalidate(batchByIdProvider(batch.id));
+              ref.invalidate(batchNotifierProvider);
+            },
             onRemindersTap: () => context.push('/notifications'),
             onEditTap: () => context.push('/batches/create?batchId=${batch.id}'),
           ),
@@ -650,7 +690,7 @@ class _StudentsTab extends ConsumerWidget {
       data: (students) => ListView.builder(
         padding: const EdgeInsets.all(20),
         itemCount: students.length,
-        itemBuilder: (context, index) => _StudentListTile(student: students[index]),
+        itemBuilder: (context, index) => _StudentListTile(student: students[index], batchId: batchId),
       ),
       loading: () => Center(child: CircularProgressIndicator(color: primaryColor)),
       error: (err, _) => Center(child: Text('Error: $err')),
@@ -658,31 +698,36 @@ class _StudentsTab extends ConsumerWidget {
   }
 }
 
-class _StudentListTile extends StatelessWidget {
+class _StudentListTile extends ConsumerWidget {
   final StudentBalance student;
-  const _StudentListTile({required this.student});
+  final String batchId;
+  const _StudentListTile({required this.student, required this.batchId});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final bool isDark = AppColors.isDarkMode;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
     final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
 
     return InkWell(
-      onTap: () => context.push('/students/${student.id}'),
+      onTap: () async {
+        await context.push('/students/${student.id}');
+        ref.invalidate(batchStudentsProvider(batchId));
+        ref.invalidate(batchAnalyticsProvider(batchId));
+        ref.invalidate(batchByIdProvider(batchId));
+      },
       borderRadius: BorderRadius.circular(16),
       child: GlassCard(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [
-            CircleAvatar(
-              backgroundColor: primaryColor.withValues(alpha: 0.2),
-              backgroundImage: NetworkImage(student.gender == Gender.female
-                  ? 'https://avatar.iran.liara.run/public/girl?username=${student.id}'
-                  : 'https://avatar.iran.liara.run/public/boy?username=${student.id}'),
-              onBackgroundImageError: (e, s) {},
+            StudentAvatar(
+              studentId: student.id, 
+              firstName: student.firstName, 
+              gender: student.gender, 
+              radius: 24
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -1336,12 +1381,11 @@ class _AttendanceRosterTile extends ConsumerWidget {
       padding: const EdgeInsets.all(12),
       child: Row(
         children: [
-          CircleAvatar(
-            backgroundColor: primaryColor.withValues(alpha: 0.2),
-            backgroundImage: NetworkImage(student.gender == Gender.female
-                ? 'https://avatar.iran.liara.run/public/girl?username=${student.id}'
-                : 'https://avatar.iran.liara.run/public/boy?username=${student.id}'),
-            onBackgroundImageError: (e, s) {},
+          StudentAvatar(
+            studentId: student.id, 
+            firstName: student.firstName, 
+            gender: student.gender, 
+            radius: 20
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -1513,7 +1557,7 @@ class _FeesTab extends ConsumerWidget {
                   )
                 else
                   Column(
-                    children: defaulters.map((s) => _DefaulterTile(student: s)).toList(),
+                    children: defaulters.map((s) => _DefaulterTile(student: s, batchId: batchId)).toList(),
                   ),
               ],
             ),
@@ -1567,7 +1611,7 @@ class _FeesTab extends ConsumerWidget {
 
   static void _launchWhatsApp(StudentBalance s) async {
     final phone = s.parentPhone ?? '';
-    final cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    final cleanPhone = phone.replaceAll(RegExp(r'[^0-9+]'), '');
     if (cleanPhone.isEmpty) return;
     
     final message = "Dear Parent, this is a reminder regarding the pending fee of ₹${s.balance.toStringAsFixed(0)} for ${s.firstName}. Kindly clear it at the earliest. Thank you!";
@@ -1624,12 +1668,13 @@ class _CircleProgress extends StatelessWidget {
   }
 }
 
-class _DefaulterTile extends StatelessWidget {
+class _DefaulterTile extends ConsumerWidget {
   final StudentBalance student;
-  const _DefaulterTile({required this.student});
+  final String batchId;
+  const _DefaulterTile({required this.student, required this.batchId});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final bool isDark = AppColors.isDarkMode;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
@@ -1638,19 +1683,22 @@ class _DefaulterTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
-        onTap: () => context.push('/students/${student.id}'),
+        onTap: () async {
+          await context.push('/students/${student.id}');
+          ref.invalidate(batchStudentsProvider(batchId));
+          ref.invalidate(batchAnalyticsProvider(batchId));
+          ref.invalidate(batchByIdProvider(batchId));
+        },
         borderRadius: BorderRadius.circular(16),
         child: GlassCard(
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: surfaceContainerLowColor,
-                backgroundImage: NetworkImage(student.gender == Gender.female
-                    ? 'https://avatar.iran.liara.run/public/girl?username=${student.id}'
-                    : 'https://avatar.iran.liara.run/public/boy?username=${student.id}'),
-                onBackgroundImageError: (e, s) {},
+              StudentAvatar(
+                studentId: student.id, 
+                firstName: student.firstName, 
+                gender: student.gender, 
+                radius: 24
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -2062,7 +2110,7 @@ class _AnalyticsTab extends ConsumerWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () => _confirmDeleteBatch(context, ref),
+                  onPressed: () => _handleDeleteBatchClick(context, ref),
                   icon: const Icon(Icons.delete_forever_rounded, color: Colors.white, size: 18),
                   label: const Text('DELETE BATCH', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                   style: ElevatedButton.styleFrom(
@@ -2077,6 +2125,32 @@ class _AnalyticsTab extends ConsumerWidget {
         ),
       ],
     );
+  }
+
+  Future<void> _handleDeleteBatchClick(BuildContext context, WidgetRef ref) async {
+    final settings = ref.read(localSettingsProvider);
+    
+    if (settings.biometricEnabled) {
+      final appLock = ref.read(appLockServiceProvider);
+      final canUse = await appLock.canUseBiometrics();
+      if (canUse) {
+        final authenticated = await appLock.authenticateWithBiometrics(
+          'Please authenticate to delete this batch',
+        );
+        if (!authenticated) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Authentication failed. Cannot delete batch.'), backgroundColor: Colors.red),
+            );
+          }
+          return;
+        }
+      }
+    }
+    
+    if (context.mounted) {
+      _confirmDeleteBatch(context, ref);
+    }
   }
 
   void _confirmDeleteBatch(BuildContext context, WidgetRef ref) {

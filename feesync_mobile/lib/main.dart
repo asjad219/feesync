@@ -63,7 +63,7 @@ class FeeSyncApp extends ConsumerWidget {
 
     final router = ref.watch(routerProvider);
     final settingsAsync = ref.watch(settingsProvider);
-    final themeModeStr = settingsAsync.value?.themeMode.toLowerCase() ?? 'light';
+    final themeModeStr = settingsAsync.value?.themeMode.toLowerCase() ?? 'dark_luxury';
     
     ThemeMode appThemeMode;
     if (themeModeStr == 'system') {

@@ -149,8 +149,6 @@ class _ProfileHeader extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 80,
-            height: 80,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               boxShadow: [
@@ -161,25 +159,11 @@ class _ProfileHeader extends StatelessWidget {
                 ),
               ],
             ),
-            child: ClipOval(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF2563EB), Color(0xFF7C3AED)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  initials,
-                  style: GoogleFonts.manrope(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
+            child: StudentAvatar(
+              studentId: student.id,
+              firstName: student.firstName,
+              gender: student.gender,
+              radius: 40,
             ),
           ),
           const SizedBox(width: 20),

@@ -47,7 +47,7 @@ final batchAnalyticsProvider = FutureProvider.family<BatchAnalytics, String>((re
     final paymentsResponse = await client
         .from('payments')
         .select('amount, payment_date')
-        .filter('student_id', 'in', '(${studentIds.join(',')})')
+        .inFilter('student_id', studentIds)
         .order('payment_date', ascending: true);
 
     for (final row in (paymentsResponse as List)) {

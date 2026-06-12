@@ -6,21 +6,25 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) throw new Error('Missing Authorization header')
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+      { global: { headers: { Authorization: authHeader } } }
     )
 
     // Check if user is admin
-    const { data: { user } } = await supabaseClient.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser()
+    if (userError || !userData?.user) throw new Error('Not authenticated')
+    const user = userData.user
 
     const { data: callerData, error: callerError } = await supabaseClient
       .from('users')
@@ -28,7 +32,7 @@ serve(async (req) => {
       .eq('id', user.id)
       .single()
 
-    if (callerError || callerData.role !== 'admin') {
+    if (callerError || !callerData || callerData.role !== 'admin') {
       throw new Error('Not authorized to delete staff')
     }
 
@@ -49,7 +53,7 @@ serve(async (req) => {
       .eq('id', targetUserId)
       .single()
       
-    if (targetError || targetData.account_id !== callerData.account_id) {
+    if (targetError || !targetData || targetData.account_id !== callerData.account_id) {
         throw new Error('User not found or not in your account')
     }
 

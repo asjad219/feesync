@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../models/student.dart';
 import '../theme/app_theme.dart';
+import 'student_avatar.dart';
+export 'student_avatar.dart';
 
 /// Status Badge Widget
 class StatusBadge extends StatelessWidget {
@@ -45,6 +48,9 @@ class StatusBadge extends StatelessWidget {
 
 /// Student Card Widget
 class StudentCard extends StatelessWidget {
+  final String studentId;
+  final String firstName;
+  final Gender? gender;
   final String name;
   final String className;
   final String? section;
@@ -55,6 +61,9 @@ class StudentCard extends StatelessWidget {
 
   const StudentCard({
     super.key,
+    required this.studentId,
+    required this.firstName,
+    this.gender,
     required this.name,
     required this.className,
     this.section,
@@ -83,14 +92,11 @@ class StudentCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Icon(Icons.person_rounded, color: AppColors.textTertiary, size: 28),
+            StudentAvatar(
+              studentId: studentId,
+              firstName: firstName,
+              gender: gender,
+              radius: 28,
             ),
             const SizedBox(width: 16),
             Expanded(

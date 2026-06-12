@@ -20,7 +20,7 @@ final batchStudentsProvider = FutureProvider.family<List<StudentBalance>, String
   final balancesResponse = await client
       .from('student_balances')
       .select()
-      .filter('id', 'in', '(${studentIds.join(',')})')
+      .inFilter('id', studentIds)
       .order('last_name');
   
   return (balancesResponse as List).map((json) => StudentBalance.fromJson(json)).toList();

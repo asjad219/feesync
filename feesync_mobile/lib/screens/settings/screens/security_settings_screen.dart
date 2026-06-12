@@ -410,7 +410,7 @@ class _SecuritySettingsScreenState
                   _divider(),
                   _infoRow('Environment', 'Production'),
                   _divider(),
-                  _infoRow('Support Email', 'support@feesync.com'),
+                  _infoRow('Support Email', 'artexplore764@gmail.com'),
                   _divider(),
                   _infoRow('Developer', 'FeeSync Team'),
                   _divider(),

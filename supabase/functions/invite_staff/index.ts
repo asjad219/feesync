@@ -6,21 +6,25 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) throw new Error('Missing Authorization header')
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+      { global: { headers: { Authorization: authHeader } } }
     )
 
     // Check if user is admin
-    const { data: { user } } = await supabaseClient.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser()
+    if (userError || !userData?.user) throw new Error('Not authenticated')
+    const user = userData.user
 
     const { data: callerData, error: callerError } = await supabaseClient
       .from('users')
@@ -28,7 +32,7 @@ serve(async (req) => {
       .eq('id', user.id)
       .single()
 
-    if (callerError || callerData.role !== 'admin') {
+    if (callerError || !callerData || callerData.role !== 'admin') {
       throw new Error('Not authorized to invite staff')
     }
 
@@ -44,20 +48,33 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // Find the original owner of the account to check subscription
+    const { data: adminUsers } = await supabaseAdmin
+      .from('users')
+      .select('id')
+      .eq('account_id', callerData.account_id)
+      .eq('role', 'admin')
+      .order('created_at', { ascending: true })
+      .limit(1)
+
+    const ownerId = adminUsers?.[0]?.id || user.id
+
     // Check staff limit
-    const { data: subData, error: subError } = await supabaseAdmin
+    const { data: subData } = await supabaseAdmin
       .from('subscriptions')
       .select('max_staff')
-      .eq('owner_id', user.id)
-      .single()
+      .eq('owner_id', ownerId)
+      .maybeSingle()
 
-    // Assuming subData might not exist if they haven't set it up, default to 1.
-    const maxStaff = subData?.max_staff ?? 1
+    // Assuming subData might not exist if they haven't set it up, default to 2.
+    const maxStaff = subData?.max_staff ?? 2
 
     const { count, error: countError } = await supabaseAdmin
       .from('users')
       .select('*', { count: 'exact', head: true })
       .eq('account_id', callerData.account_id)
+      .in('role', ['admin', 'accountant'])
+      .eq('is_active', true)
 
     if (countError) throw countError
 
@@ -68,17 +85,19 @@ serve(async (req) => {
     // Invite user via auth admin API
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
       email,
-      { 
-        data: { 
-          full_name: fullName, 
-          onboarding_complete: true, 
-          needs_password_set: true 
+      {
+        data: {
+          full_name: fullName,
+          onboarding_complete: true,
+          needs_password_set: true
         },
         redirectTo: 'feesync://reset-password'
       }
     )
 
-    if (authError) throw authError
+    if (authError || !authData?.user) {
+      throw authError || new Error('Failed to invite user')
+    }
     const newUserId = authData.user.id
 
     // Insert into public.users

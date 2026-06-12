@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../models/student.dart';
@@ -257,10 +258,10 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.share_rounded, size: 18, color: Colors.white),
+                      const FaIcon(FontAwesomeIcons.whatsapp, size: 18, color: Colors.white),
                       const SizedBox(width: 8),
                       Text(
-                        'SEND RECEIPT VIA WHATSAPP', 
+                        'SEND', 
                         style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: Colors.white)
                       ),
                     ],

@@ -233,6 +233,9 @@ class _StudentListScreenState extends ConsumerState<StudentListScreen> {
                                 itemBuilder: (context, index) {
                                   final student = filteredStudents[index];
                                   return StudentCard(
+                                    studentId: student.id,
+                                    firstName: student.firstName,
+                                    gender: student.gender,
                                     name: student.fullName,
                                     className: student.studentClass,
                                     admissionNo: student.admissionNumber,

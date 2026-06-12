@@ -175,7 +175,7 @@ class BatchListScreen extends ConsumerWidget {
 
       activeBatchesVal = activeCount.toString();
       totalStudentsVal = totalStudents.toString();
-      attendanceHealthVal = '${avgAttendance.round()}%';
+      attendanceHealthVal = '${(avgAttendance * 100).round()}%';
       monthlyRevenueVal = _formatRevenue(totalRevenue);
     }
 
