@@ -6,10 +6,13 @@ import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/currency_formatter.dart';
+import '../../core/widgets/paywall_dialog.dart';
+import '../../core/billing/feature_gate.dart';
 import '../../models/dashboard_stats.dart';
 import '../../providers/dashboard_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/user_provider.dart';
+import '../../providers/subscription_provider.dart';
 import '../../widgets/dashboard/monthly_analytics_chart.dart';
 import '../../widgets/dashboard/recent_transactions_widget.dart';
 import '../../widgets/dashboard/stat_card.dart';
@@ -114,7 +117,23 @@ class DashboardScreen extends ConsumerWidget {
           ],
         ),
         child: FloatingActionButton(
-          onPressed: () => context.push('/students/add'),
+          onPressed: () async {
+            final FeatureGate gate = ref.read(featureGateProvider).valueOrNull 
+                ?? await ref.read(featureGateProvider.future);
+            if (!gate.canAddStudent) {
+              if (context.mounted) {
+                await showPaywallDialog(
+                  context,
+                  ref,
+                  trigger: PaywallTrigger.studentLimit,
+                );
+              }
+              return;
+            }
+            if (context.mounted) {
+              context.push('/students/add');
+            }
+          },
           backgroundColor: Colors.transparent,
           elevation: 0,
           shape: const CircleBorder(),
@@ -546,14 +565,32 @@ class _BentoStatsGrid extends StatelessWidget {
   }
 }
 
-class _QuickActionsRow extends StatelessWidget {
+class _QuickActionsRow extends ConsumerWidget {
   const _QuickActionsRow();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final bool isDark = AppColors.isDarkMode;
     final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
     final secondaryColor = isDark ? const Color(0xFFD0BCFF) : const Color(0xFF7C3AED);
+
+    Future<void> onAddStudentTap() async {
+      final FeatureGate gate = ref.read(featureGateProvider).valueOrNull 
+          ?? await ref.read(featureGateProvider.future);
+      if (!gate.canAddStudent) {
+        if (context.mounted) {
+          await showPaywallDialog(
+            context,
+            ref,
+            trigger: PaywallTrigger.studentLimit,
+          );
+        }
+        return;
+      }
+      if (context.mounted) {
+        context.push('/students/add');
+      }
+    }
 
     return Row(
       children: [
@@ -567,7 +604,7 @@ class _QuickActionsRow extends StatelessWidget {
         _QuickAction(
           label: 'Add Student',
           icon: Icons.person_add_rounded,
-          onTap: () => context.push('/students/add'),
+          onTap: onAddStudentTap,
           actionColor: secondaryColor,
         ),
         const SizedBox(width: 12),

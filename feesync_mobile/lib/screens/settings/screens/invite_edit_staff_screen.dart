@@ -112,6 +112,9 @@ class _InviteEditStaffScreenState extends ConsumerState<InviteEditStaffScreen> {
           permissions: _permissions,
           isActive: _isActive,
         );
+        ref.invalidate(activeStaffCountProvider);
+        ref.invalidate(subscriptionScreenDataProvider);
+        ref.invalidate(featureGateProvider);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Staff updated successfully'), backgroundColor: AppColors.success),
@@ -126,16 +129,16 @@ class _InviteEditStaffScreenState extends ConsumerState<InviteEditStaffScreen> {
     }
   }
 
-  Future<void> _confirmDelete(BuildContext context) async {
+  Future<void> _confirmDelete() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.surfaceContainer,
         title: Text('Delete Staff?', style: TextStyle(color: AppColors.textPrimary)),
         content: Text('Are you sure you want to permanently delete this staff member? They will lose all access.', style: TextStyle(color: AppColors.textSecondary)),
         actions: [
-          TextButton(onPressed: () => context.pop(false), child: Text('Cancel', style: TextStyle(color: AppColors.textSecondary))),
-          TextButton(onPressed: () => context.pop(true), child: Text('Delete', style: TextStyle(color: AppColors.error))),
+          TextButton(onPressed: () => dialogContext.pop(false), child: Text('Cancel', style: TextStyle(color: AppColors.textSecondary))),
+          TextButton(onPressed: () => dialogContext.pop(true), child: Text('Delete', style: TextStyle(color: AppColors.error))),
         ],
       ),
     );
@@ -144,6 +147,9 @@ class _InviteEditStaffScreenState extends ConsumerState<InviteEditStaffScreen> {
       final notifier = ref.read(staffNotifierProvider.notifier);
       try {
         await notifier.deleteStaff(widget.existingStaff!.id);
+        ref.invalidate(activeStaffCountProvider);
+        ref.invalidate(subscriptionScreenDataProvider);
+        ref.invalidate(featureGateProvider);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Staff deleted'), backgroundColor: AppColors.success),
@@ -294,7 +300,7 @@ class _InviteEditStaffScreenState extends ConsumerState<InviteEditStaffScreen> {
                       side: BorderSide(color: AppColors.error),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    onPressed: isLoading ? null : () => _confirmDelete(context),
+                    onPressed: isLoading ? null : _confirmDelete,
                     child: Text('Delete Staff', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold)),
                   ),
                 ),

@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/paywall_dialog.dart';
+import '../../../core/billing/feature_gate.dart';
 import '../../widgets/dashboard/stat_card.dart';
 import '../../../providers/batch_provider.dart';
 import '../../../providers/subscription_provider.dart';
@@ -31,13 +32,15 @@ class BatchListScreen extends ConsumerWidget {
 
     // Paywall check: can the user add another batch?
     Future<void> onAddBatchTap() async {
-      final data = subDataAsync.valueOrNull;
-      if (data != null && !data.canAddBatch) {
-        await showPaywallDialog(
-          context,
-          ref,
-          trigger: PaywallTrigger.batchLimit,
-        );
+      final SubscriptionScreenData data = subDataAsync.valueOrNull ?? await ref.read(subscriptionScreenDataProvider.future);
+      if (!data.canAddBatch) {
+        if (context.mounted) {
+          await showPaywallDialog(
+            context,
+            ref,
+            trigger: PaywallTrigger.batchLimit,
+          );
+        }
         return;
       }
       if (context.mounted) context.push('/batches/create');
@@ -89,7 +92,23 @@ class BatchListScreen extends ConsumerWidget {
                           batch: batch,
                           onView: () => context.push('/batches/${batch.id}'),
                           onMarkAttendance: () => context.push('/batches/${batch.id}?tab=2'),
-                          onAddStudent: () => context.push('/students/add?batchId=${batch.id}'),
+                           onAddStudent: () async {
+                            final FeatureGate gate = ref.read(featureGateProvider).valueOrNull 
+                                ?? await ref.read(featureGateProvider.future);
+                            if (!gate.canAddStudent) {
+                              if (context.mounted) {
+                                await showPaywallDialog(
+                                  context,
+                                  ref,
+                                  trigger: PaywallTrigger.studentLimit,
+                                );
+                              }
+                              return;
+                            }
+                            if (context.mounted) {
+                              context.push('/students/add?batchId=${batch.id}');
+                            }
+                          },
                         );
                       },
                     );

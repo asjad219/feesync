@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -9,6 +11,8 @@ class StudentAvatar extends StatelessWidget {
   final String firstName;
   final Gender? gender;
   final double radius;
+
+  static final Map<String, String> _svgCache = {};
 
   const StudentAvatar({
     super.key, 
@@ -33,6 +37,29 @@ class StudentAvatar extends StatelessWidget {
         : '339af0,228be6,1c7ed6,2b8a3e';
 
     return 'https://api.dicebear.com/9.x/avataaars/svg?seed=$seed&top=$tops&clothingColor=$clothingColor&backgroundColor=e6f0fa,f3e8ff,ffe3e3';
+  }
+
+  Future<String?> _fetchSvg(String url) async {
+    if (_svgCache.containsKey(url)) {
+      return _svgCache[url];
+    }
+    
+    try {
+      final client = HttpClient();
+      client.connectionTimeout = const Duration(seconds: 3);
+      final request = await client.getUrl(Uri.parse(url));
+      final response = await request.close().timeout(const Duration(seconds: 3));
+      
+      if (response.statusCode == 200) {
+        final contents = await response.transform(utf8.decoder).join();
+        _svgCache[url] = contents;
+        return contents;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error fetching avatar: $e');
+      return null;
+    }
   }
 
   @override
@@ -63,26 +90,32 @@ class StudentAvatar extends StatelessWidget {
       child: SizedBox(
         width: radius * 2,
         height: radius * 2,
-        child: SvgPicture.network(
-          _getAvatarUrl(),
-          fit: BoxFit.cover,
-          placeholderBuilder: (context) => Container(
-            color: primaryColor.withValues(alpha: 0.1),
-            child: const Center(
-              child: SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            ),
-          ),
-          // SvgPicture throws errors internally but we can catch them if needed. 
-          // However, the builder handles displaying something else if SVG fails.
-          // In flutter_svg, if the network fails, it shows the placeholder if we don't supply an errorBuilder?
-          // Actually, we can just supply a builder if needed, but since we are using SvgPicture.network, 
-          // let's wrap it nicely. Wait, flutter_svg doesn't have an errorBuilder out of the box in some versions.
-          // It does have `placeholderBuilder` which acts until loaded. 
-          // If it fails, it might log. But we are satisfying "vector avatar" and "boy/girl" and "professional".
+        child: FutureBuilder<String?>(
+          future: _fetchSvg(_getAvatarUrl()),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Container(
+                color: primaryColor.withValues(alpha: 0.1),
+                child: const Center(
+                  child: SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              );
+            }
+            
+            if (snapshot.hasData && snapshot.data != null) {
+              return SvgPicture.string(
+                snapshot.data!,
+                fit: BoxFit.cover,
+                placeholderBuilder: (context) => fallbackWidget,
+              );
+            }
+            
+            return fallbackWidget;
+          },
         ),
       ),
     );

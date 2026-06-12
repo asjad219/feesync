@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/custom_widgets.dart';
 import '../../core/widgets/paywall_dialog.dart';
+import '../../core/billing/feature_gate.dart';
 import '../../core/widgets/error_dialog.dart';
 import '../../models/models.dart';
 import '../../providers/providers.dart';
@@ -183,20 +184,28 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 28),
-              // --- Create Batch Button ---
               GestureDetector(
                 onTap: () async {
                   Navigator.of(sheetContext).pop(); // dismiss sheet
+                  final FeatureGate gate = ref.read(featureGateProvider).valueOrNull 
+                      ?? await ref.read(featureGateProvider.future);
+                  if (!mounted) return;
+                  if (!gate.canAddBatch) {
+                    await showPaywallDialog(
+                      context,
+                      ref,
+                      trigger: PaywallTrigger.batchLimit,
+                    );
+                    return;
+                  }
                   final router = GoRouter.of(context);
                   await router.push('/batches/create'); // navigate to batch creation
-                  if (mounted) {
-                    await ref.read(batchNotifierProvider.notifier).loadBatches();
-                    if (mounted) {
-                      final batches = ref.read(batchNotifierProvider).value ?? [];
-                      if (batches.isEmpty) {
-                        router.pop(); // go back since they didn't create a batch
-                      }
-                    }
+                  if (!mounted) return;
+                  await ref.read(batchNotifierProvider.notifier).loadBatches();
+                  if (!mounted) return;
+                  final batches = ref.read(batchNotifierProvider).value ?? [];
+                  if (batches.isEmpty) {
+                    router.pop(); // go back since they didn't create a batch
                   }
                 },
                 child: Container(

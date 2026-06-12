@@ -5,8 +5,11 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/glass/glass_card.dart';
+import '../../../core/widgets/paywall_dialog.dart';
+import '../../../core/billing/feature_gate.dart';
 import '../../../providers/staff_provider.dart';
 import '../../../providers/user_provider.dart';
+import '../../../providers/subscription_provider.dart';
 
 class StaffListScreen extends ConsumerWidget {
   const StaffListScreen({super.key});
@@ -38,7 +41,23 @@ class StaffListScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: Icon(Icons.person_add_rounded, color: AppColors.primary),
-            onPressed: () => context.push('/settings/staff/invite'),
+            onPressed: () async {
+              final FeatureGate gate = ref.read(featureGateProvider).valueOrNull 
+                  ?? await ref.read(featureGateProvider.future);
+              if (!gate.canAddStaff) {
+                if (context.mounted) {
+                  await showPaywallDialog(
+                    context,
+                    ref,
+                    trigger: PaywallTrigger.staffLimit,
+                  );
+                }
+                return;
+              }
+              if (context.mounted) {
+                context.push('/settings/staff/invite');
+              }
+            },
           ),
           const SizedBox(width: 8),
         ],

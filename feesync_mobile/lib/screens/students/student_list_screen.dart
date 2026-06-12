@@ -4,7 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/custom_widgets.dart';
+import '../../core/widgets/paywall_dialog.dart';
+import '../../core/billing/feature_gate.dart';
 import '../../providers/providers.dart';
+import '../../providers/subscription_provider.dart';
 
 final studentSearchProvider = StateProvider<String>((ref) => '');
 final studentClassFilterProvider = StateProvider<String?>((ref) => null);
@@ -277,7 +280,23 @@ class _StudentListScreenState extends ConsumerState<StudentListScreen> {
           shape: BoxShape.circle,
         ),
         child: FloatingActionButton(
-          onPressed: () => context.push('/students/add'),
+          onPressed: () async {
+            final FeatureGate gate = ref.read(featureGateProvider).valueOrNull 
+                ?? await ref.read(featureGateProvider.future);
+            if (!gate.canAddStudent) {
+              if (context.mounted) {
+                await showPaywallDialog(
+                  context,
+                  ref,
+                  trigger: PaywallTrigger.studentLimit,
+                );
+              }
+              return;
+            }
+            if (context.mounted) {
+              context.push('/students/add');
+            }
+          },
           backgroundColor: Colors.transparent,
           elevation: 0,
           child: const Icon(Icons.add, size: 32, color: Colors.white),

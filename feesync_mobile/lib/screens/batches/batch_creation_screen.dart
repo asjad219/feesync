@@ -262,6 +262,9 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
           'custom_auto_due_generation': _useGlobalBilling ? null : _customAutoDueGeneration,
         };
         await ref.read(batchNotifierProvider.notifier).updateBatch(widget.batchId!, updatedData);
+        ref.invalidate(activeBatchCountProvider);
+        ref.invalidate(subscriptionScreenDataProvider);
+        ref.invalidate(featureGateProvider);
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

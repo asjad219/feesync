@@ -6,7 +6,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/custom_widgets.dart';
 import '../../../core/widgets/glass/glass_card.dart';
+import '../../../core/widgets/paywall_dialog.dart';
+import '../../../core/billing/feature_gate.dart';
 import '../../../providers/providers.dart';
+import '../../../providers/subscription_provider.dart';
 import '../../../models/models.dart';
 import '../../../providers/local_settings_provider.dart';
 import '../../../services/app_lock_service.dart';
@@ -95,13 +98,27 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
             batch: batch,
             onAttendanceTap: () => _tabController.animateTo(2),
             onAddStudentTap: () async {
-              // Navigate to add student with this batch pre-selected
-              await context.push('/students/add?batchId=${batch.id}');
-              // Refresh data upon returning
-              ref.invalidate(batchStudentsProvider(batch.id));
-              ref.invalidate(batchAnalyticsProvider(batch.id));
-              ref.invalidate(batchByIdProvider(batch.id));
-              ref.invalidate(batchNotifierProvider);
+              final FeatureGate gate = ref.read(featureGateProvider).valueOrNull 
+                  ?? await ref.read(featureGateProvider.future);
+              if (!gate.canAddStudent) {
+                if (mounted) {
+                  await showPaywallDialog(
+                    context,
+                    ref,
+                    trigger: PaywallTrigger.studentLimit,
+                  );
+                }
+                return;
+              }
+              if (mounted) {
+                // Navigate to add student with this batch pre-selected
+                await context.push('/students/add?batchId=${batch.id}');
+                // Refresh data upon returning
+                ref.invalidate(batchStudentsProvider(batch.id));
+                ref.invalidate(batchAnalyticsProvider(batch.id));
+                ref.invalidate(batchByIdProvider(batch.id));
+                ref.invalidate(batchNotifierProvider);
+              }
             },
             onRemindersTap: () => context.push('/notifications'),
             onEditTap: () => context.push('/batches/create?batchId=${batch.id}'),
@@ -2157,7 +2174,7 @@ class _AnalyticsTab extends ConsumerWidget {
     final bool isDark = AppColors.isDarkMode;
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: isDark ? const Color(0xFF1E1E2C) : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('Delete Batch?', style: GoogleFonts.manrope(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
@@ -2165,17 +2182,20 @@ class _AnalyticsTab extends ConsumerWidget {
           style: GoogleFonts.inter(color: isDark ? Colors.white70 : Colors.black87)),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('CANCEL'),
           ),
           ElevatedButton(
             onPressed: () async {
-              Navigator.pop(context); // close dialog
+              Navigator.pop(dialogContext); // close dialog using dialogContext
               try {
                 await ref.read(batchNotifierProvider.notifier).deleteBatch(batchId);
+                ref.invalidate(activeBatchCountProvider);
+                ref.invalidate(subscriptionScreenDataProvider);
+                ref.invalidate(featureGateProvider);
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Batch deleted successfully')));
-                  context.go('/batches'); // Navigate back to batches list
+                  context.go('/batches'); // Navigate back to batches list using outer context
                 }
               } catch (e) {
                 if (context.mounted) {

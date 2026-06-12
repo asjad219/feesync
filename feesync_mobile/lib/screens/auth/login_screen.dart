@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/google_auth_helper.dart';
 import '../../core/widgets/error_dialog.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -31,6 +33,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         email: _emailController.text.trim(), 
         password: _passwordController.text,
       );
+    } catch (e) {
+      if (mounted) {
+        showErrorDialog(context, e);
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _loginWithGoogle() async {
+    setState(() => _isLoading = true);
+    try {
+      await GoogleAuthHelper.signInWithGoogle();
     } catch (e) {
       if (mounted) {
         showErrorDialog(context, e);
@@ -95,6 +110,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             _buildLoginButton(),
             const SizedBox(height: 24),
             Row(
+              children: [
+                Expanded(child: Divider(color: AppColors.textTertiary.withValues(alpha: 0.2))),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text('OR', style: GoogleFonts.inter(fontSize: 12, color: AppColors.textTertiary, fontWeight: FontWeight.w600)),
+                ),
+                Expanded(child: Divider(color: AppColors.textTertiary.withValues(alpha: 0.2))),
+              ],
+            ),
+            const SizedBox(height: 24),
+            _buildGoogleButton(),
+            const SizedBox(height: 32),
+            Row(
               mainAxisAlignment: MainAxisAlignment.center, 
               children: [
                 Text("Don't have an account? ", style: GoogleFonts.inter(fontSize: 14, color: AppColors.textTertiary)),
@@ -147,6 +175,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         onPressed: _isLoading ? null : _login,
         style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent),
         child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : Text('LOGIN', style: GoogleFonts.inter(fontWeight: FontWeight.w700, letterSpacing: 1)),
+      ),
+    );
+  }
+
+  Widget _buildGoogleButton() {
+    return OutlinedButton.icon(
+      onPressed: _isLoading ? null : _loginWithGoogle,
+      icon: FaIcon(
+        FontAwesomeIcons.google,
+        size: 18,
+        color: AppColors.textPrimary,
+      ),
+      label: Text(
+        'Continue with Google',
+        style: GoogleFonts.inter(
+          fontWeight: FontWeight.w600,
+          fontSize: 15,
+          color: AppColors.textPrimary,
+        ),
+      ),
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size.fromHeight(56),
+        side: BorderSide(color: AppColors.textTertiary.withValues(alpha: 0.3)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+        backgroundColor: AppColors.surfaceContainer.withValues(alpha: 0.5),
       ),
     );
   }
