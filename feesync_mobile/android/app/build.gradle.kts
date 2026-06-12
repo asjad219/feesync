@@ -20,7 +20,7 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "com.feesync.feesync_mobile"
     compileSdk = 36
-    // buildToolsVersion = "35.0.0"
+    // buildToolsVersion = "34.0.0"
     ndkVersion = "28.2.13676358"
 
     compileOptions {
@@ -35,7 +35,7 @@ android {
     defaultConfig {
         applicationId = "com.feesync.feesync_mobile"
         minSdk = flutter.minSdkVersion
-        targetSdk = 36
+        targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true
@@ -56,15 +56,19 @@ android {
                 storeFile = project.file(storeFileStr)
             }
             storePassword = keystoreProperties["storePassword"] as String? ?: ""
+            enableV1Signing = true
+            enableV2Signing = true
+            enableV3Signing = true
+            enableV4Signing = true
         }
     }
 
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
-            // Enable R8 shrinking for release
-            isMinifyEnabled = true
-            isShrinkResources = true
+            // Disable R8 shrinking to prevent plugin crashes on launch
+            isMinifyEnabled = false
+            isShrinkResources = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
