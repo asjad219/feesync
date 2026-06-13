@@ -54,7 +54,7 @@ class StudentCard extends StatelessWidget {
   final String name;
   final String className;
   final String? section;
-  final double balance;
+  final double dueAmount;
   final String status;
   final String? admissionNo;
   final VoidCallback? onTap;
@@ -67,7 +67,7 @@ class StudentCard extends StatelessWidget {
     required this.name,
     required this.className,
     this.section,
-    required this.balance,
+    required this.dueAmount,
     required this.status,
     this.admissionNo,
     this.onTap,
@@ -130,10 +130,10 @@ class StudentCard extends StatelessWidget {
                       color: AppColors.textTertiary,
                     ),
                   ),
-                  if (balance > 0) ...[
+                  if (dueAmount > 0) ...[
                     const SizedBox(height: 8),
                     Text(
-                      'Outstanding: ₹${balance.toStringAsFixed(0)}',
+                      'Due Amount: ₹${dueAmount.toStringAsFixed(0)}',
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,

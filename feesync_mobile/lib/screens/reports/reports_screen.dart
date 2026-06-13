@@ -86,7 +86,7 @@ class ReportsScreen extends ConsumerWidget {
                       csvBuffer.writeln('Metric,Value');
                       csvBuffer.writeln('Total Students,${stats.totalStudents}');
                       csvBuffer.writeln('Total Revenue (Collected),${stats.totalFeesCollected}');
-                      csvBuffer.writeln('${stats.pendingFees < 0 ? 'Advance Dues' : 'Outstanding Dues'},${stats.pendingFees.abs()}');
+                      csvBuffer.writeln('${stats.pendingFees < 0 ? 'Advance Dues' : 'Due Amount'},${stats.pendingFees.abs()}');
                       csvBuffer.writeln('Collection Rate,${stats.collectionRate.toStringAsFixed(1)}%');
                       csvBuffer.writeln();
                       csvBuffer.writeln('Revenue Trend');
@@ -140,7 +140,7 @@ class ReportsScreen extends ConsumerWidget {
                         'Last Updated: ${DateFormat('yyyy-MM-dd HH:mm').format(stats.lastUpdated)}\n\n'
                         '• Total Students: ${stats.totalStudents}\n'
                         '• Total Revenue (Collected): ${currencyFormatter.format(stats.totalFeesCollected)}\n'
-                        '• ${stats.pendingFees < 0 ? 'Advance Dues' : 'Outstanding Dues'}: ${currencyFormatter.format(stats.pendingFees.abs())}\n'
+                        '• ${stats.pendingFees < 0 ? 'Advance Dues' : 'Due Amount'}: ${currencyFormatter.format(stats.pendingFees.abs())}\n'
                         '• Collection Rate: ${stats.collectionRate.toStringAsFixed(1)}%\n\n'
                         'Generated from FeeSync app settings analytics.';
                     SharePlus.instance.share(
@@ -233,7 +233,7 @@ class _KeyMetricsGrid extends StatelessWidget {
             ),
             const SizedBox(width: 16),
             _MetricMiniCard(
-              label: stats.pendingFees < 0 ? 'ADVANCE' : 'OUTSTANDING', 
+              label: stats.pendingFees < 0 ? 'ADVANCE' : 'DUE AMOUNT', 
               value: currencyFormatter.format(stats.pendingFees.abs()), 
               color: stats.pendingFees < 0 ? AppColors.success : AppColors.error,
               icon: stats.pendingFees < 0 ? Icons.account_balance_wallet_rounded : Icons.warning_amber_rounded,

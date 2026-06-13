@@ -21,7 +21,7 @@ class SubscriptionRepository {
       final response = await _client
           .from('subscriptions')
           .select()
-          .eq('owner_id', uid)
+          .eq('user_id', uid)
           .maybeSingle();
 
       if (response == null) {
@@ -43,14 +43,17 @@ class SubscriptionRepository {
       final response = await _client
           .from('subscriptions')
           .insert({
-            'owner_id':                  uid,
-            'plan_tier':                 'free',
+            'user_id':                   uid,
+            'plan_type':                 'free',
             'billing_cycle':             'monthly',
             'max_students':              defaultSub.maxStudents,
             'max_batches':               defaultSub.maxBatches,
             'whatsapp_receipts_limit':   defaultSub.whatsappReceiptsLimit,
             'whatsapp_reminders_limit':  defaultSub.whatsappRemindersLimit,
             'sms_limit':                 defaultSub.smsLimit,
+            'max_staff':                 defaultSub.maxStaff,
+            'status':                    defaultSub.status,
+            'start_date':                defaultSub.startDate.toIso8601String(),
           })
           .select()
           .single();
@@ -142,10 +145,10 @@ class SubscriptionRepository {
     final uid = _ownerId;
     if (uid == null) throw Exception('Not authenticated');
 
-    final payload = {...data, 'owner_id': uid};
+    final payload = {...data, 'user_id': uid};
     final response = await _client
         .from('subscriptions')
-        .upsert(payload, onConflict: 'owner_id')
+        .upsert(payload, onConflict: 'user_id')
         .select()
         .single();
 

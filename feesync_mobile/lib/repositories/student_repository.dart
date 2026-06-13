@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/student.dart';
 
@@ -59,48 +60,120 @@ class StudentRepository {
   }
 
   Future<Student> createStudent(Map<String, dynamic> data) async {
-    final response = await _client
-        .from('students')
-        .insert(data)
-        .select()
-        .single();
+    try {
+      final response = await _client
+          .from('students')
+          .insert(data)
+          .select()
+          .single();
 
-    final student = Student.fromJson(response);
+      final student = Student.fromJson(response);
 
-    // Sync with student_enrollments
-    if (data['batch_id'] != null) {
-      await _client.from('student_enrollments').upsert({
-        'account_id': data['account_id'],
-        'student_id': student.id,
-        'batch_id': data['batch_id'],
-        'status': 'active',
-      });
+      // Sync with student_enrollments
+      if (data['batch_id'] != null) {
+        await _client.from('student_enrollments').upsert({
+          'account_id': data['account_id'],
+          'student_id': student.id,
+          'batch_id': data['batch_id'],
+          'status': 'active',
+        });
+      }
+
+      return student;
+    } on PostgrestException catch (e) {
+      if (e.code == '23505' || e.message.contains('student_enrollments_student_id_batch_id_key')) {
+        throw Exception('This student is already enrolled in the selected batch.');
+      }
+      rethrow;
     }
-
-    return student;
   }
 
   Future<Student> updateStudent(String id, Map<String, dynamic> data) async {
-    final response = await _client
-        .from('students')
-        .update(data)
-        .eq('id', id)
-        .select()
-        .single();
+    try {
+      // Fetch the student's current record to see the original batch_id
+      final currentStudent = await _client
+          .from('students')
+          .select('batch_id')
+          .eq('id', id)
+          .single();
+      final originalBatchId = currentStudent['batch_id'] as String?;
+      final selectedBatchId = data['batch_id'] as String?;
 
-    final student = Student.fromJson(response);
+      debugPrint('--- STUDENT UPDATE DEBUG START ---');
+      debugPrint('Student ID: $id');
+      debugPrint('Original Batch ID: $originalBatchId');
+      debugPrint('Selected Batch ID: $selectedBatchId');
 
-    // Sync with student_enrollments if batch_id changed or is provided
-    if (data['batch_id'] != null) {
-      await _client.from('student_enrollments').upsert({
-        'account_id': data['account_id'],
-        'student_id': id,
-        'batch_id': data['batch_id'],
-        'status': 'active',
-      });
+      final updates = Map<String, dynamic>.from(data);
+      // Avoid overwriting admission_number on update to keep it stable
+      updates.remove('admission_number');
+
+      final response = await _client
+          .from('students')
+          .update(updates)
+          .eq('id', id)
+          .select()
+          .single();
+
+      final student = Student.fromJson(response);
+
+      // Sync with student_enrollments if batch_id changed
+      if (selectedBatchId != null && selectedBatchId != originalBatchId) {
+        debugPrint('Batch changed from $originalBatchId to $selectedBatchId. Updating enrollments...');
+        
+        // Mark old enrollment as dropped (if originalBatchId exists)
+        if (originalBatchId != null) {
+          debugPrint('Updating old enrollment status to dropped for student_id: $id, batch_id: $originalBatchId');
+          await _client
+              .from('student_enrollments')
+              .update({'status': 'dropped'})
+              .eq('student_id', id)
+              .eq('batch_id', originalBatchId);
+        }
+
+        // Check whether enrollment already exists for selectedBatchId
+        final existingEnrollment = await _client
+            .from('student_enrollments')
+            .select()
+            .eq('student_id', id)
+            .eq('batch_id', selectedBatchId)
+            .maybeSingle();
+
+        debugPrint('Existing enrollment check result: ${existingEnrollment != null}');
+
+        if (existingEnrollment != null) {
+          final enrollmentId = existingEnrollment['id'];
+          debugPrint('Enrollment ID: $enrollmentId');
+          debugPrint('Attempting UPDATE on existing enrollment status to active...');
+          await _client
+              .from('student_enrollments')
+              .update({'status': 'active'})
+              .eq('id', enrollmentId);
+        } else {
+          debugPrint('Attempting INSERT of new active enrollment...');
+          await _client.from('student_enrollments').insert({
+            'account_id': data['account_id'],
+            'student_id': id,
+            'batch_id': selectedBatchId,
+            'status': 'active',
+          });
+        }
+      } else {
+        debugPrint('Batch did not change or selectedBatchId is null. Skipping student_enrollments modification.');
+      }
+
+      debugPrint('--- STUDENT UPDATE DEBUG END ---');
+      return student;
+    } on PostgrestException catch (e) {
+      debugPrint('PostgrestException in updateStudent: $e');
+      if (e.code == '23505' || e.message.contains('student_enrollments_student_id_batch_id_key')) {
+        throw Exception('This student is already enrolled in the selected batch.');
+      }
+      rethrow;
+    } catch (e) {
+      debugPrint('Exception in updateStudent: $e');
+      rethrow;
     }
-
-    return student;
   }
 
   Future<void> deleteStudent(String id) async {

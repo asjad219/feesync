@@ -34,7 +34,7 @@ export default function NotificationSettingsPage() {
     formState: { errors },
     reset
   } = useForm<NotificationSettingsInput>({
-    resolver: zodResolver(notificationSettingsSchema),
+    resolver: zodResolver(notificationSettingsSchema) as any,
     values: settings ? {
       auto_reminder_days: settings.auto_reminder_days,
       reminder_frequency: settings.reminder_frequency,

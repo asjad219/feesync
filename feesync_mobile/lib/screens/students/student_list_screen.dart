@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/custom_widgets.dart';
 import '../../core/widgets/paywall_dialog.dart';
 import '../../core/billing/feature_gate.dart';
+import '../../models/student.dart';
 import '../../providers/providers.dart';
 import '../../providers/subscription_provider.dart';
 
@@ -29,13 +30,13 @@ class _StudentListScreenState extends ConsumerState<StudentListScreen> {
     super.dispose();
   }
 
-  String _getPaymentStatus(double balance, {bool aiPredictionsEnabled = false}) {
-    if (balance > 0) {
+  String _getPaymentStatus(StudentBalance student, {bool aiPredictionsEnabled = false}) {
+    if (student.dueAmount > 0) {
       if (aiPredictionsEnabled) {
-        if (balance >= 5000) return 'HIGH RISK';
-        if (balance >= 1000) return 'AT RISK';
+        if (student.dueAmount >= 5000) return 'HIGH RISK';
+        if (student.dueAmount >= 1000) return 'AT RISK';
       }
-      return 'OVERDUE';
+      return student.status;
     }
     return 'PAID';
   }
@@ -76,14 +77,14 @@ class _StudentListScreenState extends ConsumerState<StudentListScreen> {
                   _buildFilterOption(
                     context: context,
                     ref: ref,
-                    label: 'Overdue (Pending Fees)',
+                    label: 'Overdue / Due (Pending Dues)',
                     value: 'OVERDUE',
                     groupValue: currentStatus,
                   ),
                   _buildFilterOption(
                     context: context,
                     ref: ref,
-                    label: 'Paid (No Outstanding)',
+                    label: 'Paid (No Due Amount)',
                     value: 'PAID',
                     groupValue: currentStatus,
                   ),
@@ -189,7 +190,8 @@ class _StudentListScreenState extends ConsumerState<StudentListScreen> {
                     student.studentClass == classFilter;
 
                 final matchesStatus = statusFilter == null ||
-                    _getPaymentStatus(student.balance, aiPredictionsEnabled: aiPredictionsEnabled) == statusFilter;
+                    (statusFilter == 'PAID' && _getPaymentStatus(student, aiPredictionsEnabled: aiPredictionsEnabled) == 'PAID') ||
+                    (statusFilter == 'OVERDUE' && _getPaymentStatus(student, aiPredictionsEnabled: aiPredictionsEnabled) != 'PAID');
 
                 return matchesSearch && matchesClass && matchesStatus;
               }).toList();
@@ -242,8 +244,8 @@ class _StudentListScreenState extends ConsumerState<StudentListScreen> {
                                     name: student.fullName,
                                     className: student.studentClass,
                                     admissionNo: student.admissionNumber,
-                                    balance: student.balance.abs(),
-                                    status: _getPaymentStatus(student.balance, aiPredictionsEnabled: aiPredictionsEnabled),
+                                    dueAmount: student.dueAmount,
+                                    status: _getPaymentStatus(student, aiPredictionsEnabled: aiPredictionsEnabled),
                                     onTap: () => context.push('/students/${student.id}'),
                                   );
                                 },

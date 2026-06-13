@@ -122,6 +122,8 @@ class StudentBalance {
   final double totalFeeAmount;
   final double totalPaidAmount;
   final double balance;
+  final double dueAmount;
+  final String status;
 
   StudentBalance({
     required this.id,
@@ -140,6 +142,8 @@ class StudentBalance {
     required this.totalFeeAmount,
     required this.totalPaidAmount,
     required this.balance,
+    required this.dueAmount,
+    required this.status,
   });
 
   String get fullName => '$firstName $lastName';
@@ -165,6 +169,8 @@ class StudentBalance {
       totalFeeAmount: double.parse(json['total_fee_amount'].toString()),
       totalPaidAmount: double.parse(json['total_paid_amount'].toString()),
       balance: double.parse(json['balance'].toString()),
+      dueAmount: double.parse((json['due_amount'] ?? 0).toString()),
+      status: json['status'] ?? 'DUE',
     );
   }
 }

@@ -155,7 +155,7 @@ class SubscriptionScreenData {
   // ─── Staff limit ────────────────────────────────────────────────────────────
 
   double get staffUsageRatio {
-    final max = subscription.maxStaff;
+    final max = subscription.currentMaxStaff;
     if (max < 0) return 0.0;
     if (max == 0) return 1.0;
     return (activeStaffCount / max).clamp(0.0, 1.0);
@@ -167,7 +167,7 @@ class SubscriptionScreenData {
   /// True if adding one more staff is allowed.
   bool get canAddStaff {
     if (subscription.hasUnlimitedStaff) return true;
-    return activeStaffCount < subscription.maxStaff;
+    return activeStaffCount < subscription.currentMaxStaff;
   }
 
   // ─── WhatsApp Limits ────────────────────────────────────────────────────────

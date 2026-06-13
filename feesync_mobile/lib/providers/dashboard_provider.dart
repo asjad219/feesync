@@ -25,6 +25,14 @@ enum TimeCycle {
 
 final selectedTimeCycleProvider = StateProvider<TimeCycle>((ref) => TimeCycle.monthly);
 
+void invalidateDashboardAnalytics(WidgetRef ref) {
+  ref.invalidate(dashboardStatsProvider);
+  ref.invalidate(monthlyCollectionDataProvider);
+  ref.invalidate(categoryCollectionDataProvider);
+  ref.invalidate(classCollectionDataProvider);
+  ref.invalidate(recentTransactionsProvider);
+}
+
 final dashboardStatsProvider = FutureProvider<DashboardStats>((ref) async {
   final cycle = ref.watch(selectedTimeCycleProvider);
   final repo = ref.watch(dashboardAnalyticsRepositoryProvider);
@@ -58,6 +66,7 @@ class DashboardAnalyticsRepository {
   final PaymentRepository _paymentRepo;
   final StudentRepository _studentRepo;
   final FeeRepository _feeRepo;
+  static const _excludedDueStatuses = {'cancelled', 'deleted'};
 
   DashboardAnalyticsRepository(
     this._paymentRepo,
@@ -66,135 +75,81 @@ class DashboardAnalyticsRepository {
   );
 
   /// Get overall dashboard statistics
-  Future<DashboardStats> getDashboardStats() async {
-    try {
-      // Get total students
-      final students = await _studentRepo.getStudents();
-      final totalStudents = students.length;
-
-      // Get balance information
-      final balances = await _studentRepo.getStudentBalances();
-      final totalPending = balances.fold<double>(
-        0,
-        (sum, balance) => sum + balance.balance,
-      );
-
-      // Get total collected this month
-      final now = DateTime.now();
-      final monthStart = DateTime(now.year, now.month, 1);
-      final monthEnd = DateTime(now.year, now.month + 1, 0);
-
-      final monthlyCollection = await _paymentRepo.getTotalCollection(
-        startDate: monthStart,
-        endDate: monthEnd,
-      );
-      final collectedThisMonth =
-          (monthlyCollection['total'] as num?)?.toDouble() ?? 0;
-
-      // Get all-time collection
-      final allTimeCollection = await _paymentRepo.getTotalCollection();
-      final totalCollected =
-          (allTimeCollection['total'] as num?)?.toDouble() ?? 0;
-
-      // Calculate collection rate
-      final totalFees = balances.fold<double>(
-        totalCollected,
-        (sum, balance) => sum + balance.totalFeeAmount,
-      );
-
-      final collectionRate =
-          totalFees > 0 ? (totalCollected / totalFees) * 100 : 0.0;
-
-      return DashboardStats(
-        totalStudents: totalStudents,
-        totalFeesCollected: collectedThisMonth,
-        pendingFees: totalPending,
-        collectionRate: collectionRate.toDouble(),
-        lastUpdated: DateTime.now(),
-      );
-    } catch (e) {
-      debugPrint('Error fetching dashboard stats: $e');
-      rethrow;
-    }
-  }
+  Future<DashboardStats> getDashboardStats() => getDashboardStatsForCycle(TimeCycle.monthly);
 
   /// Get dashboard statistics filtered by time cycle
   Future<DashboardStats> getDashboardStatsForCycle(TimeCycle cycle) async {
     try {
       final now = DateTime.now();
-      DateTime startDate;
-      DateTime endDate;
+      final cycleRange = _rangeForCycle(now, cycle);
+      final previousCycleRange = _previousRangeForCycle(cycleRange, cycle);
 
-      switch (cycle) {
-        case TimeCycle.monthly:
-          startDate = DateTime(now.year, now.month, 1);
-          endDate = DateTime(now.year, now.month + 1, 0);
-          break;
-        case TimeCycle.quarterly:
-          int quarterMonth = (((now.month - 1) ~/ 3) * 3) + 1;
-          startDate = DateTime(now.year, quarterMonth, 1);
-          endDate = DateTime(now.year, quarterMonth + 3, 0);
-          break;
-        case TimeCycle.yearly:
-          startDate = DateTime(now.year, 1, 1);
-          endDate = DateTime(now.year, 12, 31);
-          break;
-      }
+      final results = await Future.wait<dynamic>([
+        _studentRepo.getStudents(),
+        _studentRepo.getStudentBalances(),
+        _paymentRepo.getTotalCollection(
+          startDate: cycleRange.start,
+          endDate: cycleRange.endInclusive,
+        ),
+        _paymentRepo.getTotalCollection(
+          startDate: previousCycleRange.start,
+          endDate: previousCycleRange.endInclusive,
+        ),
+        _paymentRepo.getTotalCollection(),
+        _feeRepo.getDues(),
+      ]);
 
-      // Get total students
-      final students = await _studentRepo.getStudents();
+      final students = results[0] as List;
+      final balances = results[1] as List;
+      final periodCollection = results[2] as Map<String, dynamic>;
+      final previousPeriodCollection = results[3] as Map<String, dynamic>;
+      final allTimeCollection = results[4] as Map<String, dynamic>;
+      final dues = results[5] as List;
+
       final totalStudents = students.length;
-
-      // Get total collected in this period
-      final periodCollection = await _paymentRepo.getTotalCollection(
-        startDate: startDate,
-        endDate: endDate,
+      final totalPending = balances.fold<double>(
+        0,
+        (sum, balance) => sum + (balance.dueAmount as double),
       );
-      final totalCollectedInPeriod =
-          (periodCollection['total'] as num?)?.toDouble() ?? 0;
 
-      // Get outstanding and expected amount from dues table for this period
-      double totalOutstanding = 0;
-      double totalAssigned = 0;
+      final totalCollectedInPeriod = _extractTotal(periodCollection);
+      final totalCollectedInPreviousPeriod = _extractTotal(previousPeriodCollection);
+      final totalCollectedAllTime = _extractTotal(allTimeCollection);
 
-      final dues = await _feeRepo.getDues(startDate: startDate, endDate: endDate);
-      for (var due in dues) {
-        if (due.status.toLowerCase() != 'cancelled') {
-          totalOutstanding += due.amountOutstanding;
-          totalAssigned += due.amountAssigned;
+      final totalDue = dues.fold<double>(0, (sum, due) {
+        final status = due.status.toString().toLowerCase();
+        if (_excludedDueStatuses.contains(status)) {
+          return sum;
         }
-      }
+        return sum + (due.amountAssigned as double);
+      });
 
-      // If no dues were found in the period, fallback to calculating overall
-      if (totalAssigned == 0) {
-        final balances = await _studentRepo.getStudentBalances();
-        totalOutstanding = balances.fold<double>(
-          0,
-          (sum, balance) => sum + balance.balance,
-        );
-        final allTimeCollection = await _paymentRepo.getTotalCollection();
-        final totalCollected = (allTimeCollection['total'] as num?)?.toDouble() ?? 0;
-        final totalFees = totalCollected + totalOutstanding;
-        final collectionRate = totalFees > 0 ? (totalCollected / totalFees) * 100 : 0.0;
-
-        return DashboardStats(
-          totalStudents: totalStudents,
-          totalFeesCollected: totalCollectedInPeriod,
-          pendingFees: totalOutstanding,
-          collectionRate: collectionRate,
-          lastUpdated: DateTime.now(),
-        );
-      }
-
-      final collectionRate = totalAssigned > 0 
-          ? ((totalAssigned - totalOutstanding) / totalAssigned) * 100 
+      final collectionRate = totalDue > 0
+          ? (totalCollectedAllTime / totalDue) * 100
           : 0.0;
+      final growth = _calculateGrowth(
+        currentAmount: totalCollectedInPeriod,
+        previousAmount: totalCollectedInPreviousPeriod,
+      );
+
+      debugPrint(
+        '[DashboardAnalytics] cycle=$cycle '
+        'totalDue=$totalDue '
+        'totalCollectedAllTime=$totalCollectedAllTime '
+        'currentCycleCollections=$totalCollectedInPeriod '
+        'previousCycleCollections=$totalCollectedInPreviousPeriod '
+        'collectionRate=$collectionRate '
+        'growth=${growth.isNewGrowth ? 'NEW' : growth.percentage} '
+        'pendingFees=$totalPending',
+      );
 
       return DashboardStats(
         totalStudents: totalStudents,
         totalFeesCollected: totalCollectedInPeriod,
-        pendingFees: totalOutstanding,
+        pendingFees: totalPending,
         collectionRate: collectionRate,
+        growthPercentage: growth.percentage,
+        isNewGrowth: growth.isNewGrowth,
         lastUpdated: DateTime.now(),
       );
     } catch (e) {
@@ -212,12 +167,11 @@ class DashboardAnalyticsRepository {
       // Get data for last 6 months
       for (int i = 5; i >= 0; i--) {
         final date = DateTime(now.year, now.month - i, 1);
-        final nextMonth = DateTime(date.year, date.month + 1, 1);
-        final lastDay = DateTime(nextMonth.year, nextMonth.month, 0);
+        final monthRange = _monthRange(date);
 
         final collection = await _paymentRepo.getTotalCollection(
-          startDate: date,
-          endDate: lastDay,
+          startDate: monthRange.start,
+          endDate: monthRange.endInclusive,
         );
 
         final amount = (collection['total'] as num?)?.toDouble() ?? 0;
@@ -238,12 +192,15 @@ class DashboardAnalyticsRepository {
     try {
       final categories = await _feeRepo.getFeeCategories();
       final payments = await _paymentRepo.getPayments();
+      final completedPayments = payments
+          .where((payment) => payment.status.name == 'completed')
+          .toList();
 
       double totalAmount = 0;
       final categoryTotals = <String, double>{};
 
       // Sum up payments by category
-      for (var payment in payments) {
+      for (var payment in completedPayments) {
         totalAmount += payment.amount;
         // In a real scenario, you would need to get the category from the fee structure
         // For now, we'll create a simplified version
@@ -276,6 +233,9 @@ class DashboardAnalyticsRepository {
     try {
       final students = await _studentRepo.getStudents();
       final payments = await _paymentRepo.getPayments();
+      final completedPayments = payments
+          .where((payment) => payment.status.name == 'completed')
+          .toList();
       final balances = await _studentRepo.getStudentBalances();
 
       // Group by class
@@ -288,7 +248,7 @@ class DashboardAnalyticsRepository {
       }
 
       // Sum collected by class
-      for (var payment in payments) {
+      for (var payment in completedPayments) {
         if (payment.student != null) {
           final className = payment.student!.studentClass;
           if (classMap.containsKey(className)) {
@@ -303,7 +263,7 @@ class DashboardAnalyticsRepository {
         if (classMap.containsKey(balance.studentClass)) {
           classMap[balance.studentClass]!['pending'] =
               (classMap[balance.studentClass]!['pending'] as double) +
-                  balance.balance;
+                  balance.dueAmount;
         }
       }
 
@@ -342,4 +302,100 @@ class DashboardAnalyticsRepository {
       rethrow;
     }
   }
+}
+
+class _CycleRange {
+  final DateTime start;
+  final DateTime endInclusive;
+
+  const _CycleRange({
+    required this.start,
+    required this.endInclusive,
+  });
+}
+
+class _GrowthResult {
+  final double percentage;
+  final bool isNewGrowth;
+
+  const _GrowthResult({
+    required this.percentage,
+    required this.isNewGrowth,
+  });
+}
+
+_CycleRange _rangeForCycle(DateTime date, TimeCycle cycle) {
+  switch (cycle) {
+    case TimeCycle.monthly:
+      return _monthRange(date);
+    case TimeCycle.quarterly:
+      final quarterStartMonth = (((date.month - 1) ~/ 3) * 3) + 1;
+      final start = DateTime(date.year, quarterStartMonth, 1);
+      final nextStart = DateTime(date.year, quarterStartMonth + 3, 1);
+      return _CycleRange(
+        start: start,
+        endInclusive: nextStart.subtract(const Duration(microseconds: 1)),
+      );
+    case TimeCycle.yearly:
+      final start = DateTime(date.year, 1, 1);
+      final nextStart = DateTime(date.year + 1, 1, 1);
+      return _CycleRange(
+        start: start,
+        endInclusive: nextStart.subtract(const Duration(microseconds: 1)),
+      );
+  }
+}
+
+_CycleRange _previousRangeForCycle(_CycleRange currentRange, TimeCycle cycle) {
+  switch (cycle) {
+    case TimeCycle.monthly:
+      return _monthRange(DateTime(currentRange.start.year, currentRange.start.month - 1, 1));
+    case TimeCycle.quarterly:
+      return _rangeForCycle(
+        DateTime(currentRange.start.year, currentRange.start.month - 3, 1),
+        TimeCycle.quarterly,
+      );
+    case TimeCycle.yearly:
+      return _rangeForCycle(
+        DateTime(currentRange.start.year - 1, 1, 1),
+        TimeCycle.yearly,
+      );
+  }
+}
+
+_CycleRange _monthRange(DateTime date) {
+  final start = DateTime(date.year, date.month, 1);
+  final nextStart = DateTime(date.year, date.month + 1, 1);
+  return _CycleRange(
+    start: start,
+    endInclusive: nextStart.subtract(const Duration(microseconds: 1)),
+  );
+}
+
+double _extractTotal(Map<String, dynamic> result) {
+  return (result['total'] as num?)?.toDouble() ?? 0.0;
+}
+
+_GrowthResult _calculateGrowth({
+  required double currentAmount,
+  required double previousAmount,
+}) {
+  if (previousAmount > 0) {
+    return _GrowthResult(
+      percentage: ((currentAmount - previousAmount) / previousAmount) * 100,
+      isNewGrowth: false,
+    );
+  }
+
+  if (currentAmount > 0) {
+    return const _GrowthResult(
+      percentage: 0,
+      isNewGrowth: true,
+    );
+  }
+
+  return const _GrowthResult(
+    percentage: 0,
+    isNewGrowth: false,
+  );
 }

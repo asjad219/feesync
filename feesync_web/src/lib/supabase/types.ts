@@ -65,6 +65,8 @@ export interface StudentBalance {
   total_fee_amount: number
   total_paid_amount: number
   balance: number
+  due_amount: number
+  status: string
 }
 
 export interface FeeCategory {
@@ -119,7 +121,7 @@ export interface Due {
   due_date: string
   amount_assigned: number
   amount_paid: number
-  amount_outstanding: number
+  due_amount: number
   late_fine_applied: number
   status: DueStatus
   notes?: string

@@ -226,7 +226,7 @@ class _InviteEditStaffScreenState extends ConsumerState<InviteEditStaffScreen> {
               Text('Role & Access', style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: _selectedRole,
+                initialValue: _selectedRole,
                 dropdownColor: AppColors.surfaceContainer,
                 items: const [
                   DropdownMenuItem(value: 'admin', child: Text('Admin (Full Access)')),

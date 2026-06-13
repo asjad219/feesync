@@ -1,21 +1,23 @@
 /// Subscription model matching Supabase `subscriptions` table.
 ///
 /// Tiers:
-///   free      – 30 students, 2 batches, limited WhatsApp (₹0)
-///   starter   – 200 students, 15 batches, unlimited WA (₹199/mo)
-///   growth    – unlimited, all AI features, auto-debit (₹499/mo)
+///   free      – 20 students, 2 batches, 1 staff, 100 WhatsApp (₹0)
+///   starter   – 200 students, 10 batches, 5 staff, 1000 WhatsApp (₹299/mo)
+///   growth    – unlimited, all AI features, auto-debit (₹999/mo)
 ///   institute – unlimited + staff accounts + API (₹1,499/mo)
 class Subscription {
   final String id;
-  final String ownerId;
+  final String userId;
 
-  /// Plan tier: 'free' | 'starter' | 'growth' | 'institute'
-  final String planTier;
+  /// Plan type: 'free' | 'starter' | 'growth' | 'institute'
+  final String planType;
 
   /// Billing cycle: 'monthly' | 'annual'
   final String billingCycle;
 
-  final DateTime? validUntil;
+  final DateTime? expiryDate;
+  final String status;
+  final DateTime startDate;
 
   // --- Limits (stored from DB, override via upsert_subscription RPC) ---
   final int maxStudents;          // -1 = unlimited
@@ -38,12 +40,19 @@ class Subscription {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
+  // Backward compatibility getters
+  String get ownerId => userId;
+  String get planTier => planType;
+  DateTime? get validUntil => expiryDate;
+
   const Subscription({
     required this.id,
-    required this.ownerId,
-    required this.planTier,
+    required this.userId,
+    required this.planType,
     this.billingCycle = 'monthly',
-    this.validUntil,
+    this.expiryDate,
+    this.status = 'active',
+    required this.startDate,
     required this.maxStudents,
     required this.maxBatches,
     this.whatsappReceiptsLimit = 100,
@@ -63,12 +72,18 @@ class Subscription {
   factory Subscription.fromJson(Map<String, dynamic> json) {
     return Subscription(
       id: (json['id'] as String?) ?? '',
-      ownerId: (json['owner_id'] as String?) ?? '',
-      planTier: (json['plan_tier'] as String?) ?? 'free',
+      userId: (json['user_id'] as String?) ?? (json['owner_id'] as String?) ?? '',
+      planType: (json['plan_type'] as String?) ?? (json['plan_tier'] as String?) ?? 'free',
       billingCycle: (json['billing_cycle'] as String?) ?? 'monthly',
-      validUntil: json['valid_until'] != null
-          ? DateTime.tryParse(json['valid_until'] as String)
-          : null,
+      expiryDate: json['expiry_date'] != null
+          ? DateTime.tryParse(json['expiry_date'] as String)
+          : json['valid_until'] != null
+              ? DateTime.tryParse(json['valid_until'] as String)
+              : null,
+      status: (json['status'] as String?) ?? 'active',
+      startDate: json['start_date'] != null
+          ? DateTime.tryParse(json['start_date'] as String) ?? DateTime.now()
+          : DateTime.now(),
       maxStudents: (json['max_students'] as int?) ?? 20,
       maxBatches: (json['max_batches'] as int?) ?? 2,
       whatsappReceiptsLimit:
@@ -97,10 +112,12 @@ class Subscription {
 
   Map<String, dynamic> toJson() => {
         'id': id,
-        'owner_id': ownerId,
-        'plan_tier': planTier,
+        'user_id': userId,
+        'plan_type': planType,
         'billing_cycle': billingCycle,
-        'valid_until': validUntil?.toIso8601String(),
+        'expiry_date': expiryDate?.toIso8601String(),
+        'status': status,
+        'start_date': startDate.toIso8601String(),
         'max_students': maxStudents,
         'max_batches': maxBatches,
         'whatsapp_receipts_limit': whatsappReceiptsLimit,
@@ -125,9 +142,10 @@ class Subscription {
 
   /// True if the paid subscription has not expired.
   bool get isPaidActive {
-    if (planTier == 'free') return true;
-    if (validUntil == null) return false;
-    return validUntil!.isAfter(DateTime.now());
+    if (planType == 'free') return true;
+    if (status != 'active') return false;
+    if (expiryDate == null) return false;
+    return expiryDate!.isAfter(DateTime.now());
   }
 
   /// Backward-compatible alias for [isPaidActive].
@@ -136,9 +154,9 @@ class Subscription {
   /// Resolved effective plan. Falls back to 'free' when paid plan expires.
   /// Respects active trials — during trial, returns the trialled plan.
   String get effectivePlan {
-    if (planTier == 'free') return 'free';
-    if (isPaidActive) return planTier;
-    if (isTrialActive) return planTier;
+    if (planType == 'free') return 'free';
+    if (isPaidActive) return planType;
+    if (isTrialActive) return planType;
     return 'free';
   }
 
@@ -161,11 +179,11 @@ class Subscription {
 
   /// Monthly price in INR for the current plan.
   int get monthlyPriceInr {
-    switch (planTier) {
+    switch (planType) {
       case 'starter':
-        return billingCycle == 'annual' ? 149 : 199;
+        return billingCycle == 'annual' ? 249 : 299;
       case 'growth':
-        return billingCycle == 'annual' ? 332 : 499;
+        return billingCycle == 'annual' ? 832 : 999;
       case 'institute':
         return billingCycle == 'annual' ? 1000 : 1499;
       default:
@@ -184,8 +202,8 @@ class Subscription {
 
   /// Days remaining until expiry. Returns null for free plan.
   int? get daysRemaining {
-    if (validUntil == null) return null;
-    final diff = validUntil!.difference(DateTime.now()).inDays;
+    if (expiryDate == null) return null;
+    final diff = expiryDate!.difference(DateTime.now()).inDays;
     return diff < 0 ? 0 : diff;
   }
 
@@ -248,23 +266,24 @@ class Subscription {
   // ── Defaults ───────────────────────────────────────────────────────────────
 
   /// Default free-tier subscription (used when DB has no record yet).
-  static Subscription defaultFree(String ownerId) => Subscription(
+  static Subscription defaultFree(String userId) => Subscription(
         id: '',
-        ownerId: ownerId,
-        planTier: 'free',
+        userId: userId,
+        planType: 'free',
         maxStudents: 20,
         maxBatches: 2,
         whatsappReceiptsLimit: 100,
         whatsappRemindersLimit: 30,
         smsLimit: 0,
         maxStaff: 1,
+        startDate: DateTime.now(),
       );
 
   /// Returns a subscription pre-configured for a 30-day Growth trial.
-  static Subscription newUserTrial(String ownerId) => Subscription(
+  static Subscription newUserTrial(String userId) => Subscription(
         id: '',
-        ownerId: ownerId,
-        planTier: 'growth',
+        userId: userId,
+        planType: 'growth',
         maxStudents: -1,
         maxBatches: -1,
         whatsappReceiptsLimit: -1,
@@ -273,13 +292,16 @@ class Subscription {
         maxStaff: -1,
         isTrial: true,
         trialEndsAt: DateTime.now().add(const Duration(days: 30)),
+        startDate: DateTime.now(),
       );
 
   /// Copy with updated fields.
   Subscription copyWith({
-    String? planTier,
+    String? planType,
     String? billingCycle,
-    DateTime? validUntil,
+    DateTime? expiryDate,
+    String? status,
+    DateTime? startDate,
     int? maxStudents,
     int? maxBatches,
     int? whatsappReceiptsLimit,
@@ -295,10 +317,12 @@ class Subscription {
   }) {
     return Subscription(
       id: id,
-      ownerId: ownerId,
-      planTier: planTier ?? this.planTier,
+      userId: userId,
+      planType: planType ?? this.planType,
       billingCycle: billingCycle ?? this.billingCycle,
-      validUntil: validUntil ?? this.validUntil,
+      expiryDate: expiryDate ?? this.expiryDate,
+      status: status ?? this.status,
+      startDate: startDate ?? this.startDate,
       maxStudents: maxStudents ?? this.maxStudents,
       maxBatches: maxBatches ?? this.maxBatches,
       whatsappReceiptsLimit:
@@ -399,11 +423,11 @@ class SubscriptionPlan {
     monthlyPrice: 299,
     annualPrice: 2990,       // 2 months free vs 299×12=3588
     annualMonthlyEquivalent: 249,
-    maxStudents: 150,
+    maxStudents: 200,
     maxBatches: 10,
-    whatsappReceiptsPerMonth: -1,
+    whatsappReceiptsPerMonth: 1000,
     whatsappRemindersPerMonth: -1,
-    maxStaff: 3,
+    maxStaff: 5,
     csvExport: true,
     biometricAuth: true,
     supportSystem: true,

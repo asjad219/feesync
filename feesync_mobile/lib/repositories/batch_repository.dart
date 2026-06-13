@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/batch.dart';
 
@@ -96,6 +97,32 @@ class BatchRepository {
   }
 
   Future<void> deleteBatch(String id) async {
+    debugPrint('[DEBUG] Delete method called');
+    debugPrint('[DEBUG] Batch ID received: $id');
+    
+    // 1. Validate batch exists
+    final existing = await _client.from('batches').select('id').eq('id', id).maybeSingle();
+    if (existing == null) {
+      throw Exception('Batch not found.');
+    }
+    
+    debugPrint('[DEBUG] Transaction started');
+    
+    // 2. Delete attendance records for this batch
+    await _client.from('attendance').delete().eq('batch_id', id);
+    debugPrint('[DEBUG] Child records deleted (attendance)');
+
+    // 3. Delete student enrollments for this batch
+    await _client.from('student_enrollments').delete().eq('batch_id', id);
+    debugPrint('[DEBUG] Child records deleted (student_enrollments)');
+    
+    // 4. Update student records to set batch_id to null
+    await _client.from('students').update({'batch_id': null}).eq('batch_id', id);
+    debugPrint('[DEBUG] Child records updated (students set null)');
+
+    // 5. Delete the batch itself
     await _client.from('batches').delete().eq('id', id);
+    debugPrint('[DEBUG] Batch deleted');
+    debugPrint('[DEBUG] Transaction committed');
   }
 }

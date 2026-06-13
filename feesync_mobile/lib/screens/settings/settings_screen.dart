@@ -161,9 +161,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
         centerTitle: false,
         actions: [
-          settingsAsync.when(
-            data: (settings) {
-              final isLight = settings.themeMode.toLowerCase() == 'light';
+          Builder(
+            builder: (context) {
+              debugPrint('[DEBUG] SettingsScreen: Rendering theme toggle button. settingsAsync state: ${settingsAsync.runtimeType}, isLoading: ${settingsAsync.isLoading}, hasError: ${settingsAsync.hasError}');
+              final themeMode = settingsAsync.value?.themeMode.toLowerCase() ?? 'dark_luxury';
+              final isLight = themeMode == 'light';
+              
+              if (settingsAsync.isLoading) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  child: Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
+                      ),
+                    ),
+                  ),
+                );
+              }
+              
               return IconButton(
                 icon: Icon(
                   isLight ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
@@ -173,8 +192,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 tooltip: isLight ? 'Switch to Dark Mode' : 'Switch to Light Mode',
               );
             },
-            loading: () => const SizedBox.shrink(),
-            error: (_, _) => const SizedBox.shrink(),
           ),
           const SizedBox(width: 8),
         ],
@@ -244,19 +261,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             _buildSectionHeader('Preferences & Intelligence'),
             const SizedBox(height: 12),
             _buildSettingsGroup([
-              settingsAsync.when(
-                data: (settings) {
-                  final isLight = settings.themeMode.toLowerCase() == 'light';
+              Builder(
+                builder: (context) {
+                  final themeMode = settingsAsync.value?.themeMode ?? 'dark_luxury';
+                  final subtitleText = settingsAsync.isLoading
+                      ? 'Loading theme settings...'
+                      : (themeMode == 'light'
+                          ? 'Light Mode'
+                          : themeMode == 'system'
+                              ? 'System Default'
+                              : 'Dark Mode');
                   return _SettingsItem(
                     icon: Icons.palette_rounded,
                     iconColor: const Color(0xFFF59E0B),
                     title: 'App Theme',
-                    subtitle: settings.themeMode == 'light' ? 'Light Mode' : settings.themeMode == 'system' ? 'System Default' : 'Dark Mode',
-                    onTap: () => _showThemeSelector(context, settings.themeMode),
+                    subtitle: subtitleText,
+                    onTap: settingsAsync.isLoading
+                        ? () {}
+                        : () => _showThemeSelector(context, themeMode),
                   );
                 },
-                loading: () => const SizedBox.shrink(),
-                error: (_, _) => const SizedBox.shrink(),
               ),
               _SettingsItem(
                 icon: Icons.auto_awesome_rounded,

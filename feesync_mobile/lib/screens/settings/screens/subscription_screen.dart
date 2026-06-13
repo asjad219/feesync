@@ -1417,13 +1417,6 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
         return Icons.spa_rounded;
     }
   }
-
-  SubscriptionPlan _getPlanByTier(String tier) {
-    return SubscriptionPlan.all.firstWhere(
-      (p) => p.tier == tier,
-      orElse: () => SubscriptionPlan.free,
-    );
-  }
 }
 
 // ─── Comparison row model ─────────────────────────────────────────────────────

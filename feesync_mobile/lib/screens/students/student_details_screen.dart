@@ -14,6 +14,8 @@ import '../../providers/providers.dart';
 import '../../providers/subscription_provider.dart';
 import '../../core/utils/receipt_service.dart';
 import '../../core/widgets/glass/glass_card.dart';
+import '../../core/widgets/paywall_dialog.dart';
+import '../../core/billing/feature_gate.dart';
 
 class StudentDetailsScreen extends ConsumerWidget {
   final String studentId;
@@ -56,6 +58,7 @@ class StudentDetailsScreen extends ConsumerWidget {
               ref.invalidate(studentBalanceByIdProvider(studentId));
               ref.invalidate(studentPaymentsProvider(studentId));
               ref.invalidate(studentBatchesProvider(studentId));
+              invalidateDashboardAnalytics(ref);
             },
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
@@ -111,6 +114,7 @@ class StudentDetailsScreen extends ConsumerWidget {
               ref.invalidate(activeStudentCountProvider);
               ref.invalidate(subscriptionScreenDataProvider);
               ref.invalidate(featureGateProvider);
+              invalidateDashboardAnalytics(ref);
               if (context.mounted) {
                 Navigator.pop(context);
                 context.pop();
@@ -132,17 +136,11 @@ class _ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasBalance = balance != null && balance!.balance > 0;
+    final String status = balance != null ? balance!.status : 'PAID';
     final String capitalizedName = student.fullName
         .split(' ')
         .map((word) => word.isNotEmpty ? '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}' : '')
         .join(' ');
-        
-    final String initials = student.fullName
-        .split(' ')
-        .map((e) => e.isNotEmpty ? e[0].toUpperCase() : '')
-        .take(2)
-        .join();
 
     return GlassCard(
       padding: const EdgeInsets.all(24),
@@ -188,7 +186,7 @@ class _ProfileHeader extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(height: 12),
-                StatusBadge(status: hasBalance ? 'OVERDUE' : 'PAID'),
+                StatusBadge(status: status),
               ],
             ),
           ),
@@ -246,11 +244,11 @@ class _MetricsSection extends StatelessWidget {
             ),
             const SizedBox(width: 16),
             _MetricCard(
-              label: balance!.balance < 0 ? 'ADVANCE' : 'OUTSTANDING',
-              value: currencyFormatter.format(balance!.balance.abs()),
-              color: balance!.balance > 0 ? AppColors.error : AppColors.success,
-              icon: balance!.balance > 0 ? Icons.warning_amber_rounded : Icons.verified_rounded,
-              iconBgColor: balance!.balance > 0 ? AppColors.error : AppColors.success,
+              label: 'DUE AMOUNT',
+              value: currencyFormatter.format(balance!.dueAmount),
+              color: balance!.dueAmount > 0 ? AppColors.error : AppColors.success,
+              icon: balance!.dueAmount > 0 ? Icons.warning_amber_rounded : Icons.verified_rounded,
+              iconBgColor: balance!.dueAmount > 0 ? AppColors.error : AppColors.success,
             ),
           ],
         ),
@@ -453,6 +451,9 @@ class _EnrollmentSheet extends ConsumerWidget {
                           accountId: accountId,
                         );
                         ref.invalidate(studentBatchesProvider(studentId));
+                        ref.invalidate(batchStudentsProvider(batch.id));
+                        ref.invalidate(batchAnalyticsProvider(batch.id));
+                        invalidateDashboardAnalytics(ref);
                         if (context.mounted) Navigator.pop(context);
                       } else {
                         if (context.mounted) {
@@ -616,7 +617,7 @@ class _PaymentTile extends ConsumerWidget {
         backgroundColor: AppColors.surfaceContainer,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('Revert Payment?', style: GoogleFonts.manrope(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-        content: Text('Are you sure you want to revert this payment? This will mark it as cancelled and adjust the student\'s outstanding balance.', 
+        content: Text('Are you sure you want to revert this payment? This will mark it as cancelled and adjust the student\'s due amount.', 
           style: GoogleFonts.inter(color: AppColors.textTertiary)),
         actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
         actions: [
@@ -631,6 +632,7 @@ class _PaymentTile extends ConsumerWidget {
                       ref.invalidate(studentPaymentsProvider(student.id));
                       ref.invalidate(studentBalanceByIdProvider(student.id));
                       ref.invalidate(studentBalancesProvider);
+                      invalidateDashboardAnalytics(ref);
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment reverted successfully')));
                       }
@@ -668,6 +670,18 @@ class _PaymentTile extends ConsumerWidget {
   }
 
   void _sharePastReceipt(BuildContext context, WidgetRef ref) async {
+    final FeatureGate featureGate = ref.read(featureGateProvider).valueOrNull ?? await ref.read(featureGateProvider.future);
+    if (!featureGate.canSendWhatsappReceipt) {
+      if (context.mounted) {
+        await showPaywallDialog(
+          context,
+          ref,
+          trigger: PaywallTrigger.whatsappReceiptLimit,
+        );
+      }
+      return;
+    }
+
     final invoiceNo = payment.receiptNumber ?? 'INV-${payment.id.substring(0, 8)}';
     
     final accountProfile = ref.read(accountProfileProvider).value;
@@ -702,6 +716,12 @@ class _PaymentTile extends ConsumerWidget {
       text: textReceipt,
       pdfFile: pdfFile,
     );
+
+    // Record usage
+    await ref.read(usageRepositoryProvider).recordWhatsappReceipt();
+    ref.invalidate(currentMonthUsageProvider);
+    ref.invalidate(featureGateProvider);
+    ref.invalidate(subscriptionScreenDataProvider);
   }
 }
 

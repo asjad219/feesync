@@ -433,31 +433,7 @@ class _BentoStatsGrid extends StatelessWidget {
                           letterSpacing: 1.5,
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.trending_up_rounded,
-                              color: Colors.white,
-                              size: 14,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '12.5%',
-                              style: GoogleFonts.inter(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      _buildGrowthBadge(),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -515,7 +491,7 @@ class _BentoStatsGrid extends StatelessWidget {
                             alignment: Alignment.center,
                             children: [
                               CircularProgressIndicator(
-                                value: rate / 100.0,
+                                value: (rate / 100.0).clamp(0.0, 1.0),
                                 strokeWidth: 4.5,
                                 backgroundColor: Colors.white.withValues(alpha: 0.15),
                                 valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
@@ -562,6 +538,53 @@ class _BentoStatsGrid extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Widget _buildGrowthBadge() {
+    final isPositive = stats.isNewGrowth || stats.growthPercentage > 0;
+    final isNegative = stats.growthPercentage < 0;
+    final icon = stats.isNewGrowth || isPositive
+        ? Icons.trending_up_rounded
+        : isNegative
+            ? Icons.trending_down_rounded
+            : Icons.trending_flat_rounded;
+    final label = stats.isNewGrowth
+        ? 'NEW'
+        : stats.growthPercentage == 0
+            ? '0%'
+            : '${isPositive ? '+' : '-'}${_formatPercentage(stats.growthPercentage.abs())}%';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            color: Colors.white,
+            size: 14,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatPercentage(double value) {
+    return value == value.roundToDouble()
+        ? value.toStringAsFixed(0)
+        : value.toStringAsFixed(1);
   }
 }
 

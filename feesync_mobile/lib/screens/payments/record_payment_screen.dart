@@ -10,6 +10,9 @@ import '../../models/student.dart';
 import '../../models/batch.dart';
 import '../../models/fee.dart';
 import '../../providers/providers.dart';
+import '../../providers/subscription_provider.dart';
+import '../../core/widgets/paywall_dialog.dart';
+import '../../core/billing/feature_gate.dart';
 import '../../core/utils/receipt_service.dart';
 
 class RecordPaymentScreen extends ConsumerStatefulWidget {
@@ -126,7 +129,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
       if (_selectedDueIds.isNotEmpty) {
         for (final dueId in _selectedDueIds) {
           final due = availableDues.firstWhere((d) => d.id == dueId);
-          final paymentForDue = remaining > due.amountOutstanding ? due.amountOutstanding : remaining;
+          final paymentForDue = remaining > due.dueAmount ? due.dueAmount : remaining;
           if (paymentForDue > 0) {
             allocations.add({
               'fee_structure_id': due.feeStructureId,
@@ -139,9 +142,13 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
       }
 
       String dbPaymentMethod = 'other';
-      if (_paymentMode == 'online') dbPaymentMethod = 'mobile_money';
-      else if (_paymentMode == 'cash') dbPaymentMethod = 'cash';
-      else if (_paymentMode == 'bank') dbPaymentMethod = 'bank_transfer';
+      if (_paymentMode == 'online') {
+        dbPaymentMethod = 'mobile_money';
+      } else if (_paymentMode == 'cash') {
+        dbPaymentMethod = 'cash';
+      } else if (_paymentMode == 'bank') {
+        dbPaymentMethod = 'bank_transfer';
+      }
 
       final paymentData = {
         'account_id': accountId,
@@ -155,12 +162,13 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
         'status': 'completed',
       };
 
-      await ref.read(paymentRepositoryProvider).createPayment(paymentData, allocations);
+      await ref.read(paymentNotifierProvider.notifier).createPayment(paymentData, allocations);
       ref.invalidate(studentBalancesProvider);
       ref.invalidate(studentPaymentsProvider(_selectedStudent!.id));
       if (_selectedStudent != null) ref.invalidate(studentDuesProvider(_selectedStudent!.id));
       ref.invalidate(batchNotifierProvider);
       ref.invalidate(batchByIdProvider);
+      invalidateDashboardAnalytics(ref);
 
       if (mounted) {
         _showSuccessDialog(amount);
@@ -284,6 +292,18 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
   }
 
   void _shareReceipt(double amount) async {
+    final FeatureGate featureGate = ref.read(featureGateProvider).valueOrNull ?? await ref.read(featureGateProvider.future);
+    if (!featureGate.canSendWhatsappReceipt) {
+      if (mounted) {
+        await showPaywallDialog(
+          context,
+          ref,
+          trigger: PaywallTrigger.whatsappReceiptLimit,
+        );
+      }
+      return;
+    }
+
     final student = _selectedStudent!;
     final invoiceNo = 'INV-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
     
@@ -320,6 +340,12 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
         text: textReceipt,
         pdfFile: pdfFile,
       );
+
+      // Record WhatsApp usage!
+      await ref.read(usageRepositoryProvider).recordWhatsappReceipt();
+      ref.invalidate(currentMonthUsageProvider);
+      ref.invalidate(featureGateProvider);
+      ref.invalidate(subscriptionScreenDataProvider);
 
       if (mounted) {
         Navigator.pop(context);
@@ -589,7 +615,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
                 Switch(
                   value: _isAdvancePayment,
                   onChanged: (v) => setState(() => _isAdvancePayment = v),
-                  activeColor: AppColors.primary,
+                  activeThumbColor: AppColors.primary,
                 ),
               ],
             ),
@@ -612,11 +638,11 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
                 if (isSelected) {
                   _selectedDueIds.remove(due.id);
                   final current = double.tryParse(_amountController.text) ?? 0;
-                  _amountController.text = (current - due.amountOutstanding).toStringAsFixed(0);
+                  _amountController.text = (current - due.dueAmount).toStringAsFixed(0);
                 } else {
                   _selectedDueIds.add(due.id);
                   final current = double.tryParse(_amountController.text) ?? 0;
-                  _amountController.text = (current + due.amountOutstanding).toStringAsFixed(0);
+                  _amountController.text = (current + due.dueAmount).toStringAsFixed(0);
                 }
               });
             },
@@ -653,7 +679,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
                       ],
                     ),
                   ),
-                  Text(currencyFormatter.format(due.amountOutstanding), style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                  Text(currencyFormatter.format(due.dueAmount), style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.primary)),
                 ],
               ),
             ),

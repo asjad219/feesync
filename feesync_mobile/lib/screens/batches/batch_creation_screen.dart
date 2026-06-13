@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/paywall_dialog.dart';
 import '../../../providers/batch_provider.dart';
+import '../../../providers/dashboard_provider.dart';
 import '../../../providers/user_provider.dart';
 import '../../../providers/subscription_provider.dart';
 import '../../../providers/settings_provider.dart';
@@ -242,6 +243,7 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
         ref.invalidate(activeBatchCountProvider);
         ref.invalidate(subscriptionScreenDataProvider);
         ref.invalidate(featureGateProvider);
+        invalidateDashboardAnalytics(ref);
       } else {
         final updatedData = {
           'name': _nameController.text,
@@ -265,6 +267,7 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
         ref.invalidate(activeBatchCountProvider);
         ref.invalidate(subscriptionScreenDataProvider);
         ref.invalidate(featureGateProvider);
+        invalidateDashboardAnalytics(ref);
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

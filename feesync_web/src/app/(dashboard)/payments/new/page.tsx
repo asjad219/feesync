@@ -80,7 +80,7 @@ export default function NewPaymentPage() {
 
   // Calculate total selected dues
   const selectedDuesData = dues.filter(d => selectedDues.includes(d.id))
-  const totalDueAmount = selectedDuesData.reduce((sum, d) => sum + Number(d.amount_outstanding), 0)
+  const totalDueAmount = selectedDuesData.reduce((sum, d) => sum + Number(d.due_amount), 0)
 
   useEffect(() => {
     if (selectedDues.length > 0) {
@@ -107,7 +107,7 @@ export default function NewPaymentPage() {
       // Basic allocation logic: distribute amount across selected dues
       let remainingPayment = amount
       const allocations = selectedDuesData.map(due => {
-        const paymentForThisDue = Math.min(remainingPayment, Number(due.amount_outstanding))
+        const paymentForThisDue = Math.min(remainingPayment, Number(due.due_amount))
         remainingPayment -= paymentForThisDue
         return {
           fee_structure_id: due.fee_structure_id,
@@ -265,7 +265,7 @@ export default function NewPaymentPage() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-white">₹{due.amount_outstanding}</p>
+                        <p className="font-bold text-white">₹{due.due_amount}</p>
                         {Number(due.late_fine_applied) > 0 && (
                           <p className="text-[10px] text-orange-400">Inc. ₹{due.late_fine_applied} fine</p>
                         )}

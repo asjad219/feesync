@@ -369,8 +369,27 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
       ref.invalidate(studentBalancesProvider);
       ref.invalidate(batchByIdProvider);
       ref.invalidate(batchNotifierProvider);
+      invalidateDashboardAnalytics(ref);
+
+      if (widget.studentId != null) {
+        ref.invalidate(studentByIdProvider(widget.studentId!));
+        ref.invalidate(studentBalanceByIdProvider(widget.studentId!));
+        ref.invalidate(studentBatchesProvider(widget.studentId!));
+      }
+
+      if (_selectedBatchId != null) {
+        ref.invalidate(batchStudentsProvider(_selectedBatchId!));
+        ref.invalidate(batchAnalyticsProvider(_selectedBatchId!));
+      }
+
+      if (widget.initialBatchId != null && widget.initialBatchId != _selectedBatchId) {
+        ref.invalidate(batchStudentsProvider(widget.initialBatchId!));
+        ref.invalidate(batchAnalyticsProvider(widget.initialBatchId!));
+      }
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Student saved successfully')));
+        final message = widget.studentId == null ? 'Student saved successfully' : 'Student updated successfully.';
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
         context.pop();
       }
     } catch (e) {

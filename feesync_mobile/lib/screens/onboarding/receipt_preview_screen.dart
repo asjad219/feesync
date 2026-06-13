@@ -36,7 +36,7 @@ class _ReceiptPreviewScreenState extends ConsumerState<ReceiptPreviewScreen> {
       final userProfile = ref.read(currentUserProfileProvider).value;
       if (userProfile == null) throw Exception('Profile not found');
 
-      await ref.read(paymentRepositoryProvider).createPayment({
+      await ref.read(paymentNotifierProvider.notifier).createPayment({
         'account_id': userProfile.accountId,
         'student_id': args.studentId,
         'amount': args.amount,
@@ -44,6 +44,7 @@ class _ReceiptPreviewScreenState extends ConsumerState<ReceiptPreviewScreen> {
         'payment_date': DateTime.now().toIso8601String(),
         'status': 'completed',
       }, []);
+      invalidateDashboardAnalytics(ref);
 
       await Supabase.instance.client.auth.updateUser(UserAttributes(data: {'onboarding_step': 'complete', 'onboarding_first_payment_complete': true, 'onboarding_complete': true}));
       if (mounted) context.go('/dashboard');

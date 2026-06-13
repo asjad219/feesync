@@ -66,21 +66,21 @@ class FeatureGate {
   /// True if the user can add more staff.
   bool get canAddStaff {
     if (subscription.hasUnlimitedStaff) return true;
-    return activeStaffCount < subscription.maxStaff;
+    return activeStaffCount < subscription.currentMaxStaff;
   }
 
   /// How many more staff the user can add (-1 = unlimited).
   int get remainingStaffSlots {
     if (subscription.hasUnlimitedStaff) return -1;
-    final remaining = subscription.maxStaff - activeStaffCount;
+    final remaining = subscription.currentMaxStaff - activeStaffCount;
     return remaining < 0 ? 0 : remaining;
   }
 
   /// Staff usage as a fraction (0.0–1.0). Returns 0.0 for unlimited.
   double get staffUsageFraction {
     if (subscription.hasUnlimitedStaff) return 0.0;
-    if (subscription.maxStaff == 0) return 1.0;
-    return (activeStaffCount / subscription.maxStaff).clamp(0.0, 1.0);
+    if (subscription.currentMaxStaff == 0) return 1.0;
+    return (activeStaffCount / subscription.currentMaxStaff).clamp(0.0, 1.0);
   }
 
   // ── WhatsApp limits ────────────────────────────────────────────────────────
@@ -175,6 +175,6 @@ class FeatureGate {
   /// Human-readable limit status for staff usage.
   String get staffLimitStatus {
     if (subscription.hasUnlimitedStaff) return 'Unlimited staff';
-    return '$activeStaffCount / ${subscription.maxStaff} staff used';
+    return '$activeStaffCount / ${subscription.currentMaxStaff} staff used';
   }
 }

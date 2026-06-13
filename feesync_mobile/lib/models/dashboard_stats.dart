@@ -3,6 +3,8 @@ class DashboardStats {
   final double totalFeesCollected;
   final double pendingFees;
   final double collectionRate;
+  final double growthPercentage;
+  final bool isNewGrowth;
   final DateTime lastUpdated;
 
   DashboardStats({
@@ -10,6 +12,8 @@ class DashboardStats {
     required this.totalFeesCollected,
     required this.pendingFees,
     required this.collectionRate,
+    required this.growthPercentage,
+    required this.isNewGrowth,
     required this.lastUpdated,
   });
 }

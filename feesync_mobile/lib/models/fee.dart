@@ -180,7 +180,7 @@ class Due {
   final DateTime dueDate;
   final double amountAssigned;
   final double amountPaid;
-  final double amountOutstanding;
+  final double dueAmount;
   final double lateFineApplied;
   final String status;
   final String? notes;
@@ -197,7 +197,7 @@ class Due {
     required this.dueDate,
     required this.amountAssigned,
     required this.amountPaid,
-    required this.amountOutstanding,
+    required this.dueAmount,
     required this.lateFineApplied,
     required this.status,
     this.notes,
@@ -216,7 +216,7 @@ class Due {
       dueDate: DateTime.parse(json['due_date']),
       amountAssigned: double.parse(json['amount_assigned'].toString()),
       amountPaid: double.parse((json['amount_paid'] ?? 0).toString()),
-      amountOutstanding: double.parse(json['amount_outstanding'].toString()),
+      dueAmount: double.parse((json['due_amount'] ?? 0).toString()),
       lateFineApplied: double.parse((json['late_fine_applied'] ?? 0).toString()),
       status: json['status'],
       notes: json['notes'],

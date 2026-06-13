@@ -118,6 +118,7 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
                 ref.invalidate(batchAnalyticsProvider(batch.id));
                 ref.invalidate(batchByIdProvider(batch.id));
                 ref.invalidate(batchNotifierProvider);
+                invalidateDashboardAnalytics(ref);
               }
             },
             onRemindersTap: () => context.push('/notifications'),
@@ -725,7 +726,6 @@ class _StudentListTile extends ConsumerWidget {
     final bool isDark = AppColors.isDarkMode;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
-    final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
 
     return InkWell(
       onTap: () async {
@@ -752,7 +752,7 @@ class _StudentListTile extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${student.firstName} ${student.lastName}' + (student.rollNumber != null && student.rollNumber!.isNotEmpty ? ' • Roll: ${student.rollNumber}' : ''),
+                    '${student.firstName} ${student.lastName}${student.rollNumber != null && student.rollNumber!.isNotEmpty ? ' • Roll: ${student.rollNumber}' : ''}',
                     style: TextStyle(color: textPrimaryColor, fontWeight: FontWeight.bold),
                   ),
                   Text(
@@ -1390,8 +1390,6 @@ class _AttendanceRosterTile extends ConsumerWidget {
     final status = ref.watch(dailyAttendanceProvider(batchId).select((s) => s.statuses[student.id]));
     final bool isDark = AppColors.isDarkMode;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
-    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
-    final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
 
     return GlassCard(
       margin: const EdgeInsets.only(bottom: 12),
@@ -1410,7 +1408,7 @@ class _AttendanceRosterTile extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${student.firstName} ${student.lastName}' + (student.rollNumber != null && student.rollNumber!.isNotEmpty ? ' • Roll: ${student.rollNumber}' : ''),
+                  '${student.firstName} ${student.lastName}${student.rollNumber != null && student.rollNumber!.isNotEmpty ? ' • Roll: ${student.rollNumber}' : ''}',
                   style: TextStyle(color: textPrimaryColor, fontWeight: FontWeight.bold),
                 ),
               ],
@@ -1611,27 +1609,27 @@ class _FeesTab extends ConsumerWidget {
         title: 'Send All Reminders',
         subtitle: 'You are about to send reminders to ${defaulters.length} students.',
         students: defaulters,
-        onConfirm: () async {
+        batchId: batchId,
+        onConfirm: (_) async {
           Navigator.pop(context);
-          // In bulk mode, we might just open them one by one or send to a service.
-          // For now, let's open the first one and notify user.
-          if (defaulters.isNotEmpty) {
-            _launchWhatsApp(defaulters.first);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Starting reminder sequence for ${defaulters.length} students...')),
-            );
-          }
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (ctx) => _BulkSendProgressDialog(
+              defaulters: defaulters,
+              batchId: batchId,
+            ),
+          );
         },
       ),
     );
   }
 
-  static void _launchWhatsApp(StudentBalance s) async {
+  static void _launchWhatsAppWithMessage(StudentBalance s, String message) async {
     final phone = s.parentPhone ?? '';
     final cleanPhone = phone.replaceAll(RegExp(r'[^0-9+]'), '');
     if (cleanPhone.isEmpty) return;
     
-    final message = "Dear Parent, this is a reminder regarding the pending fee of ₹${s.balance.toStringAsFixed(0)} for ${s.firstName}. Kindly clear it at the earliest. Thank you!";
     final url = 'https://wa.me/${cleanPhone.startsWith('+') ? cleanPhone : '+91$cleanPhone'}?text=${Uri.encodeComponent(message)}';
     
     await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
@@ -1649,7 +1647,7 @@ class _CircleProgress extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isDark = AppColors.isDarkMode;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
-    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+    final textSecondaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
 
     return Column(
       children: [
@@ -1679,7 +1677,7 @@ class _CircleProgress extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        Text(label, style: GoogleFonts.inter(fontSize: 11, color: textTertiaryColor, fontWeight: FontWeight.w500)),
+        Text(label, style: GoogleFonts.inter(fontSize: 11, color: textSecondaryColor, fontWeight: FontWeight.w500)),
       ],
     );
   }
@@ -1694,8 +1692,6 @@ class _DefaulterTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final bool isDark = AppColors.isDarkMode;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
-    final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
-    final surfaceContainerLowColor = isDark ? const Color(0xFF1A1A28) : const Color(0xFFF8FAFC);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -1750,44 +1746,137 @@ class _DefaulterTile extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       backgroundColor: isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF),
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) => _ReminderPreviewSheet(
         title: 'Send Reminder',
         subtitle: 'Send fee reminder to ${student.fullName}\'s parent.',
         students: [student],
-        onConfirm: () {
+        batchId: batchId,
+        onConfirm: (messageText) {
           Navigator.pop(context);
-          _FeesTab._launchWhatsApp(student);
+          _FeesTab._launchWhatsAppWithMessage(student, messageText);
         },
       ),
     );
   }
 }
 
-class _ReminderPreviewSheet extends StatelessWidget {
+class _ReminderPreviewSheet extends ConsumerStatefulWidget {
   final String title;
   final String subtitle;
   final List<StudentBalance> students;
-  final VoidCallback onConfirm;
+  final String batchId;
+  final Function(String) onConfirm;
 
   const _ReminderPreviewSheet({
     required this.title,
     required this.subtitle,
     required this.students,
+    required this.batchId,
     required this.onConfirm,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final s = students.first;
-    final message = "Dear Parent, this is a reminder regarding the pending fee of ₹${s.balance.toStringAsFixed(0)} for ${s.firstName}. Kindly clear it at the earliest. Thank you!";
+  ConsumerState<_ReminderPreviewSheet> createState() => _ReminderPreviewSheetState();
+}
 
+class _ReminderPreviewSheetState extends ConsumerState<_ReminderPreviewSheet> {
+  bool _isEditing = false;
+  late TextEditingController _messageController;
+  String _dueDateStr = 'N/A';
+  bool _isLoadingDues = true;
+  bool _isControllerInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _messageController = TextEditingController();
+    if (widget.students.length == 1) {
+      _loadOldestDueDate();
+    } else {
+      _isLoadingDues = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadOldestDueDate() async {
+    try {
+      final studentId = widget.students.first.id;
+      final dues = await ref.read(feeRepositoryProvider).getDues(studentId: studentId);
+      final unpaid = dues.where((d) => d.status != 'paid' && d.status != 'cancelled').toList();
+      if (unpaid.isNotEmpty) {
+        unpaid.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+        if (mounted) {
+          setState(() {
+            _dueDateStr = DateFormat('dd MMM yyyy').format(unpaid.first.dueDate);
+            _isLoadingDues = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _isLoadingDues = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingDues = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final bool isDark = AppColors.isDarkMode;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
 
+    final settingsAsync = ref.watch(settingsProvider);
+    final batchAsync = ref.watch(batchByIdProvider(widget.batchId));
+
+    if (widget.students.length == 1) {
+      if (_isLoadingDues || settingsAsync.isLoading || batchAsync.isLoading) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 40),
+          child: const Center(
+            child: CircularProgressIndicator(color: Color(0xFF2563EB)),
+          ),
+        );
+      }
+
+      final settings = settingsAsync.valueOrNull;
+      final batch = batchAsync.valueOrNull;
+      final student = widget.students.first;
+
+      final template = settings?.tplFeeReminder ?? 'Hi {parent_name}, this is a reminder that a fee of ₹{amount} is due for {student_name} on {due_date}. Please pay on time to avoid late charges. — {school_name}';
+      final instituteName = settings?.centerName ?? '';
+      final batchName = batch?.name ?? '';
+
+      if (!_isControllerInitialized) {
+        final generatedMessage = generateReminderMessage(
+          template: template,
+          student: student,
+          batchName: batchName,
+          instituteName: instituteName,
+          dueDate: _dueDateStr,
+        );
+        _messageController.text = generatedMessage;
+        _isControllerInitialized = true;
+      }
+    }
+// ... [rest of _ReminderPreviewSheet is here, unchanged until _BulkSendProgressDialog] ...
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
+      padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 40),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1795,41 +1884,110 @@ class _ReminderPreviewSheet extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w800, color: textPrimaryColor)),
-                  const SizedBox(height: 4),
-                  Text(subtitle, style: GoogleFonts.inter(fontSize: 13, color: textTertiaryColor)),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(widget.title, style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w800, color: textPrimaryColor)),
+                    const SizedBox(height: 4),
+                    Text(widget.subtitle, style: GoogleFonts.inter(fontSize: 13, color: textTertiaryColor)),
+                  ],
+                ),
               ),
               IconButton(onPressed: () => Navigator.pop(context), icon: Icon(Icons.close_rounded, color: textTertiaryColor)),
             ],
           ),
-          const SizedBox(height: 32),
-          Text('MESSAGE PREVIEW', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: textTertiaryColor)),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('MESSAGE PREVIEW', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: textTertiaryColor)),
+              if (widget.students.length == 1)
+                IconButton(
+                  icon: Icon(_isEditing ? Icons.check_circle_outline_rounded : Icons.edit_rounded, size: 20, color: const Color(0xFF2563EB)),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () => setState(() => _isEditing = !_isEditing),
+                ),
+            ],
+          ),
           const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
+          if (_isEditing && widget.students.length == 1) ...[
+            TextFormField(
+              controller: _messageController,
+              maxLines: 5,
+              minLines: 3,
+              style: GoogleFonts.inter(fontSize: 14, color: textPrimaryColor, height: 1.5),
+              decoration: InputDecoration(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color: const Color(0xFF2563EB).withValues(alpha: 0.3),
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color: const Color(0xFF2563EB).withValues(alpha: 0.2),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF2563EB),
+                    width: 1.5,
+                  ),
+                ),
+                filled: true,
+                fillColor: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
+                contentPadding: const EdgeInsets.all(16),
               ),
             ),
-            child: Text(
-              students.length > 1 
-                ? 'Multiple personalized messages will be sent...'
-                : message,
-              style: GoogleFonts.inter(fontSize: 14, color: textPrimaryColor, height: 1.5),
+            const SizedBox(height: 10),
+            Text(
+              "You can customize this reminder before sending. Changes made here affect only this reminder and will not modify the default reminder template in Settings.",
+              style: GoogleFonts.inter(fontSize: 11, color: textTertiaryColor, height: 1.4),
             ),
-          ),
+          ] else ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
+                ),
+              ),
+              child: Text(
+                widget.students.length > 1 
+                  ? 'Multiple personalized messages will be sent...'
+                  : _messageController.text,
+                style: GoogleFonts.inter(fontSize: 14, color: textPrimaryColor, height: 1.5),
+              ),
+            ),
+          ],
           const SizedBox(height: 32),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: onConfirm,
+              onPressed: () {
+                if (widget.students.length == 1) {
+                  final textToSend = _messageController.text.trim();
+                  if (textToSend.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Reminder message cannot be empty.'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+                  widget.onConfirm(textToSend);
+                } else {
+                  widget.onConfirm('');
+                }
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF2563EB),
                 foregroundColor: Colors.white,
@@ -1841,7 +1999,7 @@ class _ReminderPreviewSheet extends StatelessWidget {
               ),
               icon: const Icon(Icons.chat_rounded, size: 18),
               label: Text(
-                students.length > 1 ? 'SEND ALL VIA WHATSAPP' : 'SEND VIA WHATSAPP',
+                widget.students.length > 1 ? 'SEND ALL VIA WHATSAPP' : 'SEND VIA WHATSAPP',
                 style: GoogleFonts.inter(fontWeight: FontWeight.w700),
               ),
             ),
@@ -1850,6 +2008,291 @@ class _ReminderPreviewSheet extends StatelessWidget {
       ),
     );
   }
+}
+
+class _BulkSendProgressDialog extends ConsumerStatefulWidget {
+  final List<StudentBalance> defaulters;
+  final String batchId;
+
+  const _BulkSendProgressDialog({
+    required this.defaulters,
+    required this.batchId,
+  });
+
+  @override
+  ConsumerState<_BulkSendProgressDialog> createState() => _BulkSendProgressDialogState();
+}
+
+class _BulkSendProgressDialogState extends ConsumerState<_BulkSendProgressDialog> with WidgetsBindingObserver {
+  int _currentIndex = 0;
+  Map<String, String> _dueDates = {};
+  bool _isLoadingDueDates = true;
+  bool _isSending = false;
+  bool _isPaused = false;
+  String _errorMsg = '';
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _loadAllDueDates();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _isSending && !_isPaused) {
+      Future.delayed(const Duration(milliseconds: 1200), () {
+        if (mounted && _isSending && !_isPaused) {
+          _sendNext();
+        }
+      });
+    }
+  }
+
+  Future<void> _loadAllDueDates() async {
+    try {
+      final studentIds = widget.defaulters.map((d) => d.id).toList();
+      final client = ref.read(supabaseClientProvider);
+      final response = await client
+          .from('dues')
+          .select('student_id, due_date')
+          .inFilter('student_id', studentIds)
+          .neq('status', 'paid')
+          .neq('status', 'cancelled')
+          .order('due_date', ascending: true);
+          
+      final Map<String, String> dates = {};
+      for (final row in response as List) {
+        final studentId = row['student_id'] as String;
+        final rawDate = row['due_date'] as String;
+        if (!dates.containsKey(studentId)) {
+          final dt = DateTime.parse(rawDate);
+          dates[studentId] = DateFormat('dd MMM yyyy').format(dt);
+        }
+      }
+      if (mounted) {
+        setState(() {
+          _dueDates = dates;
+          _isLoadingDueDates = false;
+          _isSending = true;
+        });
+        _sendCurrent();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingDueDates = false;
+          _isSending = true;
+        });
+        _sendCurrent();
+      }
+    }
+  }
+
+  void _sendNext() {
+    setState(() {
+      _currentIndex++;
+    });
+    _sendCurrent();
+  }
+
+  Future<void> _sendCurrent() async {
+    if (_currentIndex >= widget.defaulters.length) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('All reminders sent successfully!'),
+            backgroundColor: Color(0xFF10B981),
+          ),
+        );
+      }
+      return;
+    }
+
+    final student = widget.defaulters[_currentIndex];
+    final phone = student.parentPhone ?? '';
+    final cleanPhone = phone.replaceAll(RegExp(r'[^0-9+]'), '');
+    
+    if (cleanPhone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Skipping ${student.fullName} (No phone number)')),
+      );
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          _sendNext();
+        }
+      });
+      return;
+    }
+
+    final settings = ref.read(settingsProvider).valueOrNull;
+    final batch = ref.read(batchByIdProvider(widget.batchId)).valueOrNull;
+    
+    final template = settings?.tplFeeReminder ?? 'Hi {parent_name}, this is a reminder that a fee of ₹{amount} is due for {student_name} on {due_date}. Please pay on time to avoid late charges. — {school_name}';
+    final instituteName = settings?.centerName ?? '';
+    final batchName = batch?.name ?? '';
+    
+    final message = generateReminderMessage(
+      template: template,
+      student: student,
+      batchName: batchName,
+      instituteName: instituteName,
+      dueDate: _dueDates[student.id] ?? 'N/A',
+    );
+
+    final url = 'https://wa.me/${cleanPhone.startsWith('+') ? cleanPhone : '+91$cleanPhone'}?text=${Uri.encodeComponent(message)}';
+    
+    try {
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        setState(() {
+          _errorMsg = 'Could not launch WhatsApp for ${student.fullName}';
+          _isPaused = true;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMsg = 'Error sending reminder for ${student.fullName}: $e';
+        _isPaused = true;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isDark = AppColors.isDarkMode;
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+    final textSecondaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      backgroundColor: isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Sending Reminders',
+              style: GoogleFonts.manrope(fontSize: 18, fontWeight: FontWeight.bold, color: textPrimaryColor),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _isLoadingDueDates
+                  ? 'Loading student dues...'
+                  : 'Progress: ${_currentIndex + 1} of ${widget.defaulters.length}',
+              style: GoogleFonts.inter(fontSize: 14, color: textSecondaryColor),
+            ),
+            const SizedBox(height: 20),
+            if (_isLoadingDueDates)
+              const CircularProgressIndicator(color: Color(0xFF2563EB))
+            else ...[
+              LinearProgressIndicator(
+                value: widget.defaulters.isEmpty ? 0 : (_currentIndex + 1) / widget.defaulters.length,
+                backgroundColor: isDark ? Colors.white12 : Colors.black12,
+                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF2563EB)),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                _isPaused
+                    ? 'Paused: $_errorMsg'
+                    : 'Opening WhatsApp for ${widget.defaulters[_currentIndex].fullName}\'s parent...',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(fontSize: 13, color: textPrimaryColor),
+              ),
+            ],
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (_isPaused) ...[
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _isPaused = false;
+                        _errorMsg = '';
+                      });
+                      _sendCurrent();
+                    },
+                    child: Text('Retry', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: const Color(0xFF2563EB))),
+                  ),
+                  const SizedBox(width: 8),
+                  TextButton(
+                    onPressed: () {
+                      _sendNext();
+                    },
+                    child: Text('Skip', style: GoogleFonts.inter(color: textSecondaryColor)),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _isSending = false;
+                    });
+                    Navigator.pop(context);
+                  },
+                  child: Text('Cancel', style: GoogleFonts.inter(color: Colors.redAccent)),
+                ),
+              ],
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String generateReminderMessage({
+  required String template,
+  required StudentBalance student,
+  required String batchName,
+  required String instituteName,
+  required String dueDate,
+}) {
+  final String parentName = (student.parentName == null || student.parentName!.trim().isEmpty)
+      ? "Parent"
+      : student.parentName!.trim();
+
+  final String studentName = student.firstName.trim().isEmpty
+      ? "Student"
+      : student.fullName.trim();
+
+  final double dueVal = student.balance > 0 ? student.balance : student.dueAmount;
+  final String dueAmountStr = dueVal > 0 
+      ? '₹${NumberFormat('#,###').format(dueVal)}' 
+      : 'Pending Fee';
+
+  final String finalDueDate = dueDate.isEmpty ? 'N/A' : dueDate;
+
+  String msg = template;
+  
+  msg = msg.replaceAll('{parent_name}', parentName);
+  msg = msg.replaceAll('{student_name}', studentName);
+  
+  msg = msg.replaceAll('{due_amount}', dueAmountStr);
+  msg = msg.replaceAll('{amount}', dueAmountStr);
+  
+  msg = msg.replaceAll('{batch_name}', batchName.isEmpty ? 'N/A' : batchName);
+  
+  final String instName = instituteName.isEmpty ? 'FeeSync' : instituteName;
+  msg = msg.replaceAll('{institute_name}', instName);
+  msg = msg.replaceAll('{school_name}', instName);
+  
+  msg = msg.replaceAll('{due_date}', finalDueDate);
+  
+  msg = msg.replaceAll(RegExp(r'\{[^}]*\}'), '');
+  
+  return msg;
 }
 
 class _AnalyticsTab extends ConsumerWidget {
@@ -2162,6 +2605,7 @@ class _AnalyticsTab extends ConsumerWidget {
           }
           return;
         }
+        debugPrint('[DEBUG] Biometric success received');
       }
     }
     
@@ -2172,41 +2616,105 @@ class _AnalyticsTab extends ConsumerWidget {
 
   void _confirmDeleteBatch(BuildContext context, WidgetRef ref) {
     final bool isDark = AppColors.isDarkMode;
+    final navigator = Navigator.of(context);
+    final router = GoRouter.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    
+    bool isDeleting = false;
+    String? errorMessage;
+
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF1E1E2C) : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Delete Batch?', style: GoogleFonts.manrope(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
-        content: Text('Are you sure you want to delete this batch? All related records might be affected. This action cannot be undone.', 
-          style: GoogleFonts.inter(color: isDark ? Colors.white70 : Colors.black87)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('CANCEL'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(dialogContext); // close dialog using dialogContext
-              try {
-                await ref.read(batchNotifierProvider.notifier).deleteBatch(batchId);
-                ref.invalidate(activeBatchCountProvider);
-                ref.invalidate(subscriptionScreenDataProvider);
-                ref.invalidate(featureGateProvider);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Batch deleted successfully')));
-                  context.go('/batches'); // Navigate back to batches list using outer context
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error deleting batch: $e')));
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
-            child: const Text('DELETE', style: TextStyle(color: Colors.white)),
-          ),
-        ],
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            backgroundColor: isDark ? const Color(0xFF1E1E2C) : Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Text(
+              isDeleting ? 'Deleting Batch...' : 'Delete Batch?', 
+              style: GoogleFonts.manrope(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (isDeleting) ...[
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 20),
+                      child: CircularProgressIndicator(color: Color(0xFFEF4444)),
+                    ),
+                  ),
+                  Text(
+                    'Deleting batch and updating related records. Please wait...',
+                    style: GoogleFonts.inter(color: isDark ? Colors.white70 : Colors.black87),
+                  ),
+                ] else ...[
+                  Text(
+                    'Are you sure you want to delete this batch? All related records will be updated or deleted. This action cannot be undone.', 
+                    style: GoogleFonts.inter(color: isDark ? Colors.white70 : Colors.black87),
+                  ),
+                  if (errorMessage != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      errorMessage!,
+                      style: GoogleFonts.inter(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                  ],
+                ],
+              ],
+            ),
+            actions: isDeleting ? [] : [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('CANCEL'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  setState(() {
+                    isDeleting = true;
+                    errorMessage = null;
+                  });
+                  debugPrint('[DEBUG] Confirmation button pressed');
+                  try {
+                    await ref.read(batchNotifierProvider.notifier).deleteBatch(batchId);
+                    
+                    ref.invalidate(activeBatchCountProvider);
+                    ref.invalidate(subscriptionScreenDataProvider);
+                    ref.invalidate(featureGateProvider);
+                    ref.invalidate(batchStudentsProvider(batchId));
+                    ref.invalidate(batchAnalyticsProvider(batchId));
+                    invalidateDashboardAnalytics(ref);
+                    
+                    debugPrint('[DEBUG] UI refreshed');
+                    
+                    navigator.pop();
+                    
+                    messenger.showSnackBar(
+                      const SnackBar(
+                        content: Text('Batch deleted successfully.'),
+                        backgroundColor: Color(0xFF10B981),
+                      ),
+                    );
+                    
+                    router.go('/batches');
+                  } catch (e) {
+                    debugPrint('[DEBUG] Delete failed: $e');
+                    setState(() {
+                      isDeleting = false;
+                      errorMessage = e.toString().contains('Exception:') 
+                          ? e.toString().replaceAll('Exception:', '').trim()
+                          : 'Unable to delete batch. Please try again.';
+                    });
+                  }
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+                child: const Text('DELETE', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

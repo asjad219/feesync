@@ -30,6 +30,17 @@ ParsedError parseError(BuildContext context, dynamic error) {
     return keywords.any((kw) => errStr.toLowerCase().contains(kw.toLowerCase()));
   }
 
+  // 0. Duplicate Enrollment Check
+  if (contains(['student_enrollments_student_id_batch_id_key', '23505', 'already enrolled in the selected batch'])) {
+    return ParsedError(
+      title: 'Already Enrolled',
+      message: 'This student is already enrolled in the selected batch.',
+      hotfix: 'Verify the student details and selected batch, then try again.',
+      icon: Icons.school_rounded,
+      color: const Color(0xFFEF4444),
+    );
+  }
+
   // 1. Staff limit
   if (contains(['staff limit', 'invite more staff'])) {
     return ParsedError(
