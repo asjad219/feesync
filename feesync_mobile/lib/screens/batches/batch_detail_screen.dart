@@ -2616,10 +2616,7 @@ class _AnalyticsTab extends ConsumerWidget {
 
   void _confirmDeleteBatch(BuildContext context, WidgetRef ref) {
     final bool isDark = AppColors.isDarkMode;
-    final navigator = Navigator.of(context);
-    final router = GoRouter.of(context);
-    final messenger = ScaffoldMessenger.of(context);
-    
+
     bool isDeleting = false;
     String? errorMessage;
 
@@ -2679,26 +2676,32 @@ class _AnalyticsTab extends ConsumerWidget {
                   debugPrint('[DEBUG] Confirmation button pressed');
                   try {
                     await ref.read(batchNotifierProvider.notifier).deleteBatch(batchId);
-                    
+
                     ref.invalidate(activeBatchCountProvider);
                     ref.invalidate(subscriptionScreenDataProvider);
                     ref.invalidate(featureGateProvider);
+                    ref.invalidate(batchByIdProvider(batchId));
                     ref.invalidate(batchStudentsProvider(batchId));
                     ref.invalidate(batchAnalyticsProvider(batchId));
                     invalidateDashboardAnalytics(ref);
-                    
+
                     debugPrint('[DEBUG] UI refreshed');
-                    
-                    navigator.pop();
-                    
-                    messenger.showSnackBar(
-                      const SnackBar(
-                        content: Text('Batch deleted successfully.'),
-                        backgroundColor: Color(0xFF10B981),
-                      ),
-                    );
-                    
-                    router.go('/batches');
+
+                    // Close only the dialog, not the whole screen
+                    if (dialogContext.mounted) {
+                      Navigator.pop(dialogContext);
+                    }
+
+                    // Navigate and show snackbar after dialog is dismissed
+                    if (context.mounted) {
+                      GoRouter.of(context).go('/batches');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Batch deleted successfully.'),
+                          backgroundColor: Color(0xFF10B981),
+                        ),
+                      );
+                    }
                   } catch (e) {
                     debugPrint('[DEBUG] Delete failed: $e');
                     setState(() {

@@ -72,10 +72,11 @@ class SubscriptionRepository {
     if (uid == null) return 0;
 
     try {
+      // RLS enforces account-level isolation via get_account_id().
+      // Do NOT add .eq('account_id', uid) — uid is auth UID, not account UUID.
       final response = await _client
           .from('users')
           .select('id')
-          .eq('account_id', uid)
           .eq('is_active', true);
       return (response as List).length;
     } catch (e) {
@@ -90,24 +91,17 @@ class SubscriptionRepository {
     if (uid == null) return 0;
 
     try {
-      // Try account_id field first (matches schema).
+      // RLS enforces account-level isolation via get_account_id().
+      // Do NOT add .eq('account_id', uid) — the uid is the auth UID
+      // and account_id is a separate account UUID; the explicit filter
+      // would return 0 rows.
       final response = await _client
           .from('students')
-          .select('id')
-          .eq('account_id', uid);
+          .select('id');
       return (response as List).length;
-    } catch (_) {
-      try {
-        // Fallback to owner_id field.
-        final response = await _client
-            .from('students')
-            .select('id')
-            .eq('owner_id', uid);
-        return (response as List).length;
-      } catch (e) {
-        debugPrint('[SubscriptionRepo] getActiveStudentCount error: $e');
-        return 0;
-      }
+    } catch (e) {
+      debugPrint('[SubscriptionRepo] getActiveStudentCount error: $e');
+      return 0;
     }
   }
 
@@ -117,23 +111,15 @@ class SubscriptionRepository {
     if (uid == null) return 0;
 
     try {
+      // RLS enforces account-level isolation; no explicit account_id filter needed.
       final response = await _client
           .from('batches')
           .select('id')
-          .eq('account_id', uid)
           .eq('status', 'active');
       return (response as List).length;
-    } catch (_) {
-      try {
-        final response = await _client
-            .from('batches')
-            .select('id')
-            .eq('account_id', uid);
-        return (response as List).length;
-      } catch (e) {
-        debugPrint('[SubscriptionRepo] getActiveBatchCount error: $e');
-        return 0;
-      }
+    } catch (e) {
+      debugPrint('[SubscriptionRepo] getActiveBatchCount error: $e');
+      return 0;
     }
   }
 

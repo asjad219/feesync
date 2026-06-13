@@ -398,7 +398,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                 iconColor: const Color(0xFFF59E0B),
                 label: 'Active Staff',
                 used: data.activeStaffCount,
-                max: sub.maxStaff,
+                max: sub.currentMaxStaff,
                 ratio: data.staffUsageRatio,
                 isNearLimit: data.isNearStaffLimit,
                 isAtLimit: data.isAtStaffLimit,
@@ -440,7 +440,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
     bool isSimpleLabel = false,
     String limitName = 'limit',
   }) {
-    final isUnlimited = max <= 0;
+    final isUnlimited = max < 0;
     final progressColor = isAtLimit
         ? AppColors.error
         : isNearLimit

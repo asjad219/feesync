@@ -14,6 +14,7 @@ import '../../providers/subscription_provider.dart';
 import '../../core/widgets/paywall_dialog.dart';
 import '../../core/billing/feature_gate.dart';
 import '../../core/utils/receipt_service.dart';
+import '../../core/widgets/student_avatar.dart';
 
 class RecordPaymentScreen extends ConsumerStatefulWidget {
   final Student? student;
@@ -1030,15 +1031,11 @@ class _StudentSearchBottomSheetState extends State<_StudentSearchBottomSheet> {
                               tileColor: isDark
                                   ? AppColors.surfaceContainerLow.withValues(alpha: 0.3)
                                   : Colors.white,
-                              leading: CircleAvatar(
-                                backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                                child: Text(
-                                  student.firstName.substring(0, 1).toUpperCase(),
-                                  style: GoogleFonts.inter(
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
+                              leading: StudentAvatar(
+                                studentId: student.id,
+                                firstName: student.firstName,
+                                gender: student.gender,
+                                radius: 22,
                               ),
                               title: Text(
                                 student.fullName,
