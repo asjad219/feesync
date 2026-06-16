@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -307,6 +307,10 @@ final routerProvider = Provider<GoRouter>((ref) {
 
 class GoRouterRefreshStream extends ChangeNotifier {
   GoRouterRefreshStream(Stream<AuthState> stream) {
+    // Notify immediately so GoRouter evaluates the redirect from
+    // Supabase's cached session without waiting for the first stream event.
+    // This prevents the router from being stuck on /splash when offline.
+    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
     _subscription = stream.listen((_) => notifyListeners());
   }
 

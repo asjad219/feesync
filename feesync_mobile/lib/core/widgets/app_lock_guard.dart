@@ -23,9 +23,19 @@ class _AppLockGuardState extends ConsumerState<AppLockGuard>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Always lock on startup if any lock is enabled, but wait for settings to load first
+    // Always lock on startup if any lock is enabled, but wait for settings to load first.
+    // Cap at 5 s — if init hangs (e.g. slow storage), proceed anyway so we never freeze.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(localSettingsProvider.notifier).initFuture.then((_) {
+      ref
+          .read(localSettingsProvider.notifier)
+          .initFuture
+          .timeout(
+            const Duration(seconds: 5),
+            onTimeout: () {
+              // Settings didn't load in time — proceed with defaults.
+            },
+          )
+          .then((_) {
         if (mounted) {
           _checkLock(isStartup: true).then((_) {
             if (mounted) {
@@ -33,6 +43,9 @@ class _AppLockGuardState extends ConsumerState<AppLockGuard>
             }
           });
         }
+      }).catchError((_) {
+        // Any other error — unblock the UI.
+        if (mounted) setState(() => _isCheckingInitialState = false);
       });
     });
   }

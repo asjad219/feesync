@@ -20,7 +20,10 @@ final currentUserProfileProvider = FutureProvider<UserProfile?>((ref) async {
   if (authState.value == null) return null;
   
   final repository = ref.watch(userRepositoryProvider);
-  return repository.getCurrentUserProfile();
+  return repository.getCurrentUserProfile().timeout(
+    const Duration(seconds: 10),
+    onTimeout: () => null, // Treat timeout as "not loaded yet" — won't crash
+  );
 });
 
 final accountProfileProvider = FutureProvider<AccountProfile?>((ref) async {

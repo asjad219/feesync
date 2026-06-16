@@ -4,6 +4,7 @@ import '../repositories/subscription_repository.dart';
 import '../core/billing/feature_gate.dart';
 import '../repositories/usage_repository.dart';
 import 'supabase_provider.dart';
+import '../core/billing/plan_config.dart';
 
 // ─── Repository provider ───────────────────────────────────────────────────────
 
@@ -114,14 +115,13 @@ class SubscriptionScreenData {
 
   // ─── Derived plan object ────────────────────────────────────────────────────
 
-  SubscriptionPlan get plan => SubscriptionPlan.fromTier(subscription.effectivePlan);
+  PlanConfig get plan => PlanConfig.fromTier(subscription.effectivePlan);
 
   // ─── Student limit ──────────────────────────────────────────────────────────
 
-  /// Usage ratio 0.0–1.0. Returns 0.0 for unlimited plans.
+  /// Usage ratio 0.0–1.0.
   double get studentUsageRatio {
     final max = subscription.currentMaxStudents;
-    if (max < 0) return 0.0;
     if (max == 0) return 1.0;
     return (activeStudentCount / max).clamp(0.0, 1.0);
   }
@@ -131,7 +131,6 @@ class SubscriptionScreenData {
 
   /// True if adding one more student is allowed.
   bool get canAddStudent {
-    if (subscription.hasUnlimitedStudents) return true;
     return activeStudentCount < subscription.currentMaxStudents;
   }
 
@@ -139,7 +138,6 @@ class SubscriptionScreenData {
 
   double get batchUsageRatio {
     final max = subscription.currentMaxBatches;
-    if (max < 0) return 0.0;
     if (max == 0) return 1.0;
     return (activeBatchCount / max).clamp(0.0, 1.0);
   }
@@ -148,7 +146,6 @@ class SubscriptionScreenData {
 
   /// True if adding one more batch is allowed.
   bool get canAddBatch {
-    if (subscription.hasUnlimitedBatches) return true;
     return activeBatchCount < subscription.currentMaxBatches;
   }
 
@@ -156,7 +153,6 @@ class SubscriptionScreenData {
 
   double get staffUsageRatio {
     final max = subscription.currentMaxStaff;
-    if (max < 0) return 0.0;
     if (max == 0) return 1.0;
     return (activeStaffCount / max).clamp(0.0, 1.0);
   }
@@ -166,7 +162,6 @@ class SubscriptionScreenData {
 
   /// True if adding one more staff is allowed.
   bool get canAddStaff {
-    if (subscription.hasUnlimitedStaff) return true;
     return activeStaffCount < subscription.currentMaxStaff;
   }
 
@@ -176,7 +171,6 @@ class SubscriptionScreenData {
   
   double get waReceiptsUsageRatio {
     final max = subscription.currentWaReceiptsLimit;
-    if (max < 0) return 0.0;
     if (max == 0) return 1.0;
     return (waReceiptsUsed / max).clamp(0.0, 1.0);
   }

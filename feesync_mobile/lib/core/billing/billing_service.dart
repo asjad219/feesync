@@ -8,24 +8,24 @@ import '../../models/subscription.dart';
 /// Google Play product IDs — must match Play Console subscriptions.
 class BillingProductIds {
   static const String starterMonthly  = 'feesync_starter_monthly';
-  static const String starterAnnual   = 'feesync_starter_annual';
+  static const String starterYearly   = 'feesync_starter_yearly';
   static const String growthMonthly   = 'feesync_growth_monthly';
-  static const String growthAnnual    = 'feesync_growth_annual';
+  static const String growthYearly    = 'feesync_growth_yearly';
   static const String instituteMonthly = 'feesync_institute_monthly';
-  static const String instituteAnnual  = 'feesync_institute_annual';
+  static const String instituteYearly  = 'feesync_institute_yearly';
 
   static const Set<String> all = {
     starterMonthly,
-    starterAnnual,
+    starterYearly,
     growthMonthly,
-    growthAnnual,
+    growthYearly,
     instituteMonthly,
-    instituteAnnual,
+    instituteYearly,
   };
 
   /// Maps a plan tier + billing cycle to the correct product ID.
   static String forPlan(String tier, {bool annual = false}) {
-    final cycle = annual ? 'annual' : 'monthly';
+    final cycle = annual ? 'yearly' : 'monthly';
     return 'feesync_${tier}_$cycle';
   }
 
@@ -39,7 +39,7 @@ class BillingProductIds {
 
   /// Extracts the billing cycle from a product ID.
   static String cycleFromProductId(String productId) {
-    return productId.endsWith('_annual') ? 'annual' : 'monthly';
+    return productId.endsWith('_yearly') ? 'annual' : 'monthly';
   }
 }
 
@@ -102,7 +102,30 @@ class BillingService {
       return;
     }
 
-    _isAvailable = await _iap.isAvailable();
+    // Cap the entire initialization at 8 s to avoid blocking startup when offline.
+    try {
+      await _initializeInternal().timeout(
+        const Duration(seconds: 8),
+        onTimeout: () {
+          debugPrint('[Billing] Initialization timed out — billing disabled for this session.');
+          _isAvailable = false;
+        },
+      );
+    } catch (e) {
+      debugPrint('[Billing] Initialization failed: $e — billing disabled for this session.');
+      _isAvailable = false;
+    }
+  }
+
+  Future<void> _initializeInternal() async {
+    try {
+      _isAvailable = await _iap.isAvailable();
+    } catch (e) {
+      debugPrint('[Billing] isAvailable() failed: $e');
+      _isAvailable = false;
+      return;
+    }
+
     if (!_isAvailable) {
       debugPrint('[Billing] In-app purchases not available.');
       return;
@@ -121,6 +144,13 @@ class BillingService {
     // Load product details.
     await _loadProducts();
     debugPrint('[Billing] Initialized. Available products: ${_productDetails.keys}');
+
+    // Restore purchases automatically on app startup.
+    try {
+      await restorePurchases();
+    } catch (e) {
+      debugPrint('[Billing] Restore on startup failed: $e');
+    }
   }
 
   Future<void> _loadProducts() async {

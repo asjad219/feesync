@@ -1,7 +1,7 @@
 name: feesync_mobile
 description: "FeeSync - School Fee Management Mobile App"
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: ^3.11.5
@@ -42,6 +42,9 @@ dependencies:
 
   # Local state cache
   shared_preferences: ^2.3.2
+
+  # Network connectivity
+  connectivity_plus: ^6.1.4
 
   # Google Sign-In and Google Drive APIs
   google_sign_in: ^6.2.1

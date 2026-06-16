@@ -79,24 +79,25 @@ class DashboardAnalyticsRepository {
 
   /// Get dashboard statistics filtered by time cycle
   Future<DashboardStats> getDashboardStatsForCycle(TimeCycle cycle) async {
+    const timeout = Duration(seconds: 15);
     try {
       final now = DateTime.now();
       final cycleRange = _rangeForCycle(now, cycle);
       final previousCycleRange = _previousRangeForCycle(cycleRange, cycle);
 
       final results = await Future.wait<dynamic>([
-        _studentRepo.getStudents(),
-        _studentRepo.getStudentBalances(),
+        _studentRepo.getStudents().timeout(timeout),
+        _studentRepo.getStudentBalances().timeout(timeout),
         _paymentRepo.getTotalCollection(
           startDate: cycleRange.start,
           endDate: cycleRange.endInclusive,
-        ),
+        ).timeout(timeout),
         _paymentRepo.getTotalCollection(
           startDate: previousCycleRange.start,
           endDate: previousCycleRange.endInclusive,
-        ),
-        _paymentRepo.getTotalCollection(),
-        _feeRepo.getDues(),
+        ).timeout(timeout),
+        _paymentRepo.getTotalCollection().timeout(timeout),
+        _feeRepo.getDues().timeout(timeout),
       ]);
 
       final students = results[0] as List;
@@ -160,6 +161,7 @@ class DashboardAnalyticsRepository {
 
   /// Get monthly collection data for the last 6 months
   Future<List<MonthlyStat>> getMonthlyCollectionData() async {
+    const timeout = Duration(seconds: 15);
     try {
       final now = DateTime.now();
       final List<MonthlyStat> monthlyData = [];
@@ -172,7 +174,7 @@ class DashboardAnalyticsRepository {
         final collection = await _paymentRepo.getTotalCollection(
           startDate: monthRange.start,
           endDate: monthRange.endInclusive,
-        );
+        ).timeout(timeout);
 
         final amount = (collection['total'] as num?)?.toDouble() ?? 0;
         final monthName = DateFormat('MMM').format(date);
@@ -189,9 +191,10 @@ class DashboardAnalyticsRepository {
 
   /// Get collection breakdown by fee category
   Future<List<CategoryStat>> getCategoryCollectionData() async {
+    const timeout = Duration(seconds: 15);
     try {
-      final categories = await _feeRepo.getFeeCategories();
-      final payments = await _paymentRepo.getPayments();
+      final categories = await _feeRepo.getFeeCategories().timeout(timeout);
+      final payments = await _paymentRepo.getPayments().timeout(timeout);
       final completedPayments = payments
           .where((payment) => payment.status.name == 'completed')
           .toList();
@@ -230,13 +233,14 @@ class DashboardAnalyticsRepository {
 
   /// Get collection breakdown by student class
   Future<List<ClassStat>> getClassCollectionData() async {
+    const timeout = Duration(seconds: 15);
     try {
-      final students = await _studentRepo.getStudents();
-      final payments = await _paymentRepo.getPayments();
+      final students = await _studentRepo.getStudents().timeout(timeout);
+      final payments = await _paymentRepo.getPayments().timeout(timeout);
       final completedPayments = payments
           .where((payment) => payment.status.name == 'completed')
           .toList();
-      final balances = await _studentRepo.getStudentBalances();
+      final balances = await _studentRepo.getStudentBalances().timeout(timeout);
 
       // Group by class
       final classMap = <String, Map<String, double>>{};
@@ -284,7 +288,9 @@ class DashboardAnalyticsRepository {
   /// Get recent transactions
   Future<List<RecentTransaction>> getRecentTransactions({int limit = 5}) async {
     try {
-      final payments = await _paymentRepo.getRecentPayments(limit: limit);
+      final payments = await _paymentRepo
+          .getRecentPayments(limit: limit)
+          .timeout(const Duration(seconds: 15));
 
       return payments
           .map((payment) => RecentTransaction(
@@ -292,7 +298,7 @@ class DashboardAnalyticsRepository {
                 studentName: payment.student?.fullName ?? 'Unknown',
                 studentClass: payment.student?.studentClass ?? '',
                 amount: payment.amount,
-                feeType: 'Tuition Fee', // You can make this dynamic
+                feeType: 'Tuition Fee',
                 date: payment.paymentDate,
                 paymentMethod: payment.paymentMethod.name,
               ))

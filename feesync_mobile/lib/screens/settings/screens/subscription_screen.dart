@@ -8,6 +8,9 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/glass/glass_card.dart';
 import '../../../models/subscription.dart';
 import '../../../providers/subscription_provider.dart';
+import '../../../core/billing/plan_config.dart';
+import '../../../core/billing/billing_provider.dart';
+import '../../../core/billing/billing_service.dart';
 
 class SubscriptionScreen extends ConsumerStatefulWidget {
   const SubscriptionScreen({super.key});
@@ -41,21 +44,31 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
   @override
   Widget build(BuildContext context) {
     final dataAsync = ref.watch(subscriptionScreenDataProvider);
+    final purchaseState = ref.watch(purchaseControllerProvider);
 
-    return Scaffold(
-      backgroundColor: AppColors.darkBg,
-      body: dataAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => _buildError(err),
-        data: (data) {
-          if (!_initializedPlanIndex) {
-            final tier = data.subscription.effectivePlan;
-            _selectedComparePlanIndex = _getCurrentPlanIndex(tier);
-            _initializedPlanIndex = true;
-          }
-          return _buildContent(data);
-        },
-      ),
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: AppColors.darkBg,
+          body: dataAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (err, _) => _buildError(err),
+            data: (data) {
+              if (!_initializedPlanIndex) {
+                final tier = data.subscription.effectivePlan;
+                _selectedComparePlanIndex = _getCurrentPlanIndex(tier);
+                _initializedPlanIndex = true;
+              }
+              return _buildContent(data);
+            },
+          ),
+        ),
+        if (purchaseState.isLoading)
+          Container(
+            color: Colors.black.withValues(alpha: 0.6),
+            child: const Center(child: CircularProgressIndicator()),
+          ),
+      ],
     );
   }
 
@@ -65,6 +78,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
         return 1;
       case 'growth':
         return 2;
+      case 'institute':
+        return 3;
       default:
         return 0;
     }
@@ -440,7 +455,6 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
     bool isSimpleLabel = false,
     String limitName = 'limit',
   }) {
-    final isUnlimited = max < 0;
     final progressColor = isAtLimit
         ? AppColors.error
         : isNearLimit
@@ -472,10 +486,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
               ),
             ),
             Text(
-              suffix ??
-                  (isUnlimited
-                      ? 'Unlimited'
-                      : '$used / $max'),
+              suffix ?? '$used / $max',
               style: GoogleFonts.inter(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
@@ -488,7 +499,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
             ),
           ],
         ),
-        if (!isSimpleLabel && ratio != null && !isUnlimited) ...[
+        if (!isSimpleLabel && ratio != null) ...[
           const SizedBox(height: 8),
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
@@ -605,8 +616,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
   // ─── Plan comparison ──────────────────────────────────────────────────────
 
   Widget _buildComparePlanPills() {
-    final tiers = ['free', 'starter', 'growth'];
-    final labels = ['Free', 'Starter', 'Growth'];
+    final tiers = ['free', 'starter', 'growth', 'institute'];
+    final labels = ['Free', 'Starter', 'Growth', 'Institute'];
     
     return Container(
       padding: const EdgeInsets.all(4),
@@ -616,7 +627,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
         border: Border.all(color: AppColors.outline.withValues(alpha: 0.15)),
       ),
       child: Row(
-        children: List.generate(3, (index) {
+        children: List.generate(4, (index) {
           final isSelected = _selectedComparePlanIndex == index;
           final tier = tiers[index];
           
@@ -659,7 +670,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
   }
 
   Widget _buildComparePlanCard(Subscription currentSub) {
-    final plans = SubscriptionPlan.all;
+    final plans = PlanConfig.all;
     final plan = plans[_selectedComparePlanIndex];
     final tier = plan.tier;
     
@@ -668,40 +679,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
         
     final themeColor = _planColor(tier);
     
-    final List<String> highlights;
-    switch (tier) {
-      case 'growth':
-        highlights = [
-          'Unlimited student capacity',
-          'Unlimited batches & groups',
-          'Full AI intelligence suite (all 9 features)',
-          'Razorpay Auto-Debit collection support',
-          'WhatsApp call & chat official support',
-          'Scheduled automated PDF email reports',
-          'Up to 500 fallback transactional SMS/mo',
-        ];
-        break;
-      case 'starter':
-        highlights = [
-          'Up to 200 active students (10x Free limit)',
-          'Up to 10 batches / classes',
-          'Unlimited automated WhatsApp receipts',
-          'Full reports collection access (14 reports)',
-          'AI assistance (3 smart features)',
-          'Razorpay standard payment links',
-          'Export all reports & student lists to CSV',
-        ];
-        break;
-      default:
-        highlights = [
-          'Up to 20 active students',
-          '1 Batch limit',
-          '200 WhatsApp Receipts per month',
-          '50 WhatsApp Reminders per month',
-          'Basic Reports access (5 types)',
-        ];
-        break;
-    }
+    final List<String> highlights = plan.highlights;
 
     return GlassCard(
       padding: const EdgeInsets.all(24),
@@ -774,11 +752,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      tier == 'growth'
-                          ? 'Ultimate plan for scaling coaching centers'
-                          : tier == 'starter'
-                              ? 'Best value for growing coaching hubs'
-                              : 'Kickstart your school management',
+                      plan.tagline,
                       style: GoogleFonts.inter(
                         fontSize: 11,
                         color: AppColors.textTertiary,
@@ -903,9 +877,13 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                         ),
                       )
                     : _GradientButton(
-                        label: _selectedComparePlanIndex == 1
-                            ? 'Upgrade to Starter'
-                            : 'Upgrade to Growth',
+                        label: _selectedComparePlanIndex == 3
+                            ? 'Contact for Institute'
+                            : _selectedComparePlanIndex == 2
+                                ? 'Upgrade to Growth'
+                                : _selectedComparePlanIndex == 1
+                                    ? 'Upgrade to Starter'
+                                    : 'Downgrade',
                         gradient: _planGradient(tier),
                         onTap: () => _showUpgradeSheet(currentSub),
                       ),
@@ -971,7 +949,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
   }
 
   Widget _buildPlanHeaderRow(Subscription currentSub) {
-    final plans = SubscriptionPlan.all;
+    final plans = PlanConfig.all;
 
     return Row(
       children: [
@@ -1069,7 +1047,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
       child: Row(
         children: [
           _comparisonLabelCell(row.label),
-          ...SubscriptionPlan.all.map(
+          ...PlanConfig.all.map(
             (plan) {
               final isCurrent = plan.tier == currentSub.effectivePlan;
               final value = row.getValue(plan);
@@ -1292,7 +1270,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
-          'Payment integration coming soon. Prices are in INR and include applicable taxes.',
+          'Subscriptions are managed securely through Google Play. Prices include applicable taxes.',
           style: GoogleFonts.inter(
             fontSize: 11,
             color: AppColors.textTertiary,
@@ -1300,7 +1278,21 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 16),
+        ElevatedButton.icon(
+          onPressed: () {
+            ref.read(purchaseControllerProvider.notifier).restore();
+          },
+          icon: const Icon(Icons.restore_rounded, size: 16),
+          label: const Text('Restore Purchases'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.surfaceContainerHigh,
+            foregroundColor: AppColors.textPrimary,
+            elevation: 0,
+            textStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+          ),
+        ),
+        const SizedBox(height: 16),
         Wrap(
           alignment: WrapAlignment.center,
           spacing: 16,
@@ -1423,30 +1415,25 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
 
 class _ComparisonRow {
   final String label;
-  final String Function(SubscriptionPlan) getValue;
+  final String Function(PlanConfig) getValue;
 
   const _ComparisonRow(this.label, this.getValue);
 }
 
 final _comparisonRows = <_ComparisonRow>[
   _ComparisonRow('Active Students', (p) {
-    if (p.maxStudents == -1) return 'Unlimited';
     return 'Up to ${p.maxStudents}';
   }),
   _ComparisonRow('Batches', (p) {
-    if (p.maxBatches == -1) return 'Unlimited';
     return 'Up to ${p.maxBatches}';
   }),
   _ComparisonRow('WhatsApp Receipts', (p) {
-    if (p.whatsappReceiptsPerMonth == -1) return 'Unlimited';
     return '${p.whatsappReceiptsPerMonth}/mo';
   }),
   _ComparisonRow('WA Reminders', (p) {
-    if (p.whatsappRemindersPerMonth == -1) return 'Unlimited';
     return '${p.whatsappRemindersPerMonth}/mo';
   }),
   _ComparisonRow('Staff Accounts', (p) {
-    if (p.maxStaff == -1) return 'Unlimited';
     return '${p.maxStaff} staff';
   }),
   _ComparisonRow('Biometric Auth', (p) => p.biometricAuth ? '✓' : '✗'),
@@ -1468,7 +1455,7 @@ class _FaqItem {
 final _faqItems = <_FaqItem>[
   _FaqItem(
     'How does billing work?',
-    'Payment integration is coming soon. Once launched, you will be able to subscribe directly within the app securely.',
+    'You can subscribe directly through Google Play Billing. Manage your subscription safely and securely within your Google account.',
   ),
   _FaqItem(
     'Can I upgrade or downgrade at any time?',
@@ -1484,7 +1471,7 @@ final _faqItems = <_FaqItem>[
   ),
   _FaqItem(
     'What\'s the refund policy?',
-    'Refund policies will be available once our payment integration goes live. We aim to provide fair, prorated options.',
+    'Refunds are processed according to Google Play policies. Please request refunds through the Google Play support center.',
   ),
   _FaqItem(
     'Do WhatsApp messages cost extra?',
@@ -1498,7 +1485,7 @@ final _faqItems = <_FaqItem>[
 
 // ─── Upgrade bottom sheet widget ──────────────────────────────────────────────
 
-class _UpgradeSheet extends StatelessWidget {
+class _UpgradeSheet extends ConsumerWidget {
   final Subscription currentSub;
   final bool isAnnual;
   final VoidCallback onToggle;
@@ -1510,8 +1497,8 @@ class _UpgradeSheet extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final plans = SubscriptionPlan.all
+  Widget build(BuildContext context, WidgetRef ref) {
+    final plans = PlanConfig.all
         .where((p) => p.tier != 'free' && p.tier != currentSub.effectivePlan)
         .toList();
 
@@ -1562,18 +1549,11 @@ class _UpgradeSheet extends StatelessWidget {
           ...plans.map((plan) => _PlanOptionCard(
                 plan: plan,
                 isAnnual: isAnnual,
+                currentSub: currentSub,
                 onSelect: () {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Payment integration coming soon',
-                        style: GoogleFonts.inter(fontWeight: FontWeight.w600),
-                      ),
-                      behavior: SnackBarBehavior.floating,
-                      backgroundColor: AppColors.primaryContainer,
-                    ),
-                  );
+                  final productId = BillingProductIds.forPlan(plan.tier, annual: isAnnual);
+                  ref.read(purchaseControllerProvider.notifier).purchase(productId);
                 },
               )),
           const SizedBox(height: 12),
@@ -1592,43 +1572,64 @@ class _UpgradeSheet extends StatelessWidget {
   }
 }
 
-class _PlanOptionCard extends StatelessWidget {
-  final SubscriptionPlan plan;
+class _PlanOptionCard extends ConsumerWidget {
+  final PlanConfig plan;
   final bool isAnnual;
+  final Subscription currentSub;
   final VoidCallback onSelect;
 
   const _PlanOptionCard({
     required this.plan,
     required this.isAnnual,
+    required this.currentSub,
     required this.onSelect,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final price = isAnnual ? plan.annualPrice : plan.monthlyPrice;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final productId = BillingProductIds.forPlan(plan.tier, annual: isAnnual);
+    final product = ref.watch(billingProductProvider(productId));
+
     final isGrowth = plan.tier == 'growth';
+    final isInstitute = plan.tier == 'institute';
+    
+    // Check if the user is already exactly on this plan and cycle
+    final isCurrentPlanAndCycle = currentSub.effectivePlan == plan.tier &&
+        currentSub.billingCycle == (isAnnual ? 'annual' : 'monthly');
+
+    final String displayPrice = product != null
+        ? product.price
+        : '₹${isAnnual ? plan.annualPrice : plan.monthlyPrice}';
 
     return GestureDetector(
-      onTap: onSelect,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: isGrowth
-              ? const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF7C3AED), Color(0xFFDB2777)],
-                )
-              : null,
-          color: isGrowth ? null : AppColors.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(16),
-          border: isGrowth
-              ? null
-              : Border.all(
-                  color: AppColors.outline.withValues(alpha: 0.2)),
-        ),
-        child: Row(
+      onTap: isCurrentPlanAndCycle ? null : onSelect,
+      child: Opacity(
+        opacity: isCurrentPlanAndCycle ? 0.5 : 1.0,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: isGrowth
+                ? const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF7C3AED), Color(0xFFDB2777)],
+                  )
+                : isInstitute
+                    ? const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF1E3A8A), Color(0xFF9333EA)],
+                      )
+                    : null,
+            color: (isGrowth || isInstitute) ? null : AppColors.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(16),
+            border: (isGrowth || isInstitute)
+                ? null
+                : Border.all(
+                    color: AppColors.outline.withValues(alpha: 0.2)),
+          ),
+          child: Row(
           children: [
             Icon(
               isGrowth
@@ -1647,18 +1648,18 @@ class _PlanOptionCard extends StatelessWidget {
                     style: GoogleFonts.manrope(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
-                      color: isGrowth
+                      color: (isGrowth || isInstitute)
                           ? Colors.white
                           : AppColors.textPrimary,
                     ),
                   ),
                   Text(
-                    isGrowth
-                        ? 'Unlimited students + Cloud Backup & Support'
+                    isGrowth || isInstitute
+                        ? (isInstitute ? 'Unlimited everything + Priority' : 'Unlimited students + Cloud Backup')
                         : 'Up to ${plan.maxStudents} students + Backup',
                     style: GoogleFonts.inter(
                       fontSize: 12,
-                      color: isGrowth
+                      color: (isGrowth || isInstitute)
                           ? Colors.white.withValues(alpha: 0.8)
                           : AppColors.textTertiary,
                     ),
@@ -1670,26 +1671,28 @@ class _PlanOptionCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '₹$price',
+                  isCurrentPlanAndCycle ? 'Current' : displayPrice,
                   style: GoogleFonts.manrope(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    color: isGrowth ? Colors.white : AppColors.primary,
+                    color: (isGrowth || isInstitute) ? Colors.white : AppColors.primary,
                   ),
                 ),
-                Text(
-                  '/${isAnnual ? 'year' : 'month'}',
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-                    color: isGrowth
-                        ? Colors.white.withValues(alpha: 0.7)
-                        : AppColors.textTertiary,
+                if (!isCurrentPlanAndCycle)
+                  Text(
+                    '/${isAnnual ? 'year' : 'month'}',
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      color: (isGrowth || isInstitute)
+                          ? Colors.white.withValues(alpha: 0.7)
+                          : AppColors.textTertiary,
+                    ),
                   ),
-                ),
               ],
             ),
           ],
         ),
+      ),
       ),
     );
   }

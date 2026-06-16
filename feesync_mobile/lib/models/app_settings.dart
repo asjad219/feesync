@@ -140,6 +140,44 @@ class AppSettings {
     );
   }
 
+  /// Returns a safe in-memory default when Supabase is unreachable (e.g. offline).
+  /// The dummy id/accountId prevent null-pointer errors downstream; real data
+  /// will load once connectivity is restored and providers are invalidated.
+  factory AppSettings.defaults() {
+    return AppSettings(
+      id: 'offline-default',
+      accountId: 'offline-default',
+      centerName: 'FeeSync',
+      academicYear: '2024-25',
+      currency: 'INR',
+      timezone: 'IST',
+      gstEnabled: false,
+      qrVerificationEnabled: false,
+      parentPortalEnabled: false,
+      digitalSignatureEnabled: false,
+      defaultDueDay: 5,
+      autoDueGeneration: false,
+      lateFinesEnabled: false,
+      lateFineAmount: 0,
+      gracePeriodDays: 3,
+      partialPaymentsAllowed: true,
+      aiRemindersEnabled: false,
+      aiPredictionsEnabled: false,
+      ocrEnabled: false,
+      whatsappEnabled: false,
+      smsFallbackEnabled: false,
+      autoReceiptEnabled: false,
+      themeMode: 'dark_luxury',
+      dashboardLayout: 'bento',
+      glassEffectsEnabled: true,
+      tplFeeReminder: '',
+      tplPaymentReceipt: '',
+      tplOverdueNotice: '',
+      tplLateFineApplied: '',
+      tplNewFeeGenerated: '',
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'center_name': centerName,

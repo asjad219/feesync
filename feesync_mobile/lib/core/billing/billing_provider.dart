@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 import 'billing_service.dart';
 import '../../providers/subscription_provider.dart';
 
@@ -30,6 +31,12 @@ final billingInitProvider = FutureProvider<void>((ref) async {
 final billingResultStreamProvider = StreamProvider<BillingResult>((ref) {
   final service = ref.watch(billingServiceProvider);
   return service.purchaseResultStream;
+});
+
+/// Exposes the specific product details from Google Play by ID.
+final billingProductProvider = Provider.family<ProductDetails?, String>((ref, productId) {
+  final service = ref.watch(billingServiceProvider);
+  return service.getProduct(productId);
 });
 
 /// State notifier for managing a purchase flow.

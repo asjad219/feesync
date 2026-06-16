@@ -28,20 +28,17 @@ class FeatureGate {
 
   /// True if the user can add more students.
   bool get canAddStudent {
-    if (subscription.hasUnlimitedStudents) return true;
     return activeStudentCount < subscription.currentMaxStudents;
   }
 
-  /// How many more students the user can add (-1 = unlimited).
+  /// How many more students the user can add.
   int get remainingStudentSlots {
-    if (subscription.hasUnlimitedStudents) return -1;
     final remaining = subscription.currentMaxStudents - activeStudentCount;
     return remaining < 0 ? 0 : remaining;
   }
 
-  /// Student usage as a fraction (0.0–1.0). Returns 0.0 for unlimited.
+  /// Student usage as a fraction (0.0–1.0).
   double get studentUsageFraction {
-    if (subscription.hasUnlimitedStudents) return 0.0;
     if (subscription.currentMaxStudents == 0) return 1.0;
     return (activeStudentCount / subscription.currentMaxStudents).clamp(0.0, 1.0);
   }
@@ -50,13 +47,11 @@ class FeatureGate {
 
   /// True if the user can create more batches.
   bool get canAddBatch {
-    if (subscription.hasUnlimitedBatches) return true;
     return activeBatchCount < subscription.currentMaxBatches;
   }
 
-  /// How many more batches the user can create (-1 = unlimited).
+  /// How many more batches the user can create.
   int get remainingBatchSlots {
-    if (subscription.hasUnlimitedBatches) return -1;
     final remaining = subscription.currentMaxBatches - activeBatchCount;
     return remaining < 0 ? 0 : remaining;
   }
@@ -65,20 +60,17 @@ class FeatureGate {
 
   /// True if the user can add more staff.
   bool get canAddStaff {
-    if (subscription.hasUnlimitedStaff) return true;
     return activeStaffCount < subscription.currentMaxStaff;
   }
 
-  /// How many more staff the user can add (-1 = unlimited).
+  /// How many more staff the user can add.
   int get remainingStaffSlots {
-    if (subscription.hasUnlimitedStaff) return -1;
     final remaining = subscription.currentMaxStaff - activeStaffCount;
     return remaining < 0 ? 0 : remaining;
   }
 
-  /// Staff usage as a fraction (0.0–1.0). Returns 0.0 for unlimited.
+  /// Staff usage as a fraction (0.0–1.0).
   double get staffUsageFraction {
-    if (subscription.hasUnlimitedStaff) return 0.0;
     if (subscription.currentMaxStaff == 0) return 1.0;
     return (activeStaffCount / subscription.currentMaxStaff).clamp(0.0, 1.0);
   }
@@ -87,24 +79,20 @@ class FeatureGate {
 
   /// True if the user can send another WhatsApp receipt.
   bool get canSendWhatsappReceipt {
-    if (subscription.hasUnlimitedWaReceipts) return true;
     return waReceiptsUsedThisMonth < subscription.currentWaReceiptsLimit;
   }
 
   /// True if the user can send another WhatsApp reminder.
   bool get canSendWhatsappReminder {
-    if (subscription.hasUnlimitedWaReminders) return true;
     return waRemindersUsedThisMonth < subscription.currentWaRemindersLimit;
   }
 
   int get remainingWaReceipts {
-    if (subscription.hasUnlimitedWaReceipts) return -1;
     return (subscription.currentWaReceiptsLimit - waReceiptsUsedThisMonth)
         .clamp(0, subscription.currentWaReceiptsLimit);
   }
 
   int get remainingWaReminders {
-    if (subscription.hasUnlimitedWaReminders) return -1;
     return (subscription.currentWaRemindersLimit - waRemindersUsedThisMonth)
         .clamp(0, subscription.currentWaRemindersLimit);
   }
@@ -124,7 +112,6 @@ class FeatureGate {
 
   /// True if the student count is at or near the limit (>= 80% usage).
   bool get isNearStudentLimit {
-    if (subscription.hasUnlimitedStudents) return false;
     return studentUsageFraction >= 0.8;
   }
 
@@ -136,7 +123,6 @@ class FeatureGate {
 
   /// True if the staff count is at or near the limit (>= 80% usage).
   bool get isNearStaffLimit {
-    if (subscription.hasUnlimitedStaff) return false;
     return staffUsageFraction >= 0.8;
   }
 
@@ -162,19 +148,16 @@ class FeatureGate {
 
   /// Human-readable limit status for student usage.
   String get studentLimitStatus {
-    if (subscription.hasUnlimitedStudents) return 'Unlimited students';
     return '$activeStudentCount / ${subscription.currentMaxStudents} students used';
   }
 
   /// Human-readable limit status for batch usage.
   String get batchLimitStatus {
-    if (subscription.hasUnlimitedBatches) return 'Unlimited batches';
     return '$activeBatchCount / ${subscription.currentMaxBatches} batches used';
   }
 
   /// Human-readable limit status for staff usage.
   String get staffLimitStatus {
-    if (subscription.hasUnlimitedStaff) return 'Unlimited staff';
     return '$activeStaffCount / ${subscription.currentMaxStaff} staff used';
   }
 }

@@ -28,6 +28,10 @@ final settingsProvider = StateNotifierProvider<SettingsNotifier, AsyncValue<AppS
       // User is logged out
       debugPrint('[DEBUG] settingsProvider: Profile is null (logged out), clearing settings');
       notifier.clearSettings();
+    } else if (next.hasError) {
+      // Profile load failed (e.g. offline) — use defaults so UI can render
+      debugPrint('[DEBUG] settingsProvider: Profile load error, using defaults');
+      notifier.useDefaults();
     }
   });
 
@@ -45,24 +49,38 @@ class SettingsNotifier extends StateNotifier<AsyncValue<AppSettings>> {
     debugPrint('[DEBUG] SettingsNotifier: loadSettings started');
     state = const AsyncValue.loading();
     try {
-      final settings = await _repository.getSettings();
+      final settings = await _repository.getSettings().timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          debugPrint('[DEBUG] SettingsNotifier: getSettings timed out — using defaults');
+          return null;
+        },
+      );
       debugPrint('[DEBUG] SettingsNotifier: fetched settings from repository: $settings');
       if (settings != null) {
         state = AsyncValue.data(settings);
         debugPrint('[DEBUG] SettingsNotifier: State updated to AsyncValue.data');
       } else {
-        // Not authenticated yet — stay in loading state silently
-        state = const AsyncValue.loading();
-        debugPrint('[DEBUG] SettingsNotifier: No settings found, remaining in loading state');
+        // Either not authenticated yet OR offline timeout — use safe defaults
+        // so that the UI can render without hanging in a loading state.
+        state = AsyncValue.data(AppSettings.defaults());
+        debugPrint('[DEBUG] SettingsNotifier: No settings found, using defaults');
       }
-    } catch (e, st) {
+    } catch (e) {
       debugPrint('[DEBUG] SettingsNotifier: error loading settings: $e');
-      state = AsyncValue.error(e, st);
+      // On error, also fall back to defaults so nothing is stuck.
+      state = AsyncValue.data(AppSettings.defaults());
     }
   }
 
+  /// Called when the user logs out — reset to loading so the next login triggers a fresh load.
   void clearSettings() {
     state = const AsyncValue.loading();
+  }
+
+  /// Immediately surface default settings (used when offline and no profile loaded).
+  void useDefaults() {
+    state = AsyncValue.data(AppSettings.defaults());
   }
 
   Future<void> updateSetting(String key, dynamic value) async {

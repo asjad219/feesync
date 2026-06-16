@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/widgets/paywall_dialog.dart';
+import '../../core/widgets/offline_widgets.dart';
 import '../../core/billing/feature_gate.dart';
 import '../../models/dashboard_stats.dart';
 import '../../providers/dashboard_provider.dart';
@@ -52,51 +53,71 @@ class DashboardScreen extends ConsumerWidget {
         backgroundColor: isDark ? const Color(0xFF12121F) : const Color(0xFFFFFFFF),
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 128, 24, 32),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const _GreetingHeader(),
-                const SizedBox(height: 28),
-                statsAsync.when(
-                  data: (stats) => _BentoStatsGrid(stats: stats, currencyFormatter: currencyFormatter),
-                  loading: () => _LoadingPlaceholder(height: 340, isDark: isDark),
-                  error: (e, st) => _ErrorPlaceholder(message: 'Stats error', isDark: isDark),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Offline banner sits just below the glassy app bar scroll area
+              const OfflineBanner(),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 104), // Account for app bar height
+                    const _GreetingHeader(),
+                    const SizedBox(height: 28),
+                    statsAsync.when(
+                      data: (stats) => _BentoStatsGrid(stats: stats, currencyFormatter: currencyFormatter),
+                      loading: () => _LoadingPlaceholder(height: 340, isDark: isDark),
+                      error: (e, st) => RetryErrorPlaceholder(
+                        message: 'Could not load stats — tap to retry',
+                        isDark: isDark,
+                        onRetry: () => ref.invalidate(dashboardStatsProvider),
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    monthlyDataAsync.when(
+                      data: (monthlyData) => MonthlyAnalyticsChart(
+                        data: monthlyData,
+                        currencyFormatter: currencyFormatter,
+                      ),
+                      loading: () => _LoadingPlaceholder(height: 320, isDark: isDark),
+                      error: (e, st) => RetryErrorPlaceholder(
+                        message: 'Could not load analytics — tap to retry',
+                        isDark: isDark,
+                        onRetry: () => ref.invalidate(monthlyCollectionDataProvider),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    Text(
+                      'Quick Actions',
+                      style: GoogleFonts.manrope(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: textPrimaryColor,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const _QuickActionsRow(),
+                    const SizedBox(height: 32),
+                    recentTransactionsAsync.when(
+                      data: (transactions) => RecentTransactionsWidget(
+                        transactions: transactions,
+                        currencyFormatter: currencyFormatter,
+                        onViewAll: () => context.go('/payments'),
+                      ),
+                      loading: () => _LoadingPlaceholder(height: 220, isDark: isDark),
+                      error: (e, st) => RetryErrorPlaceholder(
+                        message: 'Could not load transactions — tap to retry',
+                        isDark: isDark,
+                        onRetry: () => ref.invalidate(recentTransactionsProvider),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 28),
-                monthlyDataAsync.when(
-                  data: (monthlyData) => MonthlyAnalyticsChart(
-                    data: monthlyData,
-                    currencyFormatter: currencyFormatter,
-                  ),
-                  loading: () => _LoadingPlaceholder(height: 320, isDark: isDark),
-                  error: (e, st) => _ErrorPlaceholder(message: 'Analytics error', isDark: isDark),
-                ),
-                const SizedBox(height: 32),
-                Text(
-                  'Quick Actions',
-                  style: GoogleFonts.manrope(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: textPrimaryColor,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const _QuickActionsRow(),
-                const SizedBox(height: 32),
-                recentTransactionsAsync.when(
-                  data: (transactions) => RecentTransactionsWidget(
-                    transactions: transactions,
-                    currencyFormatter: currencyFormatter,
-                    onViewAll: () => context.go('/payments'),
-                  ),
-                  loading: () => _LoadingPlaceholder(height: 220, isDark: isDark),
-                  error: (e, st) => _ErrorPlaceholder(message: 'Transactions error', isDark: isDark),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -733,21 +754,4 @@ class _LoadingPlaceholder extends StatelessWidget {
   }
 }
 
-class _ErrorPlaceholder extends StatelessWidget {
-  final String message;
-  final bool isDark;
-  const _ErrorPlaceholder({required this.message, required this.isDark});
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 100,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: const Color(0xFFDC2626).withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(28),
-      ),
-      child: Center(child: Text(message, style: const TextStyle(color: Color(0xFFDC2626)))),
-    );
-  }
-}

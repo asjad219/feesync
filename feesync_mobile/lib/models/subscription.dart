@@ -1,10 +1,11 @@
+import '../core/billing/plan_config.dart';
+
 /// Subscription model matching Supabase `subscriptions` table.
 ///
-/// Tiers:
-///   free      – 20 students, 2 batches, 1 staff, 100 WhatsApp (₹0)
-///   starter   – 200 students, 10 batches, 5 staff, 1000 WhatsApp (₹299/mo)
-///   growth    – unlimited, all AI features, auto-debit (₹999/mo)
-///   institute – unlimited + staff accounts + API (₹1,499/mo)
+///   free      – 20 students, 2 batches, 2 staff, 100 WhatsApp (₹0)
+///   starter   – 200 students, 10 batches, 5 staff, 2000 WhatsApp (₹299/mo)
+///   growth    – 500 students, 50 batches, 10 staff, 5000 WhatsApp (₹999/mo)
+///   institute – 5000 students, 500 batches, 50 staff, 50000 WhatsApp (₹1,499/mo)
 class Subscription {
   final String id;
   final String userId;
@@ -217,31 +218,31 @@ class Subscription {
   // ── Resolved effective limits ──────────────────────────────────────────────
   
   int get currentMaxStudents {
-    final planLimit = SubscriptionPlan.fromTier(effectivePlan).maxStudents;
+    final planLimit = PlanConfig.fromTier(effectivePlan).maxStudents;
     if (planLimit < 0 || maxStudents < 0) return -1;
     return maxStudents > planLimit ? maxStudents : planLimit;
   }
 
   int get currentMaxBatches {
-    final planLimit = SubscriptionPlan.fromTier(effectivePlan).maxBatches;
+    final planLimit = PlanConfig.fromTier(effectivePlan).maxBatches;
     if (planLimit < 0 || maxBatches < 0) return -1;
     return maxBatches > planLimit ? maxBatches : planLimit;
   }
 
   int get currentWaReceiptsLimit {
-    final planLimit = SubscriptionPlan.fromTier(effectivePlan).whatsappReceiptsPerMonth;
+    final planLimit = PlanConfig.fromTier(effectivePlan).whatsappReceiptsPerMonth;
     if (planLimit < 0 || whatsappReceiptsLimit < 0) return -1;
     return whatsappReceiptsLimit > planLimit ? whatsappReceiptsLimit : planLimit;
   }
 
   int get currentWaRemindersLimit {
-    final planLimit = SubscriptionPlan.fromTier(effectivePlan).whatsappRemindersPerMonth;
+    final planLimit = PlanConfig.fromTier(effectivePlan).whatsappRemindersPerMonth;
     if (planLimit < 0 || whatsappRemindersLimit < 0) return -1;
     return whatsappRemindersLimit > planLimit ? whatsappRemindersLimit : planLimit;
   }
 
   int get currentMaxStaff {
-    final planLimit = SubscriptionPlan.fromTier(effectivePlan).maxStaff;
+    final planLimit = PlanConfig.fromTier(effectivePlan).maxStaff;
     if (planLimit < 0 || maxStaff < 0) return -1;
     return maxStaff > planLimit ? maxStaff : planLimit;
   }
@@ -345,169 +346,3 @@ class Subscription {
   }
 }
 
-// ── Static plan definitions ────────────────────────────────────────────────────
-/// Used by UI for plan comparison tables and the subscription screen.
-class SubscriptionPlan {
-  final String tier;
-  final String name;
-  final String tagline;
-  final int monthlyPrice;
-  final int annualPrice; // Total annual charge (saves 2 months vs monthly)
-  final int annualMonthlyEquivalent; // Per-month cost when billed annually
-  final int maxStudents;            // -1 = unlimited
-  final int maxBatches;             // -1 = unlimited
-  final int whatsappReceiptsPerMonth;  // -1 = unlimited
-  final int whatsappRemindersPerMonth; // -1 = unlimited
-  final int maxStaff;
-  final bool csvExport;
-  final bool biometricAuth;
-  final bool supportSystem;
-  final bool cloudBackup;
-  final bool dueReminders;
-  final bool invoiceSend;
-
-  const SubscriptionPlan({
-    required this.tier,
-    required this.name,
-    required this.tagline,
-    required this.monthlyPrice,
-    required this.annualPrice,
-    required this.annualMonthlyEquivalent,
-    required this.maxStudents,
-    required this.maxBatches,
-    required this.whatsappReceiptsPerMonth,
-    required this.whatsappRemindersPerMonth,
-    required this.maxStaff,
-    required this.csvExport,
-    required this.biometricAuth,
-    required this.supportSystem,
-    required this.cloudBackup,
-    required this.dueReminders,
-    required this.invoiceSend,
-  });
-
-  // ── Google Play product IDs ──────────────────────────────────────────────
-  /// Returns the Google Play product ID for this plan + billing cycle.
-  String googlePlayProductId({bool annual = false}) {
-    if (tier == 'free') return '';
-    final cycle = annual ? 'annual' : 'monthly';
-    return 'feesync_${tier}_$cycle';
-  }
-
-  // ── Plan constants ─────────────────────────────────────────────────────────
-
-  static const SubscriptionPlan free = SubscriptionPlan(
-    tier: 'free',
-    name: 'Free',
-    tagline: 'Try & Grow',
-    monthlyPrice: 0,
-    annualPrice: 0,
-    annualMonthlyEquivalent: 0,
-    maxStudents: 20,
-    maxBatches: 2,
-    whatsappReceiptsPerMonth: 100,
-    whatsappRemindersPerMonth: 30,
-    maxStaff: 1,
-    csvExport: false,
-    biometricAuth: true,
-    supportSystem: false,
-    cloudBackup: false,
-    dueReminders: true,
-    invoiceSend: true,
-  );
-
-  static const SubscriptionPlan starter = SubscriptionPlan(
-    tier: 'starter',
-    name: 'Starter',
-    tagline: 'Professional Solo Operator',
-    monthlyPrice: 299,
-    annualPrice: 2990,       // 2 months free vs 299×12=3588
-    annualMonthlyEquivalent: 249,
-    maxStudents: 200,
-    maxBatches: 10,
-    whatsappReceiptsPerMonth: 1000,
-    whatsappRemindersPerMonth: -1,
-    maxStaff: 5,
-    csvExport: true,
-    biometricAuth: true,
-    supportSystem: true,
-    cloudBackup: true,
-    dueReminders: true,
-    invoiceSend: true,
-  );
-
-  static const SubscriptionPlan growth = SubscriptionPlan(
-    tier: 'growth',
-    name: 'Growth',
-    tagline: 'Scale with Pro',
-    monthlyPrice: 999,
-    annualPrice: 9990,       // saves vs 999×12=11988
-    annualMonthlyEquivalent: 832,
-    maxStudents: -1,
-    maxBatches: -1,
-    whatsappReceiptsPerMonth: -1,
-    whatsappRemindersPerMonth: -1,
-    maxStaff: -1,
-    csvExport: true,
-    biometricAuth: true,
-    supportSystem: true,
-    cloudBackup: true,
-    dueReminders: true,
-    invoiceSend: true,
-  );
-
-  static const SubscriptionPlan institute = SubscriptionPlan(
-    tier: 'institute',
-    name: 'Institute',
-    tagline: 'Multi-Batch Enterprise',
-    monthlyPrice: 1499,
-    annualPrice: 11999,      // saves ₹5,989 vs 1499×12=17988
-    annualMonthlyEquivalent: 1000,
-    maxStudents: -1,
-    maxBatches: -1,
-    whatsappReceiptsPerMonth: -1,
-    whatsappRemindersPerMonth: -1,
-    maxStaff: -1,
-    csvExport: true,
-    biometricAuth: true,
-    supportSystem: true,
-    cloudBackup: true,
-    dueReminders: true,
-    invoiceSend: true,
-  );
-
-  static const List<SubscriptionPlan> all = [
-    free,
-    starter,
-    growth,
-    institute,
-  ];
-
-  /// Returns the plan definition matching [tier].
-  static SubscriptionPlan fromTier(String tier) {
-    return all.firstWhere(
-      (p) => p.tier == tier,
-      orElse: () => free,
-    );
-  }
-
-  // ── Display helpers ────────────────────────────────────────────────────────
-
-  String get studentsLabel =>
-      maxStudents < 0 ? 'Unlimited' : '$maxStudents students';
-
-  String get batchesLabel =>
-      maxBatches < 0 ? 'Unlimited' : '$maxBatches batches';
-
-  String get waReceiptsLabel =>
-      whatsappReceiptsPerMonth < 0 ? 'Unlimited' : '$whatsappReceiptsPerMonth/mo';
-
-  String get waRemindersLabel =>
-      whatsappRemindersPerMonth < 0 ? 'Unlimited' : '$whatsappRemindersPerMonth/mo';
-
-  String get annualSavingLabel {
-    if (monthlyPrice == 0) return '';
-    final saving = (monthlyPrice * 12) - annualPrice;
-    return saving > 0 ? 'Save ₹$saving/year' : '';
-  }
-}
