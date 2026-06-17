@@ -10,3 +10,4 @@ export 'dashboard_provider.dart';
 export 'user_provider.dart';
 export 'notification_provider.dart';
 export 'settings_provider.dart';
+export 'sync_provider.dart';

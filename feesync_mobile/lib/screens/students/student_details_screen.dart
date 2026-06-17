@@ -16,6 +16,7 @@ import '../../core/utils/receipt_service.dart';
 import '../../core/widgets/glass/glass_card.dart';
 import '../../core/widgets/paywall_dialog.dart';
 import '../../core/billing/feature_gate.dart';
+import '../../core/widgets/offline_widgets.dart';
 
 class StudentDetailsScreen extends ConsumerWidget {
   final String studentId;
@@ -91,8 +92,12 @@ class StudentDetailsScreen extends ConsumerWidget {
             ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        loading: () => const Scaffold(
+          body: Center(
+            child: ShimmerList(itemCount: 4, itemHeight: 100),
+          ),
+        ),
+        error: (e, _) => Center(child: Text('Student not found')),
       ),
     );
   }
@@ -353,8 +358,8 @@ class _BatchEnrollmentSection extends ConsumerWidget {
               children: batches.map((batch) => _BatchTile(batch: batch)).toList(),
             );
           },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Text('Error: $e'),
+          loading: () => const ShimmerCard(height: 60, borderRadius: 14),
+          error: (e, _) => const SizedBox.shrink(),
         ),
       ],
     );
@@ -467,8 +472,8 @@ class _EnrollmentSheet extends ConsumerWidget {
                 },
               ),
             ),
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Text('Error: $e'),
+            loading: () => const ShimmerCard(height: 60, borderRadius: 14),
+            error: (e, _) => const SizedBox.shrink(),
           ),
         ],
       ),
@@ -526,8 +531,8 @@ class _RecentPaymentsList extends StatelessWidget {
                   .toList(),
             );
           },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Text('Error: $e'),
+          loading: () => const ShimmerList(itemCount: 2, itemHeight: 76),
+          error: (e, _) => const SizedBox.shrink(),
         ),
       ],
     );

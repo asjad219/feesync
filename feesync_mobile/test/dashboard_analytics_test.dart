@@ -75,6 +75,7 @@ class FakeFeeRepository extends FeeRepository {
   Future<List<Due>> getDues({
     String? studentId,
     String? status,
+    List<String>? statuses,
     DateTime? startDate,
     DateTime? endDate,
   }) async {

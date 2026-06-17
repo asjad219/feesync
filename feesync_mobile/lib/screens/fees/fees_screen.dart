@@ -7,6 +7,7 @@ import '../../core/utils/currency_formatter.dart';
 import '../../providers/providers.dart';
 import '../../models/fee.dart';
 import '../../core/widgets/custom_widgets.dart';
+import '../../core/widgets/offline_widgets.dart';
 
 class FeesScreen extends ConsumerStatefulWidget {
   const FeesScreen({super.key});
@@ -74,8 +75,11 @@ class _FeesScreenState extends ConsumerState<FeesScreen> with SingleTickerProvid
   Widget _buildAsyncList<T>(AsyncValue<List<T>> asyncVal, Widget Function(List<T>) builder) {
     return asyncVal.when(
       data: builder,
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error loading data', style: TextStyle(color: AppColors.error))),
+      loading: () => const Padding(
+        padding: EdgeInsets.all(24),
+        child: ShimmerList(itemCount: 4, itemHeight: 76),
+      ),
+      error: (e, _) => Center(child: Text('Could not load data', style: TextStyle(color: AppColors.textTertiary))),
     );
   }
 

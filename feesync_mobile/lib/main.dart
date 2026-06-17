@@ -3,34 +3,37 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'router.dart';
 import 'core/config/supabase_config.dart';
 import 'core/theme/app_theme.dart';
 import 'core/billing/billing_provider.dart';
+import 'core/services/sync_service.dart';
 import 'providers/settings_provider.dart';
+import 'providers/sync_provider.dart';
 
 import 'core/widgets/app_lock_guard.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Catch any Flutter framework errors and display them
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
   };
 
   runZonedGuarded(() async {
+    // Initialize Firebase (non-fatal if it fails)
     try {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       );
     } catch (e) {
-      // Firebase init failed — log and continue (app can still work without it)
       debugPrint('Firebase init error: $e');
     }
 
+    // Initialize Supabase
     try {
       await Supabase.initialize(
         url: SupabaseConfig.supabaseUrl,
@@ -38,14 +41,24 @@ void main() async {
       );
     } catch (e) {
       debugPrint('Supabase init error: $e');
-      // Show error app if Supabase fails
-      runApp(_ErrorApp(error: 'Failed to connect to server: $e'));
-      return;
+      // Do NOT crash — app may still work offline with cached data
+      // Only show error if it was a config problem (not a network problem)
+      if (e.toString().contains('invalid') || e.toString().contains('config')) {
+        runApp(_ErrorApp(error: 'Invalid server configuration: $e'));
+        return;
+      }
     }
 
+    // Initialize SharedPreferences for local cache
+    final prefs = await SharedPreferences.getInstance();
+
     runApp(
-      const ProviderScope(
-        child: FeeSyncApp(),
+      ProviderScope(
+        overrides: [
+          // Provide the SharedPreferences instance to the provider graph
+          sharedPreferencesProvider.overrideWithValue(prefs),
+        ],
+        child: const FeeSyncApp(),
       ),
     );
   }, (error, stack) {
@@ -61,17 +74,19 @@ class FeeSyncApp extends ConsumerWidget {
     // Initialize billing service once at startup.
     ref.watch(billingInitProvider);
 
+    // Initialize sync service — auto-syncs when network restores.
+    ref.watch(syncServiceProvider);
+
     final router = ref.watch(routerProvider);
     final settingsAsync = ref.watch(settingsProvider);
-    final themeModeStr = settingsAsync.value?.themeMode.toLowerCase() ?? 'dark_luxury';
-    
+    final themeModeStr =
+        settingsAsync.value?.themeMode.toLowerCase() ?? 'dark_luxury';
+
     ThemeMode appThemeMode;
     if (themeModeStr == 'system') {
       appThemeMode = ThemeMode.system;
-      // We can't know the exact brightness here perfectly without context, but 
-      // AppColors.isDarkMode is mainly used inside widgets that rebuild. 
-      // However, we should try to guess based on PlatformDispatcher.
-      AppColors.isDarkMode = PlatformDispatcher.instance.platformBrightness == Brightness.dark;
+      AppColors.isDarkMode =
+          PlatformDispatcher.instance.platformBrightness == Brightness.dark;
     } else if (themeModeStr.contains('light')) {
       appThemeMode = ThemeMode.light;
       AppColors.isDarkMode = false;

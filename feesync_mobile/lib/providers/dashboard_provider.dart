@@ -4,8 +4,12 @@ import '../models/dashboard_stats.dart';
 import '../repositories/payment_repository.dart';
 import '../repositories/student_repository.dart';
 import '../repositories/fee_repository.dart';
+import '../core/services/cache_service.dart';
 import 'supabase_provider.dart';
+import 'sync_provider.dart';
 import 'package:intl/intl.dart';
+
+// ── Repository provider ───────────────────────────────────────────────────────
 
 final dashboardAnalyticsRepositoryProvider =
     Provider<DashboardAnalyticsRepository>((ref) {
@@ -17,56 +21,228 @@ final dashboardAnalyticsRepositoryProvider =
   );
 });
 
-enum TimeCycle {
-  monthly,
-  quarterly,
-  yearly,
+// ── Time cycle ────────────────────────────────────────────────────────────────
+
+enum TimeCycle { monthly, quarterly, yearly }
+
+final selectedTimeCycleProvider =
+    StateProvider<TimeCycle>((ref) => TimeCycle.monthly);
+
+// ── Dashboard Stats Notifier ──────────────────────────────────────────────────
+
+class DashboardStatsNotifier extends StateNotifier<AsyncValue<DashboardStats>> {
+  final DashboardAnalyticsRepository _repo;
+  final CacheService _cache;
+  final String? _accountId;
+  final Ref _ref;
+
+  DashboardStatsNotifier(this._repo, this._cache, this._accountId, this._ref)
+      : super(const AsyncValue.loading()) {
+    _init();
+  }
+
+  Future<void> _init() async {
+    if (_accountId == null) return;
+    // 1. Emit cached data immediately (zero-wait render)
+    final cached = _cache.loadDashboardStats(_accountId!);
+    if (cached != null) {
+      state = AsyncValue.data(cached);
+      debugPrint('[Dashboard] Loaded stats from cache');
+    }
+    // 2. Fetch from network in background
+    await fetch();
+  }
+
+  Future<void> fetch([TimeCycle? cycle]) async {
+    if (_accountId == null) return;
+    final timeCycle = cycle ?? TimeCycle.monthly;
+    try {
+      final stats = await _repo.getDashboardStatsForCycle(timeCycle);
+      await _cache.saveDashboardStats(_accountId!, stats);
+      // Update global last sync time
+      _ref.read(lastSyncTimesProvider.notifier).update(
+            (s) => {...s, 'dashboard': DateTime.now()},
+          );
+      state = AsyncValue.data(stats);
+      debugPrint('[Dashboard] Fetched fresh stats from network');
+    } catch (e, st) {
+      debugPrint('[Dashboard][OFFLINE] getDashboardStats failed: $e');
+      // Keep cached state if we have data — don't overwrite with error
+      if (state is! AsyncData) {
+        state = AsyncValue.error(e, st);
+      }
+    }
+  }
 }
 
-final selectedTimeCycleProvider = StateProvider<TimeCycle>((ref) => TimeCycle.monthly);
+// ── Monthly Stats Notifier ────────────────────────────────────────────────────
 
+class MonthlyStatsNotifier extends StateNotifier<AsyncValue<List<MonthlyStat>>> {
+  final DashboardAnalyticsRepository _repo;
+  final CacheService _cache;
+  final String? _accountId;
+
+  MonthlyStatsNotifier(this._repo, this._cache, this._accountId)
+      : super(const AsyncValue.loading()) {
+    _init();
+  }
+
+  Future<void> _init() async {
+    if (_accountId == null) return;
+    final cached = _cache.loadMonthlyStats(_accountId!);
+    if (cached != null) {
+      state = AsyncValue.data(cached);
+      debugPrint('[Dashboard] Loaded monthly stats from cache');
+    }
+    await fetch();
+  }
+
+  Future<void> fetch() async {
+    if (_accountId == null) return;
+    try {
+      final data = await _repo.getMonthlyCollectionData();
+      await _cache.saveMonthlyStats(_accountId!, data);
+      state = AsyncValue.data(data);
+    } catch (e, st) {
+      debugPrint('[Dashboard][OFFLINE] getMonthlyCollectionData failed: $e');
+      if (state is! AsyncData) {
+        state = AsyncValue.error(e, st);
+      }
+    }
+  }
+}
+
+// ── Recent Transactions Notifier ─────────────────────────────────────────────
+
+class RecentTransactionsNotifier
+    extends StateNotifier<AsyncValue<List<RecentTransaction>>> {
+  final DashboardAnalyticsRepository _repo;
+  final CacheService _cache;
+  final String? _accountId;
+
+  RecentTransactionsNotifier(this._repo, this._cache, this._accountId)
+      : super(const AsyncValue.loading()) {
+    _init();
+  }
+
+  Future<void> _init() async {
+    if (_accountId == null) return;
+    final cached = _cache.loadRecentTransactions(_accountId!);
+    if (cached != null) {
+      state = AsyncValue.data(cached);
+      debugPrint('[Dashboard] Loaded recent transactions from cache');
+    }
+    await fetch();
+  }
+
+  Future<void> fetch() async {
+    if (_accountId == null) return;
+    try {
+      final data = await _repo.getRecentTransactions(limit: 5);
+      await _cache.saveRecentTransactions(_accountId!, data);
+      state = AsyncValue.data(data);
+    } catch (e, st) {
+      debugPrint('[Dashboard][OFFLINE] getRecentTransactions failed: $e');
+      if (state is! AsyncData) {
+        state = AsyncValue.error(e, st);
+      }
+    }
+  }
+}
+
+// ── Class Stats Notifier ─────────────────────────────────────────────────────
+
+class ClassStatsNotifier extends StateNotifier<AsyncValue<List<ClassStat>>> {
+  final DashboardAnalyticsRepository _repo;
+  final CacheService _cache;
+  final String? _accountId;
+
+  ClassStatsNotifier(this._repo, this._cache, this._accountId)
+      : super(const AsyncValue.loading()) {
+    _init();
+  }
+
+  Future<void> _init() async {
+    if (_accountId == null) return;
+    final cached = _cache.loadClassStats(_accountId!);
+    if (cached != null) {
+      state = AsyncValue.data(cached);
+      debugPrint('[Dashboard] Loaded class stats from cache');
+    }
+    await fetch();
+  }
+
+  Future<void> fetch() async {
+    if (_accountId == null) return;
+    try {
+      final data = await _repo.getClassCollectionData();
+      await _cache.saveClassStats(_accountId!, data);
+      state = AsyncValue.data(data);
+    } catch (e, st) {
+      debugPrint('[Dashboard][OFFLINE] getClassCollectionData failed: $e');
+      if (state is! AsyncData) {
+        state = AsyncValue.error(e, st);
+      }
+    }
+  }
+}
+
+// ── Providers ─────────────────────────────────────────────────────────────────
+
+final _accountIdProvider = Provider<String?>((ref) {
+  final client = ref.watch(supabaseClientProvider);
+  return client.auth.currentUser?.id;
+});
+
+final dashboardStatsProvider =
+    StateNotifierProvider<DashboardStatsNotifier, AsyncValue<DashboardStats>>(
+        (ref) {
+  final repo = ref.watch(dashboardAnalyticsRepositoryProvider);
+  final cache = ref.watch(cacheServiceProvider);
+  final accountId = ref.watch(_accountIdProvider);
+  return DashboardStatsNotifier(repo, cache, accountId, ref);
+});
+
+final monthlyCollectionDataProvider = StateNotifierProvider<MonthlyStatsNotifier,
+    AsyncValue<List<MonthlyStat>>>((ref) {
+  final repo = ref.watch(dashboardAnalyticsRepositoryProvider);
+  final cache = ref.watch(cacheServiceProvider);
+  final accountId = ref.watch(_accountIdProvider);
+  return MonthlyStatsNotifier(repo, cache, accountId);
+});
+
+final recentTransactionsProvider = StateNotifierProvider<
+    RecentTransactionsNotifier, AsyncValue<List<RecentTransaction>>>((ref) {
+  final repo = ref.watch(dashboardAnalyticsRepositoryProvider);
+  final cache = ref.watch(cacheServiceProvider);
+  final accountId = ref.watch(_accountIdProvider);
+  return RecentTransactionsNotifier(repo, cache, accountId);
+});
+
+final classCollectionDataProvider = StateNotifierProvider<
+    ClassStatsNotifier, AsyncValue<List<ClassStat>>>((ref) {
+  final repo = ref.watch(dashboardAnalyticsRepositoryProvider);
+  final cache = ref.watch(cacheServiceProvider);
+  final accountId = ref.watch(_accountIdProvider);
+  return ClassStatsNotifier(repo, cache, accountId);
+});
+
+/// Invalidates all dashboard data and triggers background refresh.
 void invalidateDashboardAnalytics(WidgetRef ref) {
-  ref.invalidate(dashboardStatsProvider);
-  ref.invalidate(monthlyCollectionDataProvider);
-  ref.invalidate(categoryCollectionDataProvider);
-  ref.invalidate(classCollectionDataProvider);
-  ref.invalidate(recentTransactionsProvider);
+  ref.read(dashboardStatsProvider.notifier).fetch();
+  ref.read(monthlyCollectionDataProvider.notifier).fetch();
+  ref.read(recentTransactionsProvider.notifier).fetch();
+  ref.read(classCollectionDataProvider.notifier).fetch();
 }
 
-final dashboardStatsProvider = FutureProvider<DashboardStats>((ref) async {
-  final cycle = ref.watch(selectedTimeCycleProvider);
-  final repo = ref.watch(dashboardAnalyticsRepositoryProvider);
-  return repo.getDashboardStatsForCycle(cycle);
-});
-
-final monthlyCollectionDataProvider =
-    FutureProvider<List<MonthlyStat>>((ref) async {
-  final repo = ref.watch(dashboardAnalyticsRepositoryProvider);
-  return repo.getMonthlyCollectionData();
-});
-
-final categoryCollectionDataProvider =
-    FutureProvider<List<CategoryStat>>((ref) async {
-  final repo = ref.watch(dashboardAnalyticsRepositoryProvider);
-  return repo.getCategoryCollectionData();
-});
-
-final classCollectionDataProvider = FutureProvider<List<ClassStat>>((ref) async {
-  final repo = ref.watch(dashboardAnalyticsRepositoryProvider);
-  return repo.getClassCollectionData();
-});
-
-final recentTransactionsProvider =
-    FutureProvider<List<RecentTransaction>>((ref) async {
-  final repo = ref.watch(dashboardAnalyticsRepositoryProvider);
-  return repo.getRecentTransactions(limit: 5);
-});
+// ── Analytics Repository ──────────────────────────────────────────────────────
 
 class DashboardAnalyticsRepository {
   final PaymentRepository _paymentRepo;
   final StudentRepository _studentRepo;
   final FeeRepository _feeRepo;
   static const _excludedDueStatuses = {'cancelled', 'deleted'};
+  static const _timeout = Duration(seconds: 10);
 
   DashboardAnalyticsRepository(
     this._paymentRepo,
@@ -74,30 +250,28 @@ class DashboardAnalyticsRepository {
     this._feeRepo,
   );
 
-  /// Get overall dashboard statistics
-  Future<DashboardStats> getDashboardStats() => getDashboardStatsForCycle(TimeCycle.monthly);
+  Future<DashboardStats> getDashboardStats() =>
+      getDashboardStatsForCycle(TimeCycle.monthly);
 
-  /// Get dashboard statistics filtered by time cycle
   Future<DashboardStats> getDashboardStatsForCycle(TimeCycle cycle) async {
-    const timeout = Duration(seconds: 15);
     try {
       final now = DateTime.now();
       final cycleRange = _rangeForCycle(now, cycle);
       final previousCycleRange = _previousRangeForCycle(cycleRange, cycle);
 
       final results = await Future.wait<dynamic>([
-        _studentRepo.getStudents().timeout(timeout),
-        _studentRepo.getStudentBalances().timeout(timeout),
+        _studentRepo.getStudents().timeout(_timeout),
+        _studentRepo.getStudentBalances().timeout(_timeout),
         _paymentRepo.getTotalCollection(
           startDate: cycleRange.start,
           endDate: cycleRange.endInclusive,
-        ).timeout(timeout),
+        ).timeout(_timeout),
         _paymentRepo.getTotalCollection(
           startDate: previousCycleRange.start,
           endDate: previousCycleRange.endInclusive,
-        ).timeout(timeout),
-        _paymentRepo.getTotalCollection().timeout(timeout),
-        _feeRepo.getDues().timeout(timeout),
+        ).timeout(_timeout),
+        _paymentRepo.getTotalCollection().timeout(_timeout),
+        _feeRepo.getDues().timeout(_timeout),
       ]);
 
       final students = results[0] as List;
@@ -114,20 +288,18 @@ class DashboardAnalyticsRepository {
       );
 
       final totalCollectedInPeriod = _extractTotal(periodCollection);
-      final totalCollectedInPreviousPeriod = _extractTotal(previousPeriodCollection);
+      final totalCollectedInPreviousPeriod =
+          _extractTotal(previousPeriodCollection);
       final totalCollectedAllTime = _extractTotal(allTimeCollection);
 
       final totalDue = dues.fold<double>(0, (sum, due) {
         final status = due.status.toString().toLowerCase();
-        if (_excludedDueStatuses.contains(status)) {
-          return sum;
-        }
+        if (_excludedDueStatuses.contains(status)) return sum;
         return sum + (due.amountAssigned as double);
       });
 
-      final collectionRate = totalDue > 0
-          ? (totalCollectedAllTime / totalDue) * 100
-          : 0.0;
+      final collectionRate =
+          totalDue > 0 ? (totalCollectedAllTime / totalDue) * 100 : 0.0;
       final growth = _calculateGrowth(
         currentAmount: totalCollectedInPeriod,
         previousAmount: totalCollectedInPreviousPeriod,
@@ -138,10 +310,7 @@ class DashboardAnalyticsRepository {
         'totalDue=$totalDue '
         'totalCollectedAllTime=$totalCollectedAllTime '
         'currentCycleCollections=$totalCollectedInPeriod '
-        'previousCycleCollections=$totalCollectedInPreviousPeriod '
-        'collectionRate=$collectionRate '
-        'growth=${growth.isNewGrowth ? 'NEW' : growth.percentage} '
-        'pendingFees=$totalPending',
+        'collectionRate=$collectionRate',
       );
 
       return DashboardStats(
@@ -154,19 +323,16 @@ class DashboardAnalyticsRepository {
         lastUpdated: DateTime.now(),
       );
     } catch (e) {
-      debugPrint('Error fetching dashboard stats for cycle $cycle: $e');
+      debugPrint('[DashboardAnalytics][OFFLINE] getDashboardStatsForCycle: $e');
       rethrow;
     }
   }
 
-  /// Get monthly collection data for the last 6 months
   Future<List<MonthlyStat>> getMonthlyCollectionData() async {
-    const timeout = Duration(seconds: 15);
     try {
       final now = DateTime.now();
       final List<MonthlyStat> monthlyData = [];
 
-      // Get data for last 6 months
       for (int i = 5; i >= 0; i--) {
         final date = DateTime(now.year, now.month - i, 1);
         final monthRange = _monthRange(date);
@@ -174,43 +340,35 @@ class DashboardAnalyticsRepository {
         final collection = await _paymentRepo.getTotalCollection(
           startDate: monthRange.start,
           endDate: monthRange.endInclusive,
-        ).timeout(timeout);
+        ).timeout(_timeout);
 
         final amount = (collection['total'] as num?)?.toDouble() ?? 0;
         final monthName = DateFormat('MMM').format(date);
-
         monthlyData.add(MonthlyStat(month: monthName, amount: amount));
       }
 
       return monthlyData;
     } catch (e) {
-      debugPrint('Error fetching monthly data: $e');
+      debugPrint('[DashboardAnalytics][OFFLINE] getMonthlyCollectionData: $e');
       rethrow;
     }
   }
 
-  /// Get collection breakdown by fee category
   Future<List<CategoryStat>> getCategoryCollectionData() async {
-    const timeout = Duration(seconds: 15);
     try {
-      final categories = await _feeRepo.getFeeCategories().timeout(timeout);
-      final payments = await _paymentRepo.getPayments().timeout(timeout);
-      final completedPayments = payments
-          .where((payment) => payment.status.name == 'completed')
-          .toList();
+      final categories = await _feeRepo.getFeeCategories().timeout(_timeout);
+      final payments = await _paymentRepo.getPayments().timeout(_timeout);
+      final completedPayments =
+          payments.where((p) => p.status.name == 'completed').toList();
 
       double totalAmount = 0;
       final categoryTotals = <String, double>{};
 
-      // Sum up payments by category
       for (var payment in completedPayments) {
         totalAmount += payment.amount;
-        // In a real scenario, you would need to get the category from the fee structure
-        // For now, we'll create a simplified version
       }
 
-      // Convert to CategoryStat
-      final stats = categories
+      return categories
           .map((cat) {
             final amount = categoryTotals[cat.id] ?? 0;
             final percentage =
@@ -223,26 +381,20 @@ class DashboardAnalyticsRepository {
           })
           .where((stat) => stat.amount > 0)
           .toList();
-
-      return stats;
     } catch (e) {
-      debugPrint('Error fetching category data: $e');
+      debugPrint('[DashboardAnalytics][OFFLINE] getCategoryCollectionData: $e');
       rethrow;
     }
   }
 
-  /// Get collection breakdown by student class
   Future<List<ClassStat>> getClassCollectionData() async {
-    const timeout = Duration(seconds: 15);
     try {
-      final students = await _studentRepo.getStudents().timeout(timeout);
-      final payments = await _paymentRepo.getPayments().timeout(timeout);
-      final completedPayments = payments
-          .where((payment) => payment.status.name == 'completed')
-          .toList();
-      final balances = await _studentRepo.getStudentBalances().timeout(timeout);
+      final students = await _studentRepo.getStudents().timeout(_timeout);
+      final payments = await _paymentRepo.getPayments().timeout(_timeout);
+      final completedPayments =
+          payments.where((p) => p.status.name == 'completed').toList();
+      final balances = await _studentRepo.getStudentBalances().timeout(_timeout);
 
-      // Group by class
       final classMap = <String, Map<String, double>>{};
 
       for (var student in students) {
@@ -251,7 +403,6 @@ class DashboardAnalyticsRepository {
         }
       }
 
-      // Sum collected by class
       for (var payment in completedPayments) {
         if (payment.student != null) {
           final className = payment.student!.studentClass;
@@ -262,7 +413,6 @@ class DashboardAnalyticsRepository {
         }
       }
 
-      // Sum pending by class
       for (var balance in balances) {
         if (classMap.containsKey(balance.studentClass)) {
           classMap[balance.studentClass]!['pending'] =
@@ -271,7 +421,6 @@ class DashboardAnalyticsRepository {
         }
       }
 
-      // Convert to ClassStat
       return classMap.entries
           .map((entry) => ClassStat(
                 className: entry.key,
@@ -280,17 +429,17 @@ class DashboardAnalyticsRepository {
               ))
           .toList();
     } catch (e) {
-      debugPrint('Error fetching class data: $e');
+      debugPrint('[DashboardAnalytics][OFFLINE] getClassCollectionData: $e');
       rethrow;
     }
   }
 
-  /// Get recent transactions
-  Future<List<RecentTransaction>> getRecentTransactions({int limit = 5}) async {
+  Future<List<RecentTransaction>> getRecentTransactions(
+      {int limit = 5}) async {
     try {
       final payments = await _paymentRepo
           .getRecentPayments(limit: limit)
-          .timeout(const Duration(seconds: 15));
+          .timeout(_timeout);
 
       return payments
           .map((payment) => RecentTransaction(
@@ -304,30 +453,24 @@ class DashboardAnalyticsRepository {
               ))
           .toList();
     } catch (e) {
-      debugPrint('Error fetching recent transactions: $e');
+      debugPrint('[DashboardAnalytics][OFFLINE] getRecentTransactions: $e');
       rethrow;
     }
   }
 }
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
 class _CycleRange {
   final DateTime start;
   final DateTime endInclusive;
-
-  const _CycleRange({
-    required this.start,
-    required this.endInclusive,
-  });
+  const _CycleRange({required this.start, required this.endInclusive});
 }
 
 class _GrowthResult {
   final double percentage;
   final bool isNewGrowth;
-
-  const _GrowthResult({
-    required this.percentage,
-    required this.isNewGrowth,
-  });
+  const _GrowthResult({required this.percentage, required this.isNewGrowth});
 }
 
 _CycleRange _rangeForCycle(DateTime date, TimeCycle cycle) {
@@ -355,7 +498,8 @@ _CycleRange _rangeForCycle(DateTime date, TimeCycle cycle) {
 _CycleRange _previousRangeForCycle(_CycleRange currentRange, TimeCycle cycle) {
   switch (cycle) {
     case TimeCycle.monthly:
-      return _monthRange(DateTime(currentRange.start.year, currentRange.start.month - 1, 1));
+      return _monthRange(DateTime(
+          currentRange.start.year, currentRange.start.month - 1, 1));
     case TimeCycle.quarterly:
       return _rangeForCycle(
         DateTime(currentRange.start.year, currentRange.start.month - 3, 1),
@@ -392,16 +536,8 @@ _GrowthResult _calculateGrowth({
       isNewGrowth: false,
     );
   }
-
   if (currentAmount > 0) {
-    return const _GrowthResult(
-      percentage: 0,
-      isNewGrowth: true,
-    );
+    return const _GrowthResult(percentage: 0, isNewGrowth: true);
   }
-
-  return const _GrowthResult(
-    percentage: 0,
-    isNewGrowth: false,
-  );
+  return const _GrowthResult(percentage: 0, isNewGrowth: false);
 }

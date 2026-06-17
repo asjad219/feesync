@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/custom_widgets.dart';
+import '../../core/widgets/offline_widgets.dart';
 import '../../core/widgets/paywall_dialog.dart';
 import '../../core/billing/feature_gate.dart';
 import '../../models/student.dart';
@@ -227,7 +228,7 @@ class _StudentListScreenState extends ConsumerState<StudentListScreen> {
 
                     Expanded(
                       child: RefreshIndicator(
-                        onRefresh: () => ref.refresh(studentBalancesProvider.future),
+                        onRefresh: () => ref.read(studentBalancesProvider.notifier).loadStudents(),
                         color: AppColors.primaryContainer,
                         child: filteredStudents.isEmpty
                             ? _EmptyState()
@@ -257,19 +258,23 @@ class _StudentListScreenState extends ConsumerState<StudentListScreen> {
               );
             },
             loading: () => const Expanded(
-              child: Center(
-                child: CircularProgressIndicator(),
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: ShimmerList(itemCount: 5, itemHeight: 88),
               ),
             ),
             error: (err, stack) => Expanded(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Text(
-                    'Error: $err',
-                    style: const TextStyle(color: Colors.redAccent),
-                    textAlign: TextAlign.center,
-                  ),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    RetryErrorPlaceholder(
+                      message: 'Could not load students. Tap to retry.',
+                      isDark: AppColors.isDarkMode,
+                      onRetry: () => ref.read(studentBalancesProvider.notifier).loadStudents(),
+                    ),
+                  ],
                 ),
               ),
             ),

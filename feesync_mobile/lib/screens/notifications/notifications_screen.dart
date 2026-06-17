@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/notification.dart';
 import '../../providers/notification_provider.dart';
+import '../../core/widgets/offline_widgets.dart';
 
 class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
@@ -46,13 +47,11 @@ class NotificationsScreen extends ConsumerWidget {
             ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(
-          child: Text(
-            'Error: $e',
-            style: TextStyle(color: AppColors.error),
-          ),
+        loading: () => const Padding(
+          padding: EdgeInsets.all(24),
+          child: ShimmerList(itemCount: 5, itemHeight: 90),
         ),
+        error: (e, _) => _EmptyState(),
       ),
     );
   }

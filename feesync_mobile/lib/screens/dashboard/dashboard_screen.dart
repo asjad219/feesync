@@ -8,6 +8,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/widgets/paywall_dialog.dart';
 import '../../core/widgets/offline_widgets.dart';
+
 import '../../core/billing/feature_gate.dart';
 import '../../models/dashboard_stats.dart';
 import '../../providers/dashboard_provider.dart';
@@ -22,10 +23,11 @@ class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
   Future<void> _refreshAll(WidgetRef ref) async {
+    // Trigger background refresh on all dashboard notifiers
     await Future.wait([
-      ref.refresh(dashboardStatsProvider.future),
-      ref.refresh(monthlyCollectionDataProvider.future),
-      ref.refresh(recentTransactionsProvider.future),
+      ref.read(dashboardStatsProvider.notifier).fetch(),
+      ref.read(monthlyCollectionDataProvider.notifier).fetch(),
+      ref.read(recentTransactionsProvider.notifier).fetch(),
     ]);
   }
 
@@ -68,12 +70,13 @@ class DashboardScreen extends ConsumerWidget {
                     const SizedBox(height: 28),
                     statsAsync.when(
                       data: (stats) => _BentoStatsGrid(stats: stats, currencyFormatter: currencyFormatter),
-                      loading: () => _LoadingPlaceholder(height: 340, isDark: isDark),
+                      loading: () => const ShimmerStatsGrid(),
                       error: (e, st) => RetryErrorPlaceholder(
                         message: 'Could not load stats — tap to retry',
                         isDark: isDark,
-                        onRetry: () => ref.invalidate(dashboardStatsProvider),
+                        onRetry: () => ref.read(dashboardStatsProvider.notifier).fetch(),
                       ),
+                      skipLoadingOnRefresh: true,
                     ),
                     const SizedBox(height: 28),
                     monthlyDataAsync.when(
@@ -81,12 +84,13 @@ class DashboardScreen extends ConsumerWidget {
                         data: monthlyData,
                         currencyFormatter: currencyFormatter,
                       ),
-                      loading: () => _LoadingPlaceholder(height: 320, isDark: isDark),
+                      loading: () => const ShimmerCard(height: 320),
                       error: (e, st) => RetryErrorPlaceholder(
                         message: 'Could not load analytics — tap to retry',
                         isDark: isDark,
-                        onRetry: () => ref.invalidate(monthlyCollectionDataProvider),
+                        onRetry: () => ref.read(monthlyCollectionDataProvider.notifier).fetch(),
                       ),
+                      skipLoadingOnRefresh: true,
                     ),
                     const SizedBox(height: 32),
                     Text(
@@ -107,12 +111,13 @@ class DashboardScreen extends ConsumerWidget {
                         currencyFormatter: currencyFormatter,
                         onViewAll: () => context.go('/payments'),
                       ),
-                      loading: () => _LoadingPlaceholder(height: 220, isDark: isDark),
+                      loading: () => const ShimmerCard(height: 220),
                       error: (e, st) => RetryErrorPlaceholder(
                         message: 'Could not load transactions — tap to retry',
                         isDark: isDark,
-                        onRetry: () => ref.invalidate(recentTransactionsProvider),
+                        onRetry: () => ref.read(recentTransactionsProvider.notifier).fetch(),
                       ),
+                      skipLoadingOnRefresh: true,
                     ),
                   ],
                 ),
@@ -736,22 +741,6 @@ class _QuickAction extends StatelessWidget {
   }
 }
 
-class _LoadingPlaceholder extends StatelessWidget {
-  final double height;
-  final bool isDark;
-  const _LoadingPlaceholder({required this.height, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: height,
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF),
-        borderRadius: BorderRadius.circular(28),
-      ),
-      child: const Center(child: CircularProgressIndicator()),
-    );
-  }
-}
+// _LoadingPlaceholder removed — replaced by ShimmerCard and ShimmerStatsGrid
 
 

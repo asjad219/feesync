@@ -11,6 +11,7 @@ import '../../providers/settings_provider.dart';
 import '../../models/payment.dart';
 import '../../core/widgets/custom_widgets.dart';
 import '../../core/widgets/glass/glass_card.dart';
+import '../../core/widgets/offline_widgets.dart';
 
 class PaymentListScreen extends ConsumerStatefulWidget {
   final String? studentId;
@@ -245,10 +246,15 @@ class _PaymentListScreenState extends ConsumerState<PaymentListScreen> {
         );
       },
       loading: () => const SliverFillRemaining(
-        child: Center(child: CircularProgressIndicator()),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(24, 16, 24, 0),
+          child: ShimmerList(itemCount: 5, itemHeight: 106),
+        ),
       ),
       error: (e, _) => SliverFillRemaining(
-        child: Center(child: Text('Error loading payments', style: TextStyle(color: AppColors.error))),
+        child: Center(
+          child: Text('No payments available', style: TextStyle(color: AppColors.textTertiary)),
+        ),
       ),
     );
   }

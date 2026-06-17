@@ -7,6 +7,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/paywall_dialog.dart';
 import '../../../core/billing/feature_gate.dart';
 import '../../widgets/dashboard/stat_card.dart';
+import '../../../core/widgets/offline_widgets.dart';
 import '../../../providers/batch_provider.dart';
 import '../../../providers/subscription_provider.dart';
 import '../../../models/batch.dart';
@@ -346,20 +347,19 @@ class BatchListScreen extends ConsumerWidget {
   }
 
   Widget _buildLoadingState(Color primaryColor) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 48),
-      child: Center(child: CircularProgressIndicator(color: primaryColor)),
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 16),
+      child: ShimmerList(itemCount: 4, itemHeight: 110),
     );
   }
 
   Widget _buildErrorState(String error) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 48),
-      child: Center(
-        child: Text(
-          'Error: $error',
-          style: const TextStyle(color: Colors.redAccent),
-        ),
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: RetryErrorPlaceholder(
+        message: 'Could not load batches. Tap to retry.',
+        isDark: AppColors.isDarkMode,
+        onRetry: () {},
       ),
     );
   }

@@ -173,4 +173,27 @@ class StudentBalance {
       status: json['status'] ?? 'DUE',
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'account_id': accountId,
+      'admission_number': admissionNumber,
+      'roll_number': rollNumber,
+      'first_name': firstName,
+      'last_name': lastName,
+      'class': studentClass,
+      'batch_id': batchId,
+      'section': section,
+      'parent_name': parentName,
+      'parent_phone': parentPhone,
+      'parent_email': parentEmail,
+      'gender': gender?.name,
+      'total_fee_amount': totalFeeAmount,
+      'total_paid_amount': totalPaidAmount,
+      'balance': balance,
+      'due_amount': dueAmount,
+      'status': status,
+    };
+  }
 }

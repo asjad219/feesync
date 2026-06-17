@@ -12,6 +12,7 @@ import '../../models/user_profile.dart';
 import '../../models/subscription.dart';
 import '../../core/widgets/glass/glass_card.dart';
 import '../../core/widgets/error_dialog.dart';
+import '../../core/widgets/offline_widgets.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -203,8 +204,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           children: [
             const SizedBox(height: 12),
             userProfile.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, _) => Text('Error loading profile: $err', style: TextStyle(color: AppColors.error)),
+              loading: () => const _ProfileShimmer(),
+              error: (err, _) => const _ProfileShimmer(),
               data: (user) => _buildProfileHeader(user),
             ),
             const SizedBox(height: 24),
@@ -689,5 +690,14 @@ class _SettingsItem extends StatelessWidget {
         size: 20,
       ),
     );
+  }
+}
+
+class _ProfileShimmer extends StatelessWidget {
+  const _ProfileShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    return const ShimmerCard(height: 88, borderRadius: 20);
   }
 }
