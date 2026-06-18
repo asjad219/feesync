@@ -12,6 +12,7 @@ import '../../core/utils/currency_formatter.dart';
 import '../../providers/dashboard_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../core/widgets/glass/glass_card.dart';
+import '../../core/services/network_service.dart';
 
 class ReportsScreen extends ConsumerWidget {
   const ReportsScreen({super.key});
@@ -164,14 +165,59 @@ class ReportsScreen extends ConsumerWidget {
         data: (stats) => monthlyAsync.when(
           data: (monthly) => classStatsAsync.when(
             data: (classStats) => _buildBody(context, stats, monthly, classStats, currencyFormatter, currencySymbol),
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, _) => const Center(child: Text('Error loading class stats')),
+            loading: () {
+              final isOnline = ref.watch(isOnlineProvider).value ?? true;
+              if (!isOnline) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.wifi_off, size: 64, color: Colors.grey),
+                      const SizedBox(height: 16),
+                      Text("No Internet Connection", style: GoogleFonts.manrope(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                    ],
+                  ),
+                );
+              }
+              return const Center(child: CircularProgressIndicator());
+            },
+            error: (err, _) => const Center(child: Text('Error loading class stats', style: TextStyle(color: Colors.red))),
           ),
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, _) => const Center(child: Text('Error loading charts')),
+          loading: () {
+            final isOnline = ref.watch(isOnlineProvider).value ?? true;
+            if (!isOnline) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.wifi_off, size: 64, color: Colors.grey),
+                    const SizedBox(height: 16),
+                    Text("No Internet Connection", style: GoogleFonts.manrope(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                  ],
+                ),
+              );
+            }
+            return const Center(child: CircularProgressIndicator());
+          },
+          error: (err, _) => const Center(child: Text('Error loading charts', style: TextStyle(color: Colors.red))),
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => const Center(child: Text('Error loading stats')),
+        loading: () {
+          final isOnline = ref.watch(isOnlineProvider).value ?? true;
+          if (!isOnline) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.wifi_off, size: 64, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  Text("No Internet Connection", style: GoogleFonts.manrope(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                ],
+              ),
+            );
+          }
+          return const Center(child: CircularProgressIndicator());
+        },
+        error: (err, _) => const Center(child: Text('Error loading stats', style: TextStyle(color: Colors.red))),
       ),
     );
   }

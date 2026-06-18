@@ -4,6 +4,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'core/services/network_service.dart';
+import 'screens/offline/offline_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/signup_screen.dart';
 import 'screens/auth/splash_screen.dart';
@@ -50,9 +52,31 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: '/splash',
     refreshListenable: GoRouterRefreshStream(
       Supabase.instance.client.auth.onAuthStateChange,
+      ref.watch(networkServiceProvider).connectivityStream,
     ),
     errorBuilder: (context, state) => const SplashScreen(),
     redirect: (context, state) {
+      final isOnlineAsync = ref.read(isOnlineProvider);
+      final isOnline = isOnlineAsync.value ?? true;
+      if (!isOnline) {
+        final path = state.uri.path;
+        final isMainCachedRoute = path == '/dashboard' ||
+            path == '/students' ||
+            path == '/batches' ||
+            path == '/settings' ||
+            path == '/payments' ||
+            path == '/splash' ||
+            path == '/login' ||
+            path == '/signup' ||
+            path == '/forgot-password' ||
+            path == '/update-password' ||
+            path == '/offline';
+            
+        if (!isMainCachedRoute) {
+          return '/offline?from=${Uri.encodeComponent(path)}';
+        }
+      }
+
       final isLoggedIn = Supabase.instance.client.auth.currentUser != null;
       final isSplashRoute = state.uri.path == '/splash';
       final isAuthRoute = state.uri.path == '/login' ||
@@ -107,6 +131,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/splash',
         builder: (context, state) => const SplashScreen(),
+      ),
+
+      // Offline screen
+      GoRoute(
+        path: '/offline',
+        builder: (context, state) => OfflineScreen(
+          fromPath: state.uri.queryParameters['from'],
+        ),
       ),
 
       // Auth routes
@@ -306,19 +338,19 @@ final routerProvider = Provider<GoRouter>((ref) {
 });
 
 class GoRouterRefreshStream extends ChangeNotifier {
-  GoRouterRefreshStream(Stream<AuthState> stream) {
-    // Notify immediately so GoRouter evaluates the redirect from
-    // Supabase's cached session without waiting for the first stream event.
-    // This prevents the router from being stuck on /splash when offline.
+  GoRouterRefreshStream(Stream<AuthState> authStream, Stream<bool> connectivityStream) {
     WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
-    _subscription = stream.listen((_) => notifyListeners());
+    _authSubscription = authStream.listen((_) => notifyListeners());
+    _connectivitySubscription = connectivityStream.listen((_) => notifyListeners());
   }
 
-  late final StreamSubscription<AuthState> _subscription;
+  late final StreamSubscription<AuthState> _authSubscription;
+  late final StreamSubscription<bool> _connectivitySubscription;
 
   @override
   void dispose() {
-    _subscription.cancel();
+    _authSubscription.cancel();
+    _connectivitySubscription.cancel();
     super.dispose();
   }
 }

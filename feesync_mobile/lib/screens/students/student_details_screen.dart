@@ -17,6 +17,7 @@ import '../../core/widgets/glass/glass_card.dart';
 import '../../core/widgets/paywall_dialog.dart';
 import '../../core/billing/feature_gate.dart';
 import '../../core/widgets/offline_widgets.dart';
+import '../../core/services/network_service.dart';
 
 class StudentDetailsScreen extends ConsumerWidget {
   final String studentId;
@@ -916,8 +917,54 @@ class _StudentPaymentHistorySheet extends ConsumerWidget {
                 ),
               );
             },
-            loading: () => const Expanded(child: Center(child: CircularProgressIndicator())),
-            error: (e, _) => Expanded(child: Center(child: Text('Error: $e'))),
+            loading: () {
+              final isOnline = ref.watch(isOnlineProvider).value ?? true;
+              if (!isOnline) {
+                return Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.wifi_off, size: 48, color: Colors.grey),
+                        const SizedBox(height: 12),
+                        Text(
+                          'No Internet Connection',
+                          style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Please check your network and try again.',
+                          style: GoogleFonts.inter(fontSize: 12, color: Colors.grey),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+              return const Expanded(child: Center(child: CircularProgressIndicator()));
+            },
+            error: (e, _) => Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline_rounded, size: 48, color: Colors.redAccent),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Error Loading Payments',
+                      style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      e.toString(),
+                      style: GoogleFonts.inter(fontSize: 12, color: Colors.grey),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),

@@ -14,7 +14,7 @@ class BatchRepository {
     String? subject,
   }) async {
     try {
-      final query = _client.from('batches').select();
+      final query = _client.from('batches_with_stats').select();
 
       if (status != null) {
         query.eq('status', status.toString().split('.').last);
@@ -39,7 +39,7 @@ class BatchRepository {
   Future<Batch?> getBatchById(String id) async {
     try {
       final response = await _client
-          .from('batches')
+          .from('batches_with_stats')
           .select()
           .eq('id', id)
           .single()

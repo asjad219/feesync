@@ -175,7 +175,8 @@ class Due {
   final String id;
   final String accountId;
   final String studentId;
-  final String feeStructureId;
+  final String? feeStructureId;
+  final String? batchId;
   final String periodName;
   final DateTime dueDate;
   final double amountAssigned;
@@ -192,7 +193,8 @@ class Due {
     required this.id,
     required this.accountId,
     required this.studentId,
-    required this.feeStructureId,
+    this.feeStructureId,
+    this.batchId,
     required this.periodName,
     required this.dueDate,
     required this.amountAssigned,
@@ -212,6 +214,7 @@ class Due {
       accountId: json['account_id'],
       studentId: json['student_id'],
       feeStructureId: json['fee_structure_id'],
+      batchId: json['batch_id'],
       periodName: json['period_name'],
       dueDate: DateTime.parse(json['due_date']),
       amountAssigned: double.parse(json['amount_assigned'].toString()),

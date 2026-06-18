@@ -44,7 +44,7 @@ class DashboardStatsNotifier extends StateNotifier<AsyncValue<DashboardStats>> {
   Future<void> _init() async {
     if (_accountId == null) return;
     // 1. Emit cached data immediately (zero-wait render)
-    final cached = _cache.loadDashboardStats(_accountId!);
+    final cached = _cache.loadDashboardStats(_accountId);
     if (cached != null) {
       state = AsyncValue.data(cached);
       debugPrint('[Dashboard] Loaded stats from cache');
@@ -58,7 +58,7 @@ class DashboardStatsNotifier extends StateNotifier<AsyncValue<DashboardStats>> {
     final timeCycle = cycle ?? TimeCycle.monthly;
     try {
       final stats = await _repo.getDashboardStatsForCycle(timeCycle);
-      await _cache.saveDashboardStats(_accountId!, stats);
+      await _cache.saveDashboardStats(_accountId, stats);
       // Update global last sync time
       _ref.read(lastSyncTimesProvider.notifier).update(
             (s) => {...s, 'dashboard': DateTime.now()},
@@ -67,8 +67,9 @@ class DashboardStatsNotifier extends StateNotifier<AsyncValue<DashboardStats>> {
       debugPrint('[Dashboard] Fetched fresh stats from network');
     } catch (e, st) {
       debugPrint('[Dashboard][OFFLINE] getDashboardStats failed: $e');
-      // Keep cached state if we have data — don't overwrite with error
-      if (state is! AsyncData) {
+      if (state is AsyncData) {
+        _ref.read(offlineToastProvider.notifier).state = "You're offline. Showing saved data.";
+      } else {
         state = AsyncValue.error(e, st);
       }
     }
@@ -89,7 +90,7 @@ class MonthlyStatsNotifier extends StateNotifier<AsyncValue<List<MonthlyStat>>> 
 
   Future<void> _init() async {
     if (_accountId == null) return;
-    final cached = _cache.loadMonthlyStats(_accountId!);
+    final cached = _cache.loadMonthlyStats(_accountId);
     if (cached != null) {
       state = AsyncValue.data(cached);
       debugPrint('[Dashboard] Loaded monthly stats from cache');
@@ -101,7 +102,7 @@ class MonthlyStatsNotifier extends StateNotifier<AsyncValue<List<MonthlyStat>>> 
     if (_accountId == null) return;
     try {
       final data = await _repo.getMonthlyCollectionData();
-      await _cache.saveMonthlyStats(_accountId!, data);
+      await _cache.saveMonthlyStats(_accountId, data);
       state = AsyncValue.data(data);
     } catch (e, st) {
       debugPrint('[Dashboard][OFFLINE] getMonthlyCollectionData failed: $e');
@@ -127,7 +128,7 @@ class RecentTransactionsNotifier
 
   Future<void> _init() async {
     if (_accountId == null) return;
-    final cached = _cache.loadRecentTransactions(_accountId!);
+    final cached = _cache.loadRecentTransactions(_accountId);
     if (cached != null) {
       state = AsyncValue.data(cached);
       debugPrint('[Dashboard] Loaded recent transactions from cache');
@@ -139,7 +140,7 @@ class RecentTransactionsNotifier
     if (_accountId == null) return;
     try {
       final data = await _repo.getRecentTransactions(limit: 5);
-      await _cache.saveRecentTransactions(_accountId!, data);
+      await _cache.saveRecentTransactions(_accountId, data);
       state = AsyncValue.data(data);
     } catch (e, st) {
       debugPrint('[Dashboard][OFFLINE] getRecentTransactions failed: $e');
@@ -164,7 +165,7 @@ class ClassStatsNotifier extends StateNotifier<AsyncValue<List<ClassStat>>> {
 
   Future<void> _init() async {
     if (_accountId == null) return;
-    final cached = _cache.loadClassStats(_accountId!);
+    final cached = _cache.loadClassStats(_accountId);
     if (cached != null) {
       state = AsyncValue.data(cached);
       debugPrint('[Dashboard] Loaded class stats from cache');
@@ -176,7 +177,7 @@ class ClassStatsNotifier extends StateNotifier<AsyncValue<List<ClassStat>>> {
     if (_accountId == null) return;
     try {
       final data = await _repo.getClassCollectionData();
-      await _cache.saveClassStats(_accountId!, data);
+      await _cache.saveClassStats(_accountId, data);
       state = AsyncValue.data(data);
     } catch (e, st) {
       debugPrint('[Dashboard][OFFLINE] getClassCollectionData failed: $e');

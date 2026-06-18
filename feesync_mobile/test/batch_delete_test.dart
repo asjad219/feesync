@@ -11,6 +11,11 @@ class MockPostgrestTransformBuilder<T> extends Fake implements PostgrestTransfor
   Future<R> then<R>(FutureOr<R> Function(T) onValue, {Function? onError}) {
     return _future.then(onValue, onError: onError);
   }
+
+  @override
+  Future<T> timeout(Duration timeLimit, {FutureOr<T> Function()? onTimeout}) {
+    return _future.timeout(timeLimit, onTimeout: onTimeout);
+  }
 }
 
 class MockPostgrestFilterBuilder<T> extends Fake implements PostgrestFilterBuilder<T> {
@@ -38,6 +43,11 @@ class MockPostgrestFilterBuilder<T> extends Fake implements PostgrestFilterBuild
   @override
   Future<R> then<R>(FutureOr<R> Function(T) onValue, {Function? onError}) {
     return Future.value(result).then(onValue, onError: onError);
+  }
+
+  @override
+  Future<T> timeout(Duration timeLimit, {FutureOr<T> Function()? onTimeout}) {
+    return Future.value(result).timeout(timeLimit, onTimeout: onTimeout);
   }
 }
 

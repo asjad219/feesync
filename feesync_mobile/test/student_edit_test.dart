@@ -13,6 +13,11 @@ class MockPostgrestTransformBuilder<T> extends Fake implements PostgrestTransfor
   Future<R> then<R>(FutureOr<R> Function(T) onValue, {Function? onError}) {
     return _future.then(onValue, onError: onError);
   }
+
+  @override
+  Future<T> timeout(Duration timeLimit, {FutureOr<T> Function()? onTimeout}) {
+    return _future.timeout(timeLimit, onTimeout: onTimeout);
+  }
 }
 
 class MockPostgrestFilterBuilder<T> extends Fake implements PostgrestFilterBuilder<T> {
@@ -109,6 +114,18 @@ class MockPostgrestFilterBuilder<T> extends Fake implements PostgrestFilterBuild
       )).then(onValue, onError: onError);
     }
     return Future.value(<Map<String, dynamic>>[] as T).then(onValue, onError: onError);
+  }
+
+  @override
+  Future<T> timeout(Duration timeLimit, {FutureOr<T> Function()? onTimeout}) {
+    if (throwDuplicateError) {
+      return Future<T>.error(const PostgrestException(
+        message: 'duplicate key value violates unique constraint "student_enrollments_student_id_batch_id_key"',
+        code: '23505',
+        details: 'Conflict',
+      )).timeout(timeLimit, onTimeout: onTimeout);
+    }
+    return Future.value(<Map<String, dynamic>>[] as T).timeout(timeLimit, onTimeout: onTimeout);
   }
 }
 

@@ -6,6 +6,8 @@ import '../../models/batch.dart';
 import '../../models/payment.dart';
 import '../../models/app_settings.dart';
 import '../../models/dashboard_stats.dart';
+import '../../models/user_profile.dart';
+import '../../models/account_profile.dart';
 
 class CacheService {
   final SharedPreferences _prefs;
@@ -148,5 +150,25 @@ class CacheService {
 
   List<ClassStat>? loadClassStats(String accountId) {
     return _loadList(_getKey(accountId, 'class_stats'), ClassStat.fromJson);
+  }
+
+  Future<void> saveUserProfile(String userId, UserProfile profile) async {
+    _saveMap('feesync_user_profile_$userId', profile.toJson());
+  }
+
+  UserProfile? loadUserProfile(String userId) {
+    final data = _loadMap('feesync_user_profile_$userId');
+    if (data == null) return null;
+    return UserProfile.fromJson(data);
+  }
+
+  Future<void> saveAccountProfile(String accountId, AccountProfile profile) async {
+    _saveMap('feesync_account_profile_$accountId', profile.toJson());
+  }
+
+  AccountProfile? loadAccountProfile(String accountId) {
+    final data = _loadMap('feesync_account_profile_$accountId');
+    if (data == null) return null;
+    return AccountProfile.fromJson(data);
   }
 }

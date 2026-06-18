@@ -28,11 +28,13 @@ class FeatureGate {
 
   /// True if the user can add more students.
   bool get canAddStudent {
+    if (subscription.hasUnlimitedStudents) return true;
     return activeStudentCount < subscription.currentMaxStudents;
   }
 
   /// How many more students the user can add.
   int get remainingStudentSlots {
+    if (subscription.hasUnlimitedStudents) return -1;
     final remaining = subscription.currentMaxStudents - activeStudentCount;
     return remaining < 0 ? 0 : remaining;
   }
@@ -47,11 +49,13 @@ class FeatureGate {
 
   /// True if the user can create more batches.
   bool get canAddBatch {
+    if (subscription.hasUnlimitedBatches) return true;
     return activeBatchCount < subscription.currentMaxBatches;
   }
 
   /// How many more batches the user can create.
   int get remainingBatchSlots {
+    if (subscription.hasUnlimitedBatches) return -1;
     final remaining = subscription.currentMaxBatches - activeBatchCount;
     return remaining < 0 ? 0 : remaining;
   }
@@ -60,11 +64,13 @@ class FeatureGate {
 
   /// True if the user can add more staff.
   bool get canAddStaff {
+    if (subscription.hasUnlimitedStaff) return true;
     return activeStaffCount < subscription.currentMaxStaff;
   }
 
   /// How many more staff the user can add.
   int get remainingStaffSlots {
+    if (subscription.hasUnlimitedStaff) return -1;
     final remaining = subscription.currentMaxStaff - activeStaffCount;
     return remaining < 0 ? 0 : remaining;
   }
@@ -79,20 +85,24 @@ class FeatureGate {
 
   /// True if the user can send another WhatsApp receipt.
   bool get canSendWhatsappReceipt {
+    if (subscription.hasUnlimitedWaReceipts) return true;
     return waReceiptsUsedThisMonth < subscription.currentWaReceiptsLimit;
   }
 
   /// True if the user can send another WhatsApp reminder.
   bool get canSendWhatsappReminder {
+    if (subscription.hasUnlimitedWaReminders) return true;
     return waRemindersUsedThisMonth < subscription.currentWaRemindersLimit;
   }
 
   int get remainingWaReceipts {
+    if (subscription.hasUnlimitedWaReceipts) return -1;
     return (subscription.currentWaReceiptsLimit - waReceiptsUsedThisMonth)
         .clamp(0, subscription.currentWaReceiptsLimit);
   }
 
   int get remainingWaReminders {
+    if (subscription.hasUnlimitedWaReminders) return -1;
     return (subscription.currentWaRemindersLimit - waRemindersUsedThisMonth)
         .clamp(0, subscription.currentWaRemindersLimit);
   }

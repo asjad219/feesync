@@ -13,6 +13,7 @@ import 'core/billing/billing_provider.dart';
 import 'core/services/sync_service.dart';
 import 'providers/settings_provider.dart';
 import 'providers/sync_provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'core/widgets/app_lock_guard.dart';
 
@@ -107,7 +108,42 @@ class FeeSyncApp extends ConsumerWidget {
       themeMode: appThemeMode,
       routerConfig: router,
       builder: (context, child) {
-        return AppLockGuard(child: child!);
+        return AppLockGuard(
+          child: Consumer(
+            builder: (context, ref, _) {
+              ref.listen<String?>(offlineToastProvider, (previous, next) {
+                if (next != null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          const Icon(Icons.wifi_off_rounded, color: Colors.white, size: 16),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              next,
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      backgroundColor: const Color(0xFFB45309),
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      duration: const Duration(seconds: 3),
+                    ),
+                  );
+                  ref.read(offlineToastProvider.notifier).state = null;
+                }
+              });
+              return child!;
+            },
+          ),
+        );
       },
     );
   }

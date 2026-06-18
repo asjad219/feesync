@@ -96,26 +96,20 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
       return;
     }
 
-    if (_selectedDueIds.isEmpty) {
-      if (availableDues.isEmpty && !_isAdvancePayment) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please turn on Advance Payment to proceed.')));
+    if (availableDues.isNotEmpty) {
+      _isAdvancePayment = false;
+      if (_selectedDueIds.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select at least one pending due period.')),
+        );
         return;
       }
-
-      if (availableDues.isNotEmpty) {
-        final confirm = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            backgroundColor: AppColors.surfaceContainer,
-            title: const Text('Record as Advance?'),
-            content: const Text('No specific fee periods selected. This will be recorded as an advance payment for future dues.'),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('CANCEL')),
-              TextButton(onPressed: () => Navigator.pop(context, true), child: Text('PROCEED', style: TextStyle(color: AppColors.primary))),
-            ],
-          ),
+    } else {
+      if (!_isAdvancePayment) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please turn on Advance Payment to proceed.')),
         );
-        if (confirm != true) return;
+        return;
       }
     }
 
@@ -455,7 +449,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
               ),
               const SizedBox(height: 64),
 
-              _buildSubmitButton(duesAsync.value ?? []),
+              _buildSubmitButton(duesAsync.value ?? [], duesAsync.isLoading),
             ],
           ),
         ),
@@ -501,6 +495,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
                 if (!existsInBatch) {
                   _selectedStudent = null;
                   _selectedDueIds.clear();
+                  _isAdvancePayment = false;
                   _amountController.clear();
                 }
               }
@@ -803,7 +798,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
     );
   }
 
-  Widget _buildSubmitButton(List<Due> availableDues) {
+  Widget _buildSubmitButton(List<Due> availableDues, bool isDuesLoading) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -818,7 +813,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
         ],
       ),
       child: ElevatedButton(
-        onPressed: _isLoading || _selectedStudent == null ? null : () => _savePayment(availableDues),
+        onPressed: _isLoading || _selectedStudent == null || isDuesLoading ? null : () => _savePayment(availableDues),
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent, 
           shadowColor: Colors.transparent,

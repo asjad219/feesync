@@ -31,4 +31,17 @@ class AccountProfile {
       gstin: json['gstin'] as String?,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'school_name': schoolName,
+      'email': email,
+      'phone': phone,
+      'address': address,
+      'logo_url': logoUrl,
+      'gstin': gstin,
+    };
+  }
 }

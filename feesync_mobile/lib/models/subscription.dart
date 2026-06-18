@@ -218,33 +218,38 @@ class Subscription {
   // ── Resolved effective limits ──────────────────────────────────────────────
   
   int get currentMaxStudents {
-    final planLimit = PlanConfig.fromTier(effectivePlan).maxStudents;
-    if (planLimit < 0 || maxStudents < 0) return -1;
-    return maxStudents > planLimit ? maxStudents : planLimit;
+    if (effectivePlan == 'free' && planType != 'free') {
+      return PlanConfig.free.maxStudents;
+    }
+    return maxStudents;
   }
 
   int get currentMaxBatches {
-    final planLimit = PlanConfig.fromTier(effectivePlan).maxBatches;
-    if (planLimit < 0 || maxBatches < 0) return -1;
-    return maxBatches > planLimit ? maxBatches : planLimit;
+    if (effectivePlan == 'free' && planType != 'free') {
+      return PlanConfig.free.maxBatches;
+    }
+    return maxBatches;
   }
 
   int get currentWaReceiptsLimit {
-    final planLimit = PlanConfig.fromTier(effectivePlan).whatsappReceiptsPerMonth;
-    if (planLimit < 0 || whatsappReceiptsLimit < 0) return -1;
-    return whatsappReceiptsLimit > planLimit ? whatsappReceiptsLimit : planLimit;
+    if (effectivePlan == 'free' && planType != 'free') {
+      return PlanConfig.free.whatsappReceiptsPerMonth;
+    }
+    return whatsappReceiptsLimit;
   }
 
   int get currentWaRemindersLimit {
-    final planLimit = PlanConfig.fromTier(effectivePlan).whatsappRemindersPerMonth;
-    if (planLimit < 0 || whatsappRemindersLimit < 0) return -1;
-    return whatsappRemindersLimit > planLimit ? whatsappRemindersLimit : planLimit;
+    if (effectivePlan == 'free' && planType != 'free') {
+      return PlanConfig.free.whatsappRemindersPerMonth;
+    }
+    return whatsappRemindersLimit;
   }
 
   int get currentMaxStaff {
-    final planLimit = PlanConfig.fromTier(effectivePlan).maxStaff;
-    if (planLimit < 0 || maxStaff < 0) return -1;
-    return maxStaff > planLimit ? maxStaff : planLimit;
+    if (effectivePlan == 'free' && planType != 'free') {
+      return PlanConfig.free.maxStaff;
+    }
+    return maxStaff;
   }
 
   /// True if unlimited students are allowed.

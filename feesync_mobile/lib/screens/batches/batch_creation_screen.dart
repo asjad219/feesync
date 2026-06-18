@@ -10,6 +10,7 @@ import '../../../providers/dashboard_provider.dart';
 import '../../../providers/user_provider.dart';
 import '../../../providers/subscription_provider.dart';
 import '../../../providers/settings_provider.dart';
+import '../../../providers/student_provider.dart';
 
 class BatchCreationScreen extends ConsumerStatefulWidget {
   final String? batchId;
@@ -243,6 +244,7 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
         ref.invalidate(activeBatchCountProvider);
         ref.invalidate(subscriptionScreenDataProvider);
         ref.invalidate(featureGateProvider);
+        ref.invalidate(studentBalancesProvider);
         invalidateDashboardAnalytics(ref);
       } else {
         final updatedData = {
@@ -267,6 +269,7 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
         ref.invalidate(activeBatchCountProvider);
         ref.invalidate(subscriptionScreenDataProvider);
         ref.invalidate(featureGateProvider);
+        ref.invalidate(studentBalancesProvider);
         invalidateDashboardAnalytics(ref);
       }
       if (mounted) {

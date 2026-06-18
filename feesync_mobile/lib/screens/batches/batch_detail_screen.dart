@@ -13,6 +13,7 @@ import '../../../providers/subscription_provider.dart';
 import '../../../models/models.dart';
 import '../../../providers/local_settings_provider.dart';
 import '../../../services/app_lock_service.dart';
+import '../../../core/services/network_service.dart';
 import 'package:intl/intl.dart';
 
 class BatchDetailScreen extends ConsumerStatefulWidget {
@@ -51,6 +52,8 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
 
     final bool isDark = AppColors.isDarkMode;
     final Color scaffoldBgColor = isDark ? const Color(0xFF0D0D1A) : const Color(0xFFF8FAFC);
+    final Color primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
+    final Color textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
 
     return Scaffold(
       backgroundColor: scaffoldBgColor,
@@ -79,8 +82,87 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
 
           return _buildContent(displayBatch);
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('Error: $err')),
+        loading: () {
+          final isOnline = ref.watch(isOnlineProvider).value ?? true;
+          if (!isOnline) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.wifi_off, size: 80, color: Color(0xFFDC2626)),
+                  const SizedBox(height: 24),
+                  Text(
+                    "📡 No Internet Connection",
+                    style: GoogleFonts.manrope(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: textPrimaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    "Please check your network and try again.",
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      color: isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+                  ElevatedButton(
+                    onPressed: () => ref.invalidate(batchByIdProvider(widget.batchId)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text("Retry"),
+                  ),
+                ],
+              ),
+            );
+          }
+          return Center(child: CircularProgressIndicator(color: primaryColor));
+        },
+        error: (err, _) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline_rounded, size: 80, color: Color(0xFFDC2626)),
+                  const SizedBox(height: 24),
+                  Text(
+                    "Error Loading Batch Details",
+                    style: GoogleFonts.manrope(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: textPrimaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    err.toString(),
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+                  ElevatedButton(
+                    onPressed: () => ref.invalidate(batchByIdProvider(widget.batchId)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text("Retry"),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -703,6 +785,7 @@ class _StudentsTab extends ConsumerWidget {
     final studentsAsync = ref.watch(batchStudentsProvider(batchId));
     final bool isDark = AppColors.isDarkMode;
     final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
+    final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
 
     return studentsAsync.when(
       data: (students) => ListView.builder(
@@ -710,8 +793,55 @@ class _StudentsTab extends ConsumerWidget {
         itemCount: students.length,
         itemBuilder: (context, index) => _StudentListTile(student: students[index], batchId: batchId),
       ),
-      loading: () => Center(child: CircularProgressIndicator(color: primaryColor)),
-      error: (err, _) => Center(child: Text('Error: $err')),
+      loading: () {
+        final isOnline = ref.watch(isOnlineProvider).value ?? true;
+        if (!isOnline) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.wifi_off, size: 48, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  Text(
+                    "No Internet Connection",
+                    style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.bold, color: textPrimaryColor),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Please check your network and try again.",
+                    style: GoogleFonts.inter(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        return Center(child: CircularProgressIndicator(color: primaryColor));
+      },
+      error: (err, _) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline_rounded, size: 48, color: Colors.redAccent),
+              const SizedBox(height: 16),
+              Text(
+                "Error Loading Students",
+                style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.bold, color: textPrimaryColor),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                err.toString(),
+                style: GoogleFonts.inter(fontSize: 12, color: Colors.grey),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -935,8 +1065,38 @@ class _MarkAttendanceView extends ConsumerWidget {
                 batchId: batchId,
               ),
             ),
-            loading: () => Center(child: CircularProgressIndicator(color: primaryColor)),
-            error: (err, _) => Center(child: Text('Error: $err')),
+            loading: () {
+              final isOnline = ref.watch(isOnlineProvider).value ?? true;
+              final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+              if (!isOnline) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.wifi_off, size: 48, color: Colors.grey),
+                        const SizedBox(height: 16),
+                        Text(
+                          "No Internet Connection",
+                          style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.bold, color: textPrimaryColor),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+              return Center(child: CircularProgressIndicator(color: primaryColor));
+            },
+            error: (err, _) {
+              final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+              return Center(
+                child: Text(
+                  'Error: $err',
+                  style: TextStyle(color: textPrimaryColor),
+                ),
+              );
+            },
           ),
         ),
       ],

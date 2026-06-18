@@ -42,7 +42,7 @@ class PaymentNotifier extends StateNotifier<AsyncValue<List<Payment>>> {
   Future<void> _init() async {
     if (_accountId == null) return;
     // 1. Emit cached data immediately
-    final cached = _cache.loadPayments(_accountId!);
+    final cached = _cache.loadPayments(_accountId);
     if (cached != null) {
       state = AsyncValue.data(cached);
       debugPrint('[Payments] Loaded ${cached.length} payments from cache');
@@ -56,7 +56,7 @@ class PaymentNotifier extends StateNotifier<AsyncValue<List<Payment>>> {
       final payments = await _repository
           .getPayments()
           .timeout(const Duration(seconds: 10));
-      await _cache.savePayments(_accountId!, payments);
+      await _cache.savePayments(_accountId, payments);
       _ref.read(lastSyncTimesProvider.notifier).update(
             (s) => {...s, 'payments': DateTime.now()},
           );
@@ -64,7 +64,9 @@ class PaymentNotifier extends StateNotifier<AsyncValue<List<Payment>>> {
       debugPrint('[Payments] Fetched ${payments.length} payments from network');
     } catch (e, st) {
       debugPrint('[Payments][OFFLINE] loadPayments failed: $e');
-      if (state is! AsyncData) {
+      if (state is AsyncData) {
+        _ref.read(offlineToastProvider.notifier).state = "You're offline. Showing saved data.";
+      } else {
         state = AsyncValue.error(e, st);
       }
     }

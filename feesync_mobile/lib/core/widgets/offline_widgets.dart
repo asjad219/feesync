@@ -438,4 +438,86 @@ void showOfflineWriteSnackbar(BuildContext context) {
   );
 }
 
+/// Shows a professional offline popup dialog when offline.
+void showOfflineDialog(BuildContext context, {VoidCallback? onRetry}) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  final bgColor = isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF);
+  final textPrimary = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+  final textSecondary = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
+
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: bgColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      title: Row(
+        children: [
+          const Icon(Icons.wifi_off_rounded, color: Color(0xFFB45309), size: 28),
+          const SizedBox(width: 12),
+          Text(
+            'Connection Offline',
+            style: GoogleFonts.manrope(
+              fontWeight: FontWeight.w800,
+              color: textPrimary,
+            ),
+          ),
+        ],
+      ),
+      content: Text(
+        'You are currently offline. Some features may be unavailable, but you can continue browsing your cached students, batches, and dashboard data.',
+        style: GoogleFonts.inter(color: textSecondary, height: 1.5, fontSize: 14),
+      ),
+      actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+      actions: [
+        Row(
+          children: [
+            Expanded(
+              child: TextButton(
+                onPressed: () => Navigator.pop(context),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: Text(
+                  'Dismiss',
+                  style: GoogleFonts.inter(
+                    color: textSecondary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ),
+            if (onRetry != null) ...[
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    onRetry();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2563EB),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    'Retry',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
 

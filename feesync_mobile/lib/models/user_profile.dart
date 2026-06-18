@@ -31,4 +31,17 @@ class UserProfile {
       isActive: json['is_active'] as bool? ?? true,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'account_id': accountId,
+      'email': email,
+      'full_name': fullName,
+      'role': role,
+      'phone': phone,
+      'permissions': permissions,
+      'is_active': isActive,
+    };
+  }
 }

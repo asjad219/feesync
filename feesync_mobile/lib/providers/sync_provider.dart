@@ -23,3 +23,6 @@ final lastSyncTimesProvider = StateProvider<Map<String, DateTime?>>((ref) {
     'settings': null,
   };
 });
+
+// Toast notifications for offline warning
+final offlineToastProvider = StateProvider<String?>((ref) => null);

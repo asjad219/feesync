@@ -44,7 +44,7 @@ class StudentBalancesNotifier
   Future<void> _init() async {
     if (_accountId == null) return;
     // 1. Emit cached data immediately
-    final cached = _cache.loadStudentBalances(_accountId!);
+    final cached = _cache.loadStudentBalances(_accountId);
     if (cached != null) {
       state = AsyncValue.data(cached);
       debugPrint('[Students] Loaded ${cached.length} balances from cache');
@@ -59,7 +59,7 @@ class StudentBalancesNotifier
       final balances = await _repo
           .getStudentBalances()
           .timeout(const Duration(seconds: 10));
-      await _cache.saveStudentBalances(_accountId!, balances);
+      await _cache.saveStudentBalances(_accountId, balances);
       _ref.read(lastSyncTimesProvider.notifier).update(
             (s) => {...s, 'students': DateTime.now()},
           );
@@ -67,7 +67,9 @@ class StudentBalancesNotifier
       debugPrint('[Students] Fetched ${balances.length} balances from network');
     } catch (e, st) {
       debugPrint('[Students][OFFLINE] getStudentBalances failed: $e');
-      if (state is! AsyncData) {
+      if (state is AsyncData) {
+        _ref.read(offlineToastProvider.notifier).state = "You're offline. Showing saved data.";
+      } else {
         state = AsyncValue.error(e, st);
       }
     }

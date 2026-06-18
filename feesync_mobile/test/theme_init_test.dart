@@ -1,10 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:feesync_mobile/providers/settings_provider.dart';
 import 'package:feesync_mobile/providers/user_provider.dart';
 import 'package:feesync_mobile/models/user_profile.dart';
 import 'package:feesync_mobile/models/app_settings.dart';
 import 'package:feesync_mobile/repositories/settings_repository.dart';
+import 'package:feesync_mobile/providers/sync_provider.dart';
 
 // Helper function to create mock AppSettings
 AppSettings createMockSettings({
@@ -57,8 +59,6 @@ class MockSettingsRepository implements SettingsRepository {
     return mockSettings;
   }
 
-
-
   @override
   Future<AppSettings> updateSettings(Map<String, dynamic> data) async {
     throw UnimplementedError();
@@ -68,14 +68,18 @@ class MockSettingsRepository implements SettingsRepository {
 void main() {
   group('Theme Initialization & settingsProvider Tests', () {
     late MockSettingsRepository mockRepository;
+    late SharedPreferences prefs;
 
-    setUp(() {
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({});
+      prefs = await SharedPreferences.getInstance();
       mockRepository = MockSettingsRepository();
     });
 
     test('Initial state is loading and does not load settings if profile is null', () async {
       final container = ProviderContainer(
         overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
           settingsRepositoryProvider.overrideWithValue(mockRepository),
           currentUserProfileProvider.overrideWith((ref) => Future.value(null)),
         ],
@@ -94,6 +98,7 @@ void main() {
 
       final container = ProviderContainer(
         overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
           settingsRepositoryProvider.overrideWithValue(mockRepository),
           // Override currentUserProfileProvider to watch our controller StateProvider
           currentUserProfileProvider.overrideWith((ref) => ref.watch(userProfileNotifier)),
@@ -151,6 +156,7 @@ void main() {
 
       final container = ProviderContainer(
         overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
           settingsRepositoryProvider.overrideWithValue(mockRepository),
           currentUserProfileProvider.overrideWith((ref) => ref.watch(userProfileNotifier)),
         ],

@@ -171,25 +171,27 @@ BEGIN
       AND period_name = 'Batch ' || enrollment.batch_id || ' ' || current_period_name;
 
     IF existing_due_id IS NULL THEN
-      INSERT INTO dues (
-        account_id,
-        student_id,
-        batch_id,
-        period_name,
-        due_date,
-        amount_assigned,
-        due_amount,
-        status
-      ) VALUES (
-        enrollment.student_account_id,
-        enrollment.student_id,
-        enrollment.batch_id,
-        'Batch ' || enrollment.batch_id || ' ' || current_period_name,
-        current_due_date,
-        enrollment.base_amount,
-        enrollment.base_amount,
-        'pending'
-      );
+      IF CURRENT_DATE >= current_due_date THEN
+        INSERT INTO dues (
+          account_id,
+          student_id,
+          batch_id,
+          period_name,
+          due_date,
+          amount_assigned,
+          due_amount,
+          status
+        ) VALUES (
+          enrollment.student_account_id,
+          enrollment.student_id,
+          enrollment.batch_id,
+          'Batch ' || enrollment.batch_id || ' ' || current_period_name,
+          current_due_date,
+          enrollment.base_amount,
+          enrollment.base_amount,
+          'pending'
+        );
+      END IF;
     END IF;
   END LOOP;
 

@@ -116,7 +116,8 @@ export interface Due {
   id: string
   account_id: string
   student_id: string
-  fee_structure_id: string
+  fee_structure_id: string | null
+  batch_id?: string | null
   period_name: string
   due_date: string
   amount_assigned: number
