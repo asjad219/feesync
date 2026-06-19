@@ -35,7 +35,7 @@ final batchStudentsProvider = FutureProvider.family<List<StudentBalance>, String
   } catch (e) {
     debugPrint('[BatchStudents][OFFLINE] batchStudentsProvider failed: $e');
     if (accountId != null) {
-      final cached = cache.loadStudentBalances(accountId);
+      final cached = await cache.loadStudentBalances(accountId);
       if (cached != null) {
         final filtered = cached.where((s) => s.batchId == batchId).toList();
         debugPrint('[BatchStudents][OFFLINE] Returning ${filtered.length} students from cached balances');

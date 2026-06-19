@@ -46,7 +46,7 @@ class DashboardStatsNotifier extends StateNotifier<AsyncValue<DashboardStats>> {
   Future<void> _init() async {
     if (_accountId == null) return;
     // 1. Emit cached data immediately (zero-wait render)
-    final cached = _cache.loadDashboardStats(_accountId);
+    final cached = await _cache.loadDashboardStats(_accountId);
     if (cached != null) {
       state = AsyncValue.data(cached);
       debugPrint('[Dashboard] Loaded stats from cache');
@@ -92,7 +92,8 @@ class MonthlyStatsNotifier extends StateNotifier<AsyncValue<List<MonthlyStat>>> 
 
   Future<void> _init() async {
     if (_accountId == null) return;
-    final cached = _cache.loadMonthlyStats(_accountId);
+    // 1. Emit cached data immediately
+    final cached = await _cache.loadMonthlyStats(_accountId);
     if (cached != null) {
       state = AsyncValue.data(cached);
       debugPrint('[Dashboard] Loaded monthly stats from cache');
@@ -130,7 +131,8 @@ class RecentTransactionsNotifier
 
   Future<void> _init() async {
     if (_accountId == null) return;
-    final cached = _cache.loadRecentTransactions(_accountId);
+    // 1. Emit cached data immediately
+    final cached = await _cache.loadRecentTransactions(_accountId);
     if (cached != null) {
       state = AsyncValue.data(cached);
       debugPrint('[Dashboard] Loaded recent transactions from cache');
@@ -167,7 +169,8 @@ class ClassStatsNotifier extends StateNotifier<AsyncValue<List<ClassStat>>> {
 
   Future<void> _init() async {
     if (_accountId == null) return;
-    final cached = _cache.loadClassStats(_accountId);
+    // 1. Emit cached data immediately
+    final cached = await _cache.loadClassStats(_accountId);
     if (cached != null) {
       state = AsyncValue.data(cached);
       debugPrint('[Dashboard] Loaded class stats from cache');

@@ -1,10 +1,9 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:uuid/uuid.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../models/student.dart';
@@ -15,8 +14,11 @@ import '../../providers/subscription_provider.dart';
 import '../../core/widgets/paywall_dialog.dart';
 import '../../core/billing/feature_gate.dart';
 import '../../core/utils/receipt_service.dart';
-import '../../core/widgets/student_avatar.dart';
 import '../../core/widgets/permission_guard.dart';
+
+import 'widgets/payment_form_fields.dart';
+import 'widgets/payment_selection_widgets.dart';
+import 'widgets/student_search_bottom_sheet.dart';
 
 class RecordPaymentScreen extends ConsumerStatefulWidget {
   final Student? student;
@@ -117,7 +119,13 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
 
     if (_isAdvancePayment) {
       final batches = ref.read(batchNotifierProvider).value ?? [];
-      final selectedBatch = batches.firstWhere((b) => b.id == _selectedBatchId, orElse: () => null);
+      Batch? selectedBatch;
+      for (final b in batches) {
+        if (b.id == _selectedBatchId) {
+          selectedBatch = b;
+          break;
+        }
+      }
       if (selectedBatch != null) {
         if (amount > selectedBatch.monthlyFee) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -163,19 +171,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
         dbPaymentMethod = 'bank_transfer';
       }
 
-      // Generate client-side UUID for idempotency_key
-      final random = Random.secure();
-      final values = List<int>.generate(16, (i) => random.nextInt(256));
-      values[6] = (values[6] & 0x0f) | 0x40;
-      values[8] = (values[8] & 0x3f) | 0x80;
-      final buffer = StringBuffer();
-      for (int i = 0; i < 16; i++) {
-        if (i == 4 || i == 6 || i == 8 || i == 10) {
-          buffer.write('-');
-        }
-        buffer.write(values[i].toRadixString(16).padLeft(2, '0'));
-      }
-      final idempotencyKey = buffer.toString();
+      final idempotencyKey = const Uuid().v4();
 
       final paymentData = {
         'account_id': accountId,
@@ -196,7 +192,11 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
       if (_selectedStudent != null) ref.invalidate(studentDuesProvider(_selectedStudent!.id));
       ref.invalidate(batchNotifierProvider);
       ref.invalidate(batchByIdProvider);
-      invalidateDashboardAnalytics(ref);
+      
+      ref.read(dashboardStatsProvider.notifier).fetch();
+      ref.read(monthlyCollectionDataProvider.notifier).fetch();
+      ref.read(recentTransactionsProvider.notifier).fetch();
+      ref.read(classCollectionDataProvider.notifier).fetch();
 
       if (mounted) {
         _showSuccessDialog(amount);
@@ -209,10 +209,11 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
   }
 
   void _showErrorDialog(String error) {
-    // Sanitize technical errors slightly for better UX
     String displayError = error;
-    if (error.contains('PostgrestException')) {
+    if (error.contains('DatabaseException')) {
       displayError = 'A database error occurred while saving the payment. Please try again.';
+    } else if (error.contains('NetworkException')) {
+      displayError = 'A network error occurred. Please check your connection.';
     }
 
     showDialog(
@@ -369,7 +370,6 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
         pdfFile: pdfFile,
       );
 
-      // Record WhatsApp usage!
       await ref.read(usageRepositoryProvider).recordWhatsappReceipt();
       ref.invalidate(currentMonthUsageProvider);
       ref.invalidate(featureGateProvider);
@@ -384,6 +384,40 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _showStudentSearchBottomSheet(List<StudentBalance> balances) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surfaceContainer,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => StudentSearchBottomSheet(
+        balances: balances,
+        selectedBatchId: _selectedBatchId,
+        onStudentSelected: (studentBalance) {
+          setState(() {
+            _selectedStudent = Student(
+              id: studentBalance.id,
+              accountId: studentBalance.accountId,
+              admissionNumber: studentBalance.admissionNumber,
+              firstName: studentBalance.firstName,
+              lastName: studentBalance.lastName,
+              studentClass: studentBalance.studentClass,
+              rollNumber: studentBalance.rollNumber,
+              parentPhone: studentBalance.parentPhone,
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            );
+            _selectedDueIds.clear();
+            _isAdvancePayment = false;
+            _amountController.clear();
+          });
+        },
+      ),
+    );
   }
 
   @override
@@ -410,34 +444,74 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _SectionHeader(title: 'Transaction Details', subtitle: 'Link payment to a student and select due periods'),
+                const PaymentSectionHeader(title: 'Transaction Details', subtitle: 'Link payment to a student and select due periods'),
                 const SizedBox(height: 32),
   
-                _buildLabel('BATCH / CLASS'),
+                const PaymentFormLabel(text: 'BATCH / CLASS'),
                 const SizedBox(height: 12),
                 batchesAsync.when(
-                  data: (batches) => _buildBatchPicker(batches),
+                  data: (batches) => BatchSelectionDropdown(
+                    batches: batches,
+                    selectedBatchId: _selectedBatchId,
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedBatchId = value;
+                        if (_selectedStudent != null) {
+                          final balances = ref.read(studentBalancesProvider).value ?? [];
+                          final existsInBatch = balances.any((b) => b.id == _selectedStudent!.id && (value == null || b.batchId == value));
+                          if (!existsInBatch) {
+                            _selectedStudent = null;
+                            _selectedDueIds.clear();
+                            _isAdvancePayment = false;
+                            _amountController.clear();
+                          }
+                        }
+                      });
+                    },
+                  ),
                   loading: () => const LinearProgressIndicator(),
                   error: (e, _) => Text('Error: $e'),
                 ),
                 const SizedBox(height: 24),
                 
-                _buildLabel('STUDENT NAME'),
+                const PaymentFormLabel(text: 'STUDENT NAME'),
                 const SizedBox(height: 12),
                 studentsAsync.when(
-                  data: (balances) => _buildStudentPicker(balances),
+                  data: (balances) => StudentSelectionButton(
+                    selectedStudent: _selectedStudent,
+                    onTap: () => _showStudentSearchBottomSheet(balances),
+                  ),
                   loading: () => const LinearProgressIndicator(),
                   error: (e, _) => Text('Error: $e'),
                 ),
                 const SizedBox(height: 32),
   
                 if (_selectedStudent != null) ...[
-                  _buildLabel('SELECT PENDING DUES'),
+                  const PaymentFormLabel(text: 'SELECT PENDING DUES'),
                   const SizedBox(height: 12),
                   duesAsync.when(
-                    data: (dues) => _buildDuesList(dues),
+                    data: (dues) => PendingDuesSelector(
+                      dues: dues,
+                      selectedDueIds: _selectedDueIds,
+                      isAdvancePayment: _isAdvancePayment,
+                      currencyCode: currencyCode,
+                      onAdvancePaymentChanged: (v) => setState(() => _isAdvancePayment = v),
+                      onDueToggled: (due, isSelected) {
+                        setState(() {
+                          if (isSelected) {
+                            _selectedDueIds.remove(due.id);
+                            final current = double.tryParse(_amountController.text) ?? 0;
+                            _amountController.text = (current - due.dueAmount).toStringAsFixed(0);
+                          } else {
+                            _selectedDueIds.add(due.id);
+                            final current = double.tryParse(_amountController.text) ?? 0;
+                            _amountController.text = (current + due.dueAmount).toStringAsFixed(0);
+                          }
+                        });
+                      },
+                    ),
                     loading: () => const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Text('Error loading dues'),
+                    error: (e, _) => const Text('Error loading dues'),
                   ),
                   const SizedBox(height: 32),
                 ],
@@ -445,7 +519,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: _buildField(
+                      child: PaymentTextField(
                         label: 'AMOUNT ($currencySymbol)',
                         controller: _amountController,
                         hint: '0',
@@ -455,26 +529,47 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
                     ),
                     const SizedBox(width: 16),
                     Expanded(
-                      child: _buildDatePicker(),
+                      child: PaymentDatePicker(
+                        date: _paymentDate,
+                        onTap: () => _selectDate(context),
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 32),
   
-                _buildLabel('PAYMENT MODE'),
+                const PaymentFormLabel(text: 'PAYMENT MODE'),
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    _buildModeToggle('online', Icons.account_balance_wallet_rounded, 'Online'),
+                    PaymentModeToggle(
+                      value: 'online', 
+                      icon: Icons.account_balance_wallet_rounded, 
+                      label: 'Online',
+                      selectedMode: _paymentMode,
+                      onSelected: (v) => setState(() => _paymentMode = v),
+                    ),
                     const SizedBox(width: 12),
-                    _buildModeToggle('cash', Icons.payments_rounded, 'Cash'),
+                    PaymentModeToggle(
+                      value: 'cash', 
+                      icon: Icons.payments_rounded, 
+                      label: 'Cash',
+                      selectedMode: _paymentMode,
+                      onSelected: (v) => setState(() => _paymentMode = v),
+                    ),
                     const SizedBox(width: 12),
-                    _buildModeToggle('bank', Icons.account_balance_rounded, 'Bank'),
+                    PaymentModeToggle(
+                      value: 'bank', 
+                      icon: Icons.account_balance_rounded, 
+                      label: 'Bank',
+                      selectedMode: _paymentMode,
+                      onSelected: (v) => setState(() => _paymentMode = v),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 32),
   
-                _buildField(
+                PaymentTextField(
                   label: 'NOTES (OPTIONAL)',
                   controller: _notesController,
                   hint: 'Internal remarks...',
@@ -487,347 +582,6 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
                 _buildSubmitButton(duesAsync.value ?? [], duesAsync.isLoading),
               ],
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLabel(String text) => Text(text, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: AppColors.textTertiary));
-
-  Widget _buildBatchPicker(List<Batch> batches) {
-    final bool isDark = AppColors.isDarkMode;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceContainer.withValues(alpha: 0.5) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.1)),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          isExpanded: true,
-          value: _selectedBatchId,
-          hint: const Text('All Batches / Classes'),
-          dropdownColor: isDark ? const Color(0xFF1E1E2C) : Colors.white,
-          icon: Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textTertiary),
-          items: [
-            const DropdownMenuItem<String>(
-              value: null,
-              child: Text('All Batches / Classes'),
-            ),
-            ...batches.map((b) => DropdownMenuItem<String>(
-                  value: b.id,
-                  child: Text('${b.name} (${b.subject})'),
-                )),
-          ],
-          onChanged: (value) {
-            setState(() {
-              _selectedBatchId = value;
-              // Reset selected student if they do not belong to the selected batch
-              if (_selectedStudent != null) {
-                final balances = ref.read(studentBalancesProvider).value ?? [];
-                final existsInBatch = balances.any((b) => b.id == _selectedStudent!.id && (value == null || b.batchId == value));
-                if (!existsInBatch) {
-                  _selectedStudent = null;
-                  _selectedDueIds.clear();
-                  _isAdvancePayment = false;
-                  _amountController.clear();
-                }
-              }
-            });
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStudentPicker(List<StudentBalance> balances) {
-    final bool isDark = AppColors.isDarkMode;
-    final displayName = _selectedStudent != null 
-        ? '${_selectedStudent!.fullName} (${_selectedStudent!.studentClass})'
-        : 'Select a student';
-    return InkWell(
-      onTap: () => _showStudentSearchBottomSheet(balances),
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceContainer.withValues(alpha: 0.5) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.1)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                displayName,
-                style: GoogleFonts.inter(
-                  fontSize: 15,
-                  fontWeight: _selectedStudent != null ? FontWeight.w600 : FontWeight.w400,
-                  color: _selectedStudent != null ? AppColors.textPrimary : AppColors.textHint,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textTertiary),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showStudentSearchBottomSheet(List<StudentBalance> balances) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppColors.surfaceContainer,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) => _StudentSearchBottomSheet(
-        balances: balances,
-        selectedBatchId: _selectedBatchId,
-        onStudentSelected: (studentBalance) {
-          setState(() {
-            _selectedStudent = Student(
-              id: studentBalance.id,
-              accountId: studentBalance.accountId,
-              admissionNumber: studentBalance.admissionNumber,
-              firstName: studentBalance.firstName,
-              lastName: studentBalance.lastName,
-              studentClass: studentBalance.studentClass,
-              rollNumber: studentBalance.rollNumber,
-              parentPhone: studentBalance.parentPhone,
-              createdAt: DateTime.now(),
-              updatedAt: DateTime.now(),
-            );
-            _selectedDueIds.clear();
-            _isAdvancePayment = false;
-            _amountController.clear();
-          });
-        },
-      ),
-    );
-  }
-
-  Widget _buildDuesList(List<Due> dues) {
-    final bool isDark = AppColors.isDarkMode;
-    if (dues.isEmpty) {
-      return Column(
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(20)),
-            child: Center(child: Text('No pending dues for this student', style: GoogleFonts.inter(color: AppColors.primary, fontWeight: FontWeight.w600))),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.surfaceContainer.withValues(alpha: 0.5) : Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.1)),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Record as Advance Payment', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-                      const SizedBox(height: 4),
-                      Text('Since there are no pending dues, this payment will be added to the student\'s advance balance.', style: GoogleFonts.inter(fontSize: 11, color: AppColors.textTertiary)),
-                    ],
-                  ),
-                ),
-                Switch(
-                  value: _isAdvancePayment,
-                  onChanged: (v) => setState(() => _isAdvancePayment = v),
-                  activeThumbColor: AppColors.primary,
-                ),
-              ],
-            ),
-          ),
-        ],
-      );
-    }
-    
-    final currencyCode = ref.read(settingsProvider).value?.currency;
-    final currencyFormatter = CurrencyFormatter.numberFormat(currencyCode, decimalDigits: 0);
-
-    return Column(
-      children: dues.map((due) {
-        final isSelected = _selectedDueIds.contains(due.id);
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: GestureDetector(
-            onTap: () {
-              setState(() {
-                if (isSelected) {
-                  _selectedDueIds.remove(due.id);
-                  final current = double.tryParse(_amountController.text) ?? 0;
-                  _amountController.text = (current - due.dueAmount).toStringAsFixed(0);
-                } else {
-                  _selectedDueIds.add(due.id);
-                  final current = double.tryParse(_amountController.text) ?? 0;
-                  _amountController.text = (current + due.dueAmount).toStringAsFixed(0);
-                }
-              });
-            },
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isSelected 
-                    ? AppColors.primary.withValues(alpha: 0.1) 
-                    : (isDark ? AppColors.surfaceContainer.withValues(alpha: 0.5) : Colors.white),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: isSelected 
-                      ? AppColors.primary.withValues(alpha: 0.3) 
-                      : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.1)),
-                ),
-                boxShadow: isSelected ? null : (isDark ? null : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.01),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ]),
-              ),
-              child: Row(
-                children: [
-                  Icon(isSelected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded, color: isSelected ? AppColors.primary : AppColors.textTertiary, size: 20),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(due.periodName, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-                        Text('Due: ${DateFormat('MMM d, yyyy').format(due.dueDate)}', style: GoogleFonts.inter(fontSize: 12, color: AppColors.textTertiary)),
-                      ],
-                    ),
-                  ),
-                  Text(currencyFormatter.format(due.dueAmount), style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.primary)),
-                ],
-              ),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildField({
-    required String label,
-    required TextEditingController controller,
-    required String hint,
-    required IconData icon,
-    int maxLines = 1,
-    TextInputType? keyboardType,
-    bool isRequired = true,
-  }) {
-    final bool isDark = AppColors.isDarkMode;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildLabel(label),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          maxLines: maxLines,
-          keyboardType: keyboardType,
-          style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-          decoration: InputDecoration(
-            hintText: hint,
-            prefixIcon: Icon(icon, size: 20, color: AppColors.textTertiary),
-            fillColor: isDark ? AppColors.surfaceContainer.withValues(alpha: 0.5) : Colors.white,
-            filled: true,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(
-                color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.1),
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(
-                color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.1),
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(
-                color: AppColors.primary,
-                width: 1.5,
-              ),
-            ),
-          ),
-          validator: isRequired ? (v) => v?.isEmpty ?? true ? 'Required' : null : null,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDatePicker() {
-    final bool isDark = AppColors.isDarkMode;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildLabel('PAYMENT DATE'),
-        const SizedBox(height: 8),
-        GestureDetector(
-          onTap: () => _selectDate(context),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.surfaceContainer.withValues(alpha: 0.5) : Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.1),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.calendar_month_rounded, size: 20, color: AppColors.textTertiary),
-                const SizedBox(width: 12),
-                Text(DateFormat('MMM d, yyyy').format(_paymentDate), style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildModeToggle(String value, IconData icon, String label) {
-    final isSelected = _paymentMode == value;
-    final bool isDark = AppColors.isDarkMode;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _paymentMode = value),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            color: isSelected 
-                ? AppColors.primary.withValues(alpha: 0.1) 
-                : (isDark ? AppColors.surfaceContainer.withValues(alpha: 0.5) : Colors.white),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isSelected 
-                  ? AppColors.primary.withValues(alpha: 0.3) 
-                  : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.1)),
-            ),
-          ),
-          child: Column(
-            children: [
-              Icon(icon, color: isSelected ? AppColors.primary : AppColors.textTertiary, size: 24),
-              const SizedBox(height: 8),
-              Text(label, style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: isSelected ? AppColors.primary : AppColors.textTertiary)),
-            ],
           ),
         ),
       ),
@@ -864,260 +618,6 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  const _SectionHeader({required this.title, required this.subtitle});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: GoogleFonts.manrope(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
-        const SizedBox(height: 4),
-        Text(subtitle, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textTertiary)),
-      ],
-    );
-  }
-}
-
-class _StudentSearchBottomSheet extends StatefulWidget {
-  final List<StudentBalance> balances;
-  final String? selectedBatchId;
-  final ValueChanged<StudentBalance> onStudentSelected;
-
-  const _StudentSearchBottomSheet({
-    required this.balances,
-    this.selectedBatchId,
-    required this.onStudentSelected,
-  });
-
-  @override
-  State<_StudentSearchBottomSheet> createState() => _StudentSearchBottomSheetState();
-}
-
-class _StudentSearchBottomSheetState extends State<_StudentSearchBottomSheet> {
-  final _searchController = TextEditingController();
-  String _searchQuery = '';
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Filter balances by batch
-    final batchFiltered = widget.balances.where((b) {
-      if (widget.selectedBatchId != null && b.batchId != widget.selectedBatchId) {
-        return false;
-      }
-      return true;
-    }).toList();
-
-    // Filter by search query
-    final filtered = batchFiltered.where((b) {
-      if (_searchQuery.isEmpty) return true;
-      final q = _searchQuery.toLowerCase();
-      return b.fullName.toLowerCase().contains(q) ||
-          b.admissionNumber.toLowerCase().contains(q) ||
-          (b.rollNumber ?? '').toLowerCase().contains(q);
-    }).toList();
-
-    final isDark = AppColors.isDarkMode;
-
-    return DraggableScrollableSheet(
-      initialChildSize: 0.85,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      expand: false,
-      builder: (context, scrollController) {
-        return Container(
-          decoration: BoxDecoration(
-            color: AppColors.surfaceContainer,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Top drag indicator
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.textTertiary.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Select Student',
-                style: GoogleFonts.manrope(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Search Input
-              TextField(
-                controller: _searchController,
-                autofocus: true,
-                style: GoogleFonts.inter(fontSize: 15, color: AppColors.textPrimary),
-                decoration: InputDecoration(
-                  hintText: 'Search by name, roll, or admission no...',
-                  prefixIcon: Icon(Icons.search_rounded, color: AppColors.textTertiary),
-                  suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: Icon(Icons.clear_rounded, color: AppColors.textTertiary),
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() => _searchQuery = '');
-                          },
-                        )
-                      : null,
-                  fillColor: isDark
-                      ? AppColors.surfaceContainerLow.withValues(alpha: 0.6)
-                      : Colors.white,
-                  filled: true,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(
-                      color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.1),
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(
-                      color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.1),
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: AppColors.primary, width: 1.5),
-                  ),
-                ),
-                onChanged: (val) => setState(() => _searchQuery = val),
-              ),
-              const SizedBox(height: 16),
-              // Filter count
-              Text(
-                'Showing ${filtered.length} of ${batchFiltered.length} students',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textTertiary,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: filtered.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.person_search_rounded, size: 48, color: AppColors.textTertiary),
-                            const SizedBox(height: 12),
-                            Text(
-                              'No students found',
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        controller: scrollController,
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: filtered.length,
-                        itemBuilder: (context, index) {
-                          final student = filtered[index];
-                          final balanceText = student.balance > 0
-                              ? 'Balance: ₹${student.balance.toStringAsFixed(0)}'
-                              : 'No dues';
-                          final balanceColor = student.balance > 0
-                              ? AppColors.error
-                              : AppColors.success;
-
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              tileColor: isDark
-                                  ? AppColors.surfaceContainerLow.withValues(alpha: 0.3)
-                                  : Colors.white,
-                              leading: StudentAvatar(
-                                studentId: student.id,
-                                firstName: student.firstName,
-                                gender: student.gender,
-                                radius: 22,
-                              ),
-                              title: Text(
-                                student.fullName,
-                                style: GoogleFonts.inter(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              subtitle: Text(
-                                'Class: ${student.studentClass} • Roll: ${student.rollNumber ?? 'N/A'}',
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  color: AppColors.textTertiary,
-                                ),
-                              ),
-                              trailing: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    balanceText,
-                                    style: GoogleFonts.inter(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
-                                      color: balanceColor,
-                                    ),
-                                  ),
-                                  if (student.admissionNumber.isNotEmpty)
-                                    Text(
-                                      'ID: ${student.admissionNumber}',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 10,
-                                        color: AppColors.textTertiary,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                              onTap: () {
-                                widget.onStudentSelected(student);
-                                Navigator.pop(context);
-                              },
-                            ),
-                          );
-                        },
-                      ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }

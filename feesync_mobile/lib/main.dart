@@ -11,6 +11,7 @@ import 'core/config/supabase_config.dart';
 import 'core/theme/app_theme.dart';
 import 'core/billing/billing_provider.dart';
 import 'core/services/sync_service.dart';
+import 'core/services/cache_service.dart';
 import 'providers/settings_provider.dart';
 import 'providers/sync_provider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -26,6 +27,7 @@ void main() async {
 
   runZonedGuarded(() async {
     SharedPreferences? prefs;
+    CacheService? cacheService;
     String? initError;
 
     try {
@@ -58,6 +60,14 @@ void main() async {
         debugPrint('SharedPreferences init error: $e');
         initError = 'Failed to initialize local storage: $e';
       }
+
+      // Initialize CacheService (sqflite)
+      try {
+        cacheService = await CacheService.init().timeout(const Duration(seconds: 5));
+      } catch (e) {
+        debugPrint('CacheService init error: $e');
+        initError = 'Failed to initialize database cache: $e';
+      }
     } catch (e) {
       debugPrint('General initialization error: $e');
       initError = 'Initialization failed: $e';
@@ -71,6 +81,8 @@ void main() async {
             overrides: [
               if (prefs != null)
                 sharedPreferencesProvider.overrideWithValue(prefs),
+              if (cacheService != null)
+                cacheServiceProvider.overrideWithValue(cacheService),
             ],
             child: const FeeSyncApp(),
           ),

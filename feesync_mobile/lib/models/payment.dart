@@ -16,6 +16,7 @@ class Payment {
   final DateTime createdAt;
   final DateTime updatedAt;
   final StudentInfo? student;
+  final bool isOffline;
 
   Payment({
     required this.id,
@@ -32,6 +33,7 @@ class Payment {
     required this.createdAt,
     required this.updatedAt,
     this.student,
+    this.isOffline = false,
   });
 
   factory Payment.fromJson(Map<String, dynamic> json) {
@@ -58,6 +60,7 @@ class Payment {
       student: json['students'] != null
           ? StudentInfo.fromJson(json['students'])
           : null,
+      isOffline: json['is_offline'] ?? false,
     );
   }
 
@@ -76,6 +79,7 @@ class Payment {
       'status': status.name,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
+      'is_offline': isOffline,
     };
   }
 }

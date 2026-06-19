@@ -533,6 +533,10 @@ class _PaymentTransactionCard extends StatelessWidget {
                               color: AppColors.textTertiary,
                             ),
                           ),
+                          if (payment.isOffline) ...[
+                            const SizedBox(width: 8),
+                            Icon(Icons.cloud_upload_outlined, size: 14, color: AppColors.textTertiary),
+                          ],
                         ],
                       ),
                     ],

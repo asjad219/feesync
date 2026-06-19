@@ -28,15 +28,8 @@ class OfflineBanner extends ConsumerWidget {
       }
     }
 
-    // Also check CacheService directly for persisted times
-    final cacheService = ref.read(cacheServiceProvider);
-    for (final key in ['dashboard', 'students', 'batches', 'payments']) {
-      final persisted = cacheService.loadLastSyncTime(key);
-      if (persisted != null &&
-          (latestSync == null || persisted.isAfter(latestSync))) {
-        latestSync = persisted;
-      }
-    }
+    // Removed synchronous CacheService read since it is now async and backed by SQLite.
+    // The session's lastSyncTimesProvider is sufficient for real-time updates.
 
     final syncLabel = latestSync != null
         ? 'Last synced: ${_formatSyncTime(latestSync)}'

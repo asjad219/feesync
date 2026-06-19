@@ -3,15 +3,21 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/payment.dart';
+import '../core/errors/app_exception.dart';
 
 class PaymentRepository {
   void _handleException(dynamic e) {
     if (e is SocketException || e.toString().contains('SocketException') || e.toString().contains('Failed host lookup')) {
-      throw SocketException('No internet connection. Please verify your connection.');
+      throw NetworkException(e.toString());
     }
     if (e is TimeoutException || e.toString().contains('TimeoutException')) {
-      throw TimeoutException('Request timed out. Please try again.');
+      throw NetworkException('Request timed out');
     }
+    if (e is PostgrestException) {
+      throw DatabaseException(e.message, e.details?.toString());
+    }
+    if (e is AppException) throw e;
+    throw UnknownException(e.toString());
   }
   final SupabaseClient _client;
   static const _timeout = Duration(seconds: 10);
@@ -127,15 +133,29 @@ class PaymentRepository {
     Map<String, dynamic> paymentData,
     List<Map<String, dynamic>> feeAllocations,
   ) async {
+    return createPaymentOnline(paymentData, feeAllocations, null);
+  }
+
+  Future<Payment> createPaymentOnline(
+    Map<String, dynamic> paymentData,
+    List<Map<String, dynamic>> feeAllocations,
+    String? tempId,
+  ) async {
     try {
       final receiptNumber = 'RCP-${DateTime.now().millisecondsSinceEpoch}';
 
+      final insertData = {
+        ...paymentData,
+        'receipt_number': receiptNumber,
+      };
+
+      if (tempId != null) {
+        insertData.remove('id'); // Ensure we don't send the tempId if Supabase generates it, or we can send it if UUIDs match Supabase format. Let's remove to be safe.
+      }
+
       final response = await _client
           .from('payments')
-          .insert({
-            ...paymentData,
-            'receipt_number': receiptNumber,
-          })
+          .insert(insertData)
           .select()
           .single()
           .timeout(_timeout);

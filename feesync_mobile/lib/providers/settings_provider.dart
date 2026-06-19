@@ -56,10 +56,14 @@ class SettingsNotifier extends StateNotifier<AsyncValue<AppSettings>> {
 
     // 1. Emit cached settings immediately (if available)
     if (accountId != null) {
-      final cached = _cache.loadSettings(accountId);
-      if (cached != null) {
-        state = AsyncValue.data(cached);
-        debugPrint('[Settings] Loaded from cache for account $accountId');
+      try {
+        final cached = await _cache.loadSettings(accountId);
+        if (cached != null) {
+          state = AsyncValue.data(cached);
+          debugPrint('[Settings] Loaded from cache for account $accountId');
+        }
+      } catch (e) {
+        debugPrint('[Settings] Failed to load from cache: $e');
       }
     }
 

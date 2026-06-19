@@ -5,6 +5,10 @@ import '../repositories/payment_repository.dart';
 import '../core/services/cache_service.dart';
 import 'supabase_provider.dart';
 import 'sync_provider.dart';
+import 'dart:async';
+import 'package:uuid/uuid.dart';
+import '../models/sync_task.dart';
+import '../core/errors/app_exception.dart';
 
 // ── Repository provider ───────────────────────────────────────────────────────
 
@@ -42,7 +46,7 @@ class PaymentNotifier extends StateNotifier<AsyncValue<List<Payment>>> {
   Future<void> _init() async {
     if (_accountId == null) return;
     // 1. Emit cached data immediately
-    final cached = _cache.loadPayments(_accountId);
+    final cached = await _cache.loadPayments(_accountId);
     if (cached != null) {
       state = AsyncValue.data(cached);
       debugPrint('[Payments] Loaded ${cached.length} payments from cache');
@@ -72,12 +76,47 @@ class PaymentNotifier extends StateNotifier<AsyncValue<List<Payment>>> {
     }
   }
 
+  bool _isOfflineException(dynamic e) {
+    return e is NetworkException;
+  }
+
   Future<void> createPayment(
     Map<String, dynamic> data,
     List<Map<String, dynamic>> feeAllocations,
   ) async {
-    await _repository.createPayment(data, feeAllocations);
-    await loadPayments();
+    try {
+      await _repository.createPayment(data, feeAllocations);
+      await loadPayments();
+    } catch (e) {
+      if (_isOfflineException(e)) {
+        final tempId = const Uuid().v4();
+        data['id'] = tempId;
+        final task = SyncTask(
+          id: tempId,
+          type: 'create_payment',
+          payload: {'paymentData': data, 'feeAllocations': feeAllocations, 'tempId': tempId},
+          createdAt: DateTime.now(),
+        );
+        await _ref.read(syncQueueServiceProvider).enqueueTask(task);
+        
+        // Optimistic update
+        final current = state.valueOrNull ?? [];
+        final newPayment = Payment.fromJson({
+          ...data,
+          'status': 'completed',
+          'created_at': DateTime.now().toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
+          'is_offline': true,
+        });
+        
+        state = AsyncValue.data([newPayment, ...current]);
+        if (_accountId != null) {
+          await _cache.savePayments(_accountId, state.value!);
+        }
+      } else {
+        rethrow;
+      }
+    }
   }
 
   Future<void> updatePayment(String id, Map<String, dynamic> data) async {

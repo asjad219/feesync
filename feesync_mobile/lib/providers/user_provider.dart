@@ -25,7 +25,7 @@ final currentUserProfileProvider = FutureProvider<UserProfile?>((ref) async {
   final cache = ref.watch(cacheServiceProvider);
   final repository = ref.watch(userRepositoryProvider);
   
-  final cachedProfile = cache.loadUserProfile(user.id);
+  final cachedProfile = await cache.loadUserProfile(user.id);
   
   try {
     final profile = await repository.getCurrentUserProfile().timeout(
@@ -51,7 +51,7 @@ final accountProfileProvider = FutureProvider<AccountProfile?>((ref) async {
   final cache = ref.watch(cacheServiceProvider);
   final repository = ref.watch(accountRepositoryProvider);
   
-  final cachedAccount = cache.loadAccountProfile(userProfile.accountId);
+  final cachedAccount = await cache.loadAccountProfile(userProfile.accountId);
   
   try {
     final account = await repository.getAccountProfile(userProfile.accountId).timeout(

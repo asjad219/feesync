@@ -3,15 +3,21 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/student.dart';
+import '../core/errors/app_exception.dart';
 
 class StudentRepository {
   void _handleException(dynamic e) {
     if (e is SocketException || e.toString().contains('SocketException') || e.toString().contains('Failed host lookup')) {
-      throw SocketException('No internet connection. Please verify your connection.');
+      throw NetworkException(e.toString());
     }
     if (e is TimeoutException || e.toString().contains('TimeoutException')) {
-      throw TimeoutException('Request timed out. Please try again.');
+      throw NetworkException('Request timed out');
     }
+    if (e is PostgrestException) {
+      throw DatabaseException(e.message, e.details?.toString());
+    }
+    if (e is AppException) throw e;
+    throw UnknownException(e.toString());
   }
   final SupabaseClient _client;
   static const _timeout = Duration(seconds: 10);

@@ -44,7 +44,7 @@ class StudentBalancesNotifier
   Future<void> _init() async {
     if (_accountId == null) return;
     // 1. Emit cached data immediately
-    final cached = _cache.loadStudentBalances(_accountId);
+    final cached = await _cache.loadStudentBalances(_accountId);
     if (cached != null) {
       state = AsyncValue.data(cached);
       debugPrint('[Students] Loaded ${cached.length} balances from cache');

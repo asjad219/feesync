@@ -41,7 +41,7 @@ class BatchNotifier extends StateNotifier<AsyncValue<List<Batch>>> {
   Future<void> _init() async {
     if (_accountId == null) return;
     // 1. Emit cached data immediately
-    final cached = _cache.loadBatches(_accountId);
+    final cached = await _cache.loadBatches(_accountId);
     if (cached != null) {
       state = AsyncValue.data(cached);
       debugPrint('[Batches] Loaded ${cached.length} batches from cache');
