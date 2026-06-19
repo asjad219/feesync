@@ -66,9 +66,75 @@ class StaffListScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => Center(child: Text('Error: $err', style: TextStyle(color: AppColors.error))),
         data: (staffList) {
+          if (staffList.isEmpty) {
+            return RefreshIndicator(
+              onRefresh: () async => ref.refresh(staffListProvider),
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(32),
+                children: [
+                  const SizedBox(height: 64),
+                  Icon(Icons.group_off_rounded, size: 80, color: AppColors.textTertiary.withValues(alpha: 0.3)),
+                  const SizedBox(height: 24),
+                  Text(
+                    'No Staff Added',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.manrope(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Add your team members and assign them roles to help manage the school efficiently.',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: AppColors.textTertiary,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 48),
+                  Center(
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        final FeatureGate gate = ref.read(featureGateProvider).valueOrNull 
+                            ?? await ref.read(featureGateProvider.future);
+                        if (!gate.canAddStaff) {
+                          if (context.mounted) {
+                            await showPaywallDialog(
+                              context,
+                              ref,
+                              trigger: PaywallTrigger.staffLimit,
+                            );
+                          }
+                          return;
+                        }
+                        if (context.mounted) {
+                          context.push('/settings/staff/invite');
+                        }
+                      },
+                      icon: const Icon(Icons.person_add_rounded),
+                      label: Text('Invite Staff', style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        elevation: 0,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
           return RefreshIndicator(
             onRefresh: () async => ref.refresh(staffListProvider),
             child: ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(20),
               itemCount: staffList.length,
               itemBuilder: (context, index) {

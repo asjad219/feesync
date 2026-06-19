@@ -7,12 +7,14 @@ import '../../models/dashboard_stats.dart';
 
 class MonthlyAnalyticsChart extends StatefulWidget {
   final List<MonthlyStat> data;
+  final List<MonthlyStat>? weeklyData;
   final String title;
   final NumberFormat? currencyFormatter;
 
   const MonthlyAnalyticsChart({
     super.key,
     required this.data,
+    this.weeklyData,
     this.title = 'Monthly Revenue Analytics',
     this.currencyFormatter,
   });
@@ -27,12 +29,16 @@ class _MonthlyAnalyticsChartState extends State<MonthlyAnalyticsChart> {
   @override
   Widget build(BuildContext context) {
     final bool isDark = AppColors.isDarkMode;
-    if (widget.data.isEmpty) {
+    final activeData = selectedPeriod == 'weekly' && widget.weeklyData != null
+        ? widget.weeklyData!
+        : widget.data;
+
+    if (activeData.isEmpty) {
       return _emptyState(isDark);
     }
 
-    final maxValue = widget.data.map((e) => e.amount).reduce((a, b) => a > b ? a : b);
-    final maxIndex = widget.data.indexWhere((e) => e.amount == maxValue);
+    final maxValue = activeData.map((e) => e.amount).reduce((a, b) => a > b ? a : b);
+    final maxIndex = activeData.indexWhere((e) => e.amount == maxValue);
     final formatter = widget.currencyFormatter ?? NumberFormat.compact();
 
     // Redefined dynamic colors for chart
@@ -138,9 +144,9 @@ class _MonthlyAnalyticsChartState extends State<MonthlyAnalyticsChart> {
                     tooltipPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     tooltipMargin: 8,
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                      final amount = widget.data[groupIndex].amount;
+                      final amount = activeData[groupIndex].amount;
                       return BarTooltipItem(
-                        '${widget.data[groupIndex].month.toUpperCase()}\n',
+                        '${activeData[groupIndex].month.toUpperCase()}\n',
                         GoogleFonts.inter(
                           color: textSecondaryColor,
                           fontSize: 10,
@@ -177,11 +183,11 @@ class _MonthlyAnalyticsChartState extends State<MonthlyAnalyticsChart> {
                       showTitles: true,
                       getTitlesWidget: (value, meta) {
                         final index = value.toInt();
-                        if (index < 0 || index >= widget.data.length) return const SizedBox();
+                        if (index < 0 || index >= activeData.length) return const SizedBox();
                         return Padding(
                           padding: const EdgeInsets.only(top: 10),
                           child: Text(
-                            widget.data[index].month.toUpperCase(),
+                            activeData[index].month.toUpperCase(),
                             style: GoogleFonts.inter(
                               color: textTertiaryColor,
                               fontSize: 9,
@@ -199,7 +205,7 @@ class _MonthlyAnalyticsChartState extends State<MonthlyAnalyticsChart> {
                   topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 ),
                 borderData: FlBorderData(show: false),
-                barGroups: List.generate(widget.data.length, (index) {
+                barGroups: List.generate(activeData.length, (index) {
                   final isPeak = index == maxIndex;
                   // Beautiful gradients for the bar chart
                   final peakGradient = LinearGradient(
@@ -220,7 +226,7 @@ class _MonthlyAnalyticsChartState extends State<MonthlyAnalyticsChart> {
                     x: index,
                     barRods: [
                       BarChartRodData(
-                        toY: widget.data[index].amount,
+                        toY: activeData[index].amount,
                         gradient: isPeak ? peakGradient : defaultGradient,
                         width: 32,
                         borderRadius: const BorderRadius.only(

@@ -348,6 +348,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
         date: _paymentDate,
         invoiceNo: invoiceNo,
         institutionName: institutionName,
+        isAdvance: _isAdvancePayment,
       );
 
       final pdfFile = await ReceiptService.generatePdfReceipt(
@@ -357,6 +358,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
         date: _paymentDate,
         invoiceNo: invoiceNo,
         institutionName: institutionName,
+        isAdvance: _isAdvancePayment,
       );
 
       String cleanPhone = (student.parentPhone ?? '').replaceAll(RegExp(r'[^0-9]'), '');

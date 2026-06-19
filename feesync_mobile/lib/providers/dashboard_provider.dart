@@ -116,6 +116,29 @@ class MonthlyStatsNotifier extends StateNotifier<AsyncValue<List<MonthlyStat>>> 
   }
 }
 
+// ── Weekly Stats Notifier ─────────────────────────────────────────────────────
+
+class WeeklyStatsNotifier extends StateNotifier<AsyncValue<List<MonthlyStat>>> {
+  final DashboardAnalyticsRepository _repo;
+
+  WeeklyStatsNotifier(this._repo)
+      : super(const AsyncValue.loading()) {
+    fetch();
+  }
+
+  Future<void> fetch() async {
+    try {
+      final data = await _repo.getWeeklyCollectionData();
+      state = AsyncValue.data(data);
+    } catch (e, st) {
+      debugPrint('[Dashboard][OFFLINE] getWeeklyCollectionData failed: $e');
+      if (state is! AsyncData) {
+        state = AsyncValue.error(e, st);
+      }
+    }
+  }
+}
+
 // ── Recent Transactions Notifier ─────────────────────────────────────────────
 
 class RecentTransactionsNotifier
@@ -200,6 +223,8 @@ final _accountIdProvider = Provider<String?>((ref) {
   return authState.value?.id;
 });
 
+
+
 final dashboardStatsProvider =
     StateNotifierProvider<DashboardStatsNotifier, AsyncValue<DashboardStats>>(
         (ref) {
@@ -215,6 +240,11 @@ final monthlyCollectionDataProvider = StateNotifierProvider<MonthlyStatsNotifier
   final cache = ref.watch(cacheServiceProvider);
   final accountId = ref.watch(_accountIdProvider);
   return MonthlyStatsNotifier(repo, cache, accountId);
+});
+
+final weeklyCollectionDataProvider = StateNotifierProvider<WeeklyStatsNotifier, AsyncValue<List<MonthlyStat>>>((ref) {
+  final repo = ref.watch(dashboardAnalyticsRepositoryProvider);
+  return WeeklyStatsNotifier(repo);
 });
 
 final recentTransactionsProvider = StateNotifierProvider<
@@ -237,6 +267,7 @@ final classCollectionDataProvider = StateNotifierProvider<
 void invalidateDashboardAnalytics(WidgetRef ref) {
   ref.read(dashboardStatsProvider.notifier).fetch();
   ref.read(monthlyCollectionDataProvider.notifier).fetch();
+  ref.read(weeklyCollectionDataProvider.notifier).fetch();
   ref.read(recentTransactionsProvider.notifier).fetch();
   ref.read(classCollectionDataProvider.notifier).fetch();
 }
@@ -304,7 +335,7 @@ class DashboardAnalyticsRepository {
       final totalStudents = students.length;
       final totalPending = balances.fold<double>(
         0,
-        (sum, balance) => sum + (balance.dueAmount as double),
+        (sum, balance) => sum + (balance.dueAmount as double) - (balance.advanceBalance as double),
       );
 
       final totalCollectedInPeriod = _extractTotal(periodCollection);
@@ -374,6 +405,35 @@ class DashboardAnalyticsRepository {
     }
   }
 
+  Future<List<MonthlyStat>> getWeeklyCollectionData() async {
+    try {
+      final now = DateTime.now();
+      final List<MonthlyStat> weeklyData = [];
+      
+      for (int i = 5; i >= 0; i--) {
+        final date = now.subtract(Duration(days: i * 7));
+        // Start of week (Monday)
+        final weekStart = date.subtract(Duration(days: date.weekday - 1));
+        // End of week (Sunday)
+        final weekEnd = weekStart.add(const Duration(days: 6, hours: 23, minutes: 59, seconds: 59));
+        
+        final collection = await _paymentRepo.getTotalCollection(
+          startDate: weekStart,
+          endDate: weekEnd,
+        ).timeout(_timeout);
+
+        final amount = (collection['total'] as num?)?.toDouble() ?? 0;
+        final label = '${DateFormat('d').format(weekStart)} ${DateFormat('MMM').format(weekStart)}';
+        weeklyData.add(MonthlyStat(month: label, amount: amount));
+      }
+
+      return weeklyData;
+    } catch (e) {
+      debugPrint('[DashboardAnalytics][OFFLINE] getWeeklyCollectionData: $e');
+      rethrow;
+    }
+  }
+
   Future<List<CategoryStat>> getCategoryCollectionData() async {
     try {
       final accountId = await _getAccountId();
@@ -431,7 +491,7 @@ class DashboardAnalyticsRepository {
         if (classMap.containsKey(balance.studentClass)) {
           classMap[balance.studentClass]!['pending'] =
               (classMap[balance.studentClass]!['pending'] as double) +
-                  balance.dueAmount;
+                  balance.dueAmount - balance.advanceBalance;
         }
       }
 

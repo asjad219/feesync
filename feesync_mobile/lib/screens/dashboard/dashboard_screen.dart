@@ -35,6 +35,7 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(dashboardStatsProvider);
     final monthlyDataAsync = ref.watch(monthlyCollectionDataProvider);
+    final weeklyDataAsync = ref.watch(weeklyCollectionDataProvider);
     final recentTransactionsAsync = ref.watch(recentTransactionsProvider);
     final settingsAsync = ref.watch(settingsProvider);
     final currencyCode = settingsAsync.value?.currency;
@@ -80,9 +81,19 @@ class DashboardScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 28),
                     monthlyDataAsync.when(
-                      data: (monthlyData) => MonthlyAnalyticsChart(
-                        data: monthlyData,
-                        currencyFormatter: currencyFormatter,
+                      data: (monthlyData) => weeklyDataAsync.when(
+                        data: (weeklyData) => MonthlyAnalyticsChart(
+                          data: monthlyData,
+                          weeklyData: weeklyData,
+                          currencyFormatter: currencyFormatter,
+                        ),
+                        loading: () => const ShimmerCard(height: 320),
+                        error: (e, st) => RetryErrorPlaceholder(
+                          message: 'Could not load weekly analytics — tap to retry',
+                          isDark: isDark,
+                          onRetry: () => ref.read(weeklyCollectionDataProvider.notifier).fetch(),
+                        ),
+                        skipLoadingOnRefresh: true,
                       ),
                       loading: () => const ShimmerCard(height: 320),
                       error: (e, st) => RetryErrorPlaceholder(

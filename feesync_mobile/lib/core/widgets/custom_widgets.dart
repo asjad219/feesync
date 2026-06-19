@@ -55,6 +55,7 @@ class StudentCard extends StatelessWidget {
   final String className;
   final String? section;
   final double dueAmount;
+  final double advanceBalance;
   final String status;
   final String? admissionNo;
   final VoidCallback? onTap;
@@ -68,6 +69,7 @@ class StudentCard extends StatelessWidget {
     required this.className,
     this.section,
     required this.dueAmount,
+    this.advanceBalance = 0.0,
     required this.status,
     this.admissionNo,
     this.onTap,
@@ -138,6 +140,16 @@ class StudentCard extends StatelessWidget {
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: AppColors.error,
+                      ),
+                    ),
+                  ] else if (advanceBalance > 0) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Advance Balance: ₹${advanceBalance.toStringAsFixed(0)}',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
                       ),
                     ),
                   ],

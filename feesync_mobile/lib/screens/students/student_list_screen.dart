@@ -38,7 +38,9 @@ class _StudentListScreenState extends ConsumerState<StudentListScreen> {
         if (student.dueAmount >= 5000) return 'HIGH RISK';
         if (student.dueAmount >= 1000) return 'AT RISK';
       }
-      return student.status;
+      return 'DUE';
+    } else if (student.advanceBalance > 0) {
+      return 'ADVANCE';
     }
     return 'PAID';
   }
@@ -249,6 +251,7 @@ class _StudentListScreenState extends ConsumerState<StudentListScreen> {
                                       className: student.studentClass,
                                       admissionNo: student.admissionNumber,
                                       dueAmount: student.dueAmount,
+                                      advanceBalance: student.advanceBalance,
                                       status: _getPaymentStatus(student, aiPredictionsEnabled: aiPredictionsEnabled),
                                       onTap: () => context.push('/students/${student.id}'),
                                     );

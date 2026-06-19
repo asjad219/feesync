@@ -164,12 +164,18 @@ class _StudentSearchBottomSheetState extends State<StudentSearchBottomSheet> {
                         itemCount: filtered.length,
                         itemBuilder: (context, index) {
                           final student = filtered[index];
-                          final balanceText = student.balance > 0
-                              ? 'Balance: ₹${student.balance.toStringAsFixed(0)}'
-                              : 'No dues';
-                          final balanceColor = student.balance > 0
-                              ? AppColors.error
-                              : AppColors.success;
+                          String balanceText;
+                          Color balanceColor;
+                          if (student.dueAmount > 0) {
+                            balanceText = 'Due: ₹${student.dueAmount.toStringAsFixed(0)}';
+                            balanceColor = AppColors.error;
+                          } else if (student.advanceBalance > 0) {
+                            balanceText = 'Advance: ₹${student.advanceBalance.toStringAsFixed(0)}';
+                            balanceColor = AppColors.success;
+                          } else {
+                            balanceText = 'No dues';
+                            balanceColor = AppColors.success;
+                          }
 
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 8),

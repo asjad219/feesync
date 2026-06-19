@@ -17,6 +17,7 @@ class ReceiptService {
     required DateTime date,
     required String invoiceNo,
     String? institutionName,
+    bool isAdvance = false,
   }) async {
     final pdf = pw.Document();
     final dateStr = DateFormat('dd MMM yyyy').format(date);
@@ -123,7 +124,7 @@ class ReceiptService {
                         child: pw.Row(
                           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                           children: [
-                            pw.Text('Fee Payment', style: const pw.TextStyle(fontSize: 14)),
+                            pw.Text(isAdvance ? 'Advance Fee Payment' : 'Fee Payment', style: const pw.TextStyle(fontSize: 14)),
                             pw.Text('INR ${amount.toStringAsFixed(2)}', style: const pw.TextStyle(fontSize: 14)),
                           ],
                         ),
@@ -197,11 +198,12 @@ class ReceiptService {
     required DateTime date,
     required String invoiceNo,
     String? institutionName,
+    bool isAdvance = false,
   }) {
     final dateStr = DateFormat('dd MMM yyyy').format(date);
     final header = institutionName != null ? '🏦 *${institutionName.toUpperCase()}*\n' : '';
     return """
-$header📝 *PAYMENT RECEIPT*
+$header📝 *${isAdvance ? 'ADVANCE ' : ''}PAYMENT RECEIPT*
 --------------------------
 *Invoice No:* $invoiceNo
 *Date:* $dateStr
