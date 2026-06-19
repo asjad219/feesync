@@ -110,6 +110,7 @@ void main() {
             _buildDue(id: 'due-3', amountAssigned: 10000, status: 'cancelled'),
           ],
         ),
+        FakeSupabaseClient(),
       );
 
       final stats = await repository.getDashboardStatsForCycle(TimeCycle.monthly);
@@ -140,6 +141,7 @@ void main() {
             _buildDue(amountAssigned: 12000, status: 'paid'),
           ],
         ),
+        FakeSupabaseClient(),
       );
 
       final stats = await repository.getDashboardStatsForCycle(TimeCycle.monthly);
@@ -164,6 +166,7 @@ void main() {
           balances: const [],
         ),
         FakeFeeRepository(dues: const []),
+        FakeSupabaseClient(),
       );
 
       final stats = await repository.getDashboardStatsForCycle(TimeCycle.monthly);
@@ -191,6 +194,7 @@ void main() {
           ],
         ),
         FakeFeeRepository(dues: const []),
+        FakeSupabaseClient(),
       );
 
       final stats = await repository.getDashboardStatsForCycle(TimeCycle.monthly);

@@ -328,10 +328,14 @@ final routerProvider = Provider<GoRouter>((ref) {
   );
 
   // Listen for password recovery events to navigate to update-password
-  Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+  final subscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
     if (data.event == AuthChangeEvent.passwordRecovery) {
       router.go('/update-password');
     }
+  });
+
+  ref.onDispose(() {
+    subscription.cancel();
   });
 
   return router;

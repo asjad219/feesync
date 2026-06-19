@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -101,7 +102,24 @@ class StudentDetailsScreen extends ConsumerWidget {
               child: ShimmerList(itemCount: 4, itemHeight: 100),
             ),
           ),
-          error: (e, _) => Center(child: Text('Student not found')),
+          error: (e, st) {
+            final isOffline = e is SocketException || e.toString().contains('SocketException') || e.toString().contains('TimeoutException') || e.toString().contains('Failed host lookup');
+            if (isOffline) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: RetryErrorPlaceholder(
+                    message: 'Network connection failed. Please check your internet connection.',
+                    isDark: AppColors.isDarkMode,
+                    onRetry: () {
+                      ref.invalidate(studentByIdProvider(studentId));
+                    },
+                  ),
+                ),
+              );
+            }
+            return const Center(child: Text('Student not found'));
+          },
         ),
       ),
     );

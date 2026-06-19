@@ -168,6 +168,42 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
   }
 
   void _nextStep() {
+    if (_currentStep == 0) {
+      final name = _nameController.text.trim();
+      if (name.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Batch Name cannot be empty.'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+        return;
+      }
+    } else if (_currentStep == 2) {
+      final fee = double.tryParse(_feeController.text.trim()) ?? 0;
+      if (fee <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Fee Amount must be greater than 0.'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+        return;
+      }
+
+      if (!_useGlobalBilling) {
+        if (_customDueDay < 1 || _customDueDay > 31) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Due day must be between 1 and 31.'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+          return;
+        }
+      }
+    }
+
     if (_currentStep < 5) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
@@ -652,7 +688,7 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
                   const SizedBox(height: 8),
                   DropdownButtonFormField<int>(
                     initialValue: _customDueDay,
-                    items: List.generate(28, (i) => i + 1).map((d) => DropdownMenuItem(
+                    items: List.generate(31, (i) => i + 1).map((d) => DropdownMenuItem(
                       value: d,
                       child: Text('$d of the month', style: GoogleFonts.inter(color: textPrimaryColor, fontSize: 14)),
                     )).toList(),

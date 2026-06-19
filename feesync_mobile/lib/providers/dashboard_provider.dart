@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/dashboard_stats.dart';
 import '../repositories/payment_repository.dart';
 import '../repositories/student_repository.dart';
@@ -18,6 +19,7 @@ final dashboardAnalyticsRepositoryProvider =
     PaymentRepository(client),
     StudentRepository(client),
     FeeRepository(client),
+    client,
   );
 });
 
@@ -242,6 +244,7 @@ class DashboardAnalyticsRepository {
   final PaymentRepository _paymentRepo;
   final StudentRepository _studentRepo;
   final FeeRepository _feeRepo;
+  final SupabaseClient _client;
   static const _excludedDueStatuses = {'cancelled', 'deleted'};
   static const _timeout = Duration(seconds: 10);
 
@@ -249,7 +252,20 @@ class DashboardAnalyticsRepository {
     this._paymentRepo,
     this._studentRepo,
     this._feeRepo,
+    this._client,
   );
+
+  Future<String?> _getAccountId() async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) return null;
+    final userResponse = await _client
+        .from('users')
+        .select('account_id')
+        .eq('id', userId)
+        .maybeSingle()
+        .timeout(_timeout);
+    return userResponse?['account_id'] as String?;
+  }
 
   Future<DashboardStats> getDashboardStats() =>
       getDashboardStatsForCycle(TimeCycle.monthly);
@@ -357,31 +373,25 @@ class DashboardAnalyticsRepository {
 
   Future<List<CategoryStat>> getCategoryCollectionData() async {
     try {
-      final categories = await _feeRepo.getFeeCategories().timeout(_timeout);
-      final payments = await _paymentRepo.getPayments().timeout(_timeout);
-      final completedPayments =
-          payments.where((p) => p.status.name == 'completed').toList();
+      final accountId = await _getAccountId();
+      if (accountId == null) return [];
 
-      double totalAmount = 0;
-      final categoryTotals = <String, double>{};
+      final response = await _client.rpc(
+        'get_category_collection_distribution',
+        params: {'p_account_id': accountId},
+      ).timeout(_timeout);
 
-      for (var payment in completedPayments) {
-        totalAmount += payment.amount;
+      if (response is List) {
+        return response.map((json) {
+          final map = json as Map<String, dynamic>;
+          return CategoryStat(
+            name: map['category_name'] as String? ?? 'Unknown',
+            amount: (map['amount'] as num?)?.toDouble() ?? 0.0,
+            percentage: (map['percentage'] as num?)?.toDouble() ?? 0.0,
+          );
+        }).toList();
       }
-
-      return categories
-          .map((cat) {
-            final amount = categoryTotals[cat.id] ?? 0;
-            final percentage =
-                totalAmount > 0 ? (amount / totalAmount) * 100 : 0.0;
-            return CategoryStat(
-              name: cat.name,
-              amount: amount,
-              percentage: percentage.toDouble(),
-            );
-          })
-          .where((stat) => stat.amount > 0)
-          .toList();
+      return [];
     } catch (e) {
       debugPrint('[DashboardAnalytics][OFFLINE] getCategoryCollectionData: $e');
       rethrow;

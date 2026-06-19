@@ -1,8 +1,18 @@
+import 'dart:async';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/payment.dart';
 
 class PaymentRepository {
+  void _handleException(dynamic e) {
+    if (e is SocketException || e.toString().contains('SocketException') || e.toString().contains('Failed host lookup')) {
+      throw SocketException('No internet connection. Please verify your connection.');
+    }
+    if (e is TimeoutException || e.toString().contains('TimeoutException')) {
+      throw TimeoutException('Request timed out. Please try again.');
+    }
+  }
   final SupabaseClient _client;
   static const _timeout = Duration(seconds: 10);
 
@@ -33,6 +43,7 @@ class PaymentRepository {
       return (response as List).map((json) => Payment.fromJson(json)).toList();
     } catch (e) {
       debugPrint('[PaymentRepo][OFFLINE] getPayments failed: $e');
+      _handleException(e);
       rethrow;
     }
   }
@@ -48,6 +59,7 @@ class PaymentRepository {
       return Payment.fromJson(response);
     } catch (e) {
       debugPrint('[PaymentRepo][OFFLINE] getPaymentById($id) failed: $e');
+      _handleException(e);
       rethrow;
     }
   }
@@ -64,6 +76,7 @@ class PaymentRepository {
       return (response as List).map((json) => Payment.fromJson(json)).toList();
     } catch (e) {
       debugPrint('[PaymentRepo][OFFLINE] getRecentPayments failed: $e');
+      _handleException(e);
       rethrow;
     }
   }
@@ -73,29 +86,39 @@ class PaymentRepository {
     DateTime? endDate,
   }) async {
     try {
-      var query = _client
-          .from('payments')
-          .select('amount')
-          .eq('status', 'completed');
-
-      if (startDate != null) {
-        query = query.gte('payment_date', startDate.toIso8601String());
+      final userId = _client.auth.currentUser?.id;
+      String? accountId;
+      if (userId != null) {
+        final userResponse = await _client
+            .from('users')
+            .select('account_id')
+            .eq('id', userId)
+            .maybeSingle()
+            .timeout(_timeout);
+        if (userResponse != null) {
+          accountId = userResponse['account_id'];
+        }
       }
-      if (endDate != null) {
-        query = query.lte('payment_date', endDate.toIso8601String());
+
+      if (accountId != null) {
+        final response = await _client.rpc('get_total_collection_amount', params: {
+          'p_account_id': accountId,
+          'p_start_date': startDate?.toIso8601String(),
+          'p_end_date': endDate?.toIso8601String(),
+        }).timeout(_timeout);
+
+        if (response is List && response.isNotEmpty) {
+          final map = response.first as Map;
+          return {
+            'total': (map['total'] as num?)?.toDouble() ?? 0.0,
+            'count': (map['count'] as num?)?.toInt() ?? 0,
+          };
+        }
       }
-
-      final response = await query.timeout(_timeout);
-      final data = response as List;
-
-      final total = data.fold<double>(
-        0,
-        (sum, payment) => sum + double.parse(payment['amount'].toString()),
-      );
-
-      return {'total': total, 'count': data.length};
+      return {'total': 0.0, 'count': 0};
     } catch (e) {
       debugPrint('[PaymentRepo][OFFLINE] getTotalCollection failed: $e');
+      _handleException(e);
       rethrow;
     }
   }
@@ -138,6 +161,7 @@ class PaymentRepository {
       return payment;
     } catch (e) {
       debugPrint('[PaymentRepo] createPayment failed: $e');
+      _handleException(e);
       rethrow;
     }
   }
@@ -154,6 +178,7 @@ class PaymentRepository {
       return Payment.fromJson(response);
     } catch (e) {
       debugPrint('[PaymentRepo] updatePayment($id) failed: $e');
+      _handleException(e);
       rethrow;
     }
   }
@@ -167,6 +192,7 @@ class PaymentRepository {
           .timeout(_timeout);
     } catch (e) {
       debugPrint('[PaymentRepo] deletePayment($id) failed: $e');
+      _handleException(e);
       rethrow;
     }
   }

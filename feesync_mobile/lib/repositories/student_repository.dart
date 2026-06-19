@@ -1,8 +1,18 @@
+import 'dart:async';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/student.dart';
 
 class StudentRepository {
+  void _handleException(dynamic e) {
+    if (e is SocketException || e.toString().contains('SocketException') || e.toString().contains('Failed host lookup')) {
+      throw SocketException('No internet connection. Please verify your connection.');
+    }
+    if (e is TimeoutException || e.toString().contains('TimeoutException')) {
+      throw TimeoutException('Request timed out. Please try again.');
+    }
+  }
   final SupabaseClient _client;
   static const _timeout = Duration(seconds: 10);
 
@@ -33,6 +43,7 @@ class StudentRepository {
       return (response as List).map((json) => Student.fromJson(json)).toList();
     } catch (e) {
       debugPrint('[StudentRepo][OFFLINE] getStudents failed: $e');
+      _handleException(e);
       rethrow;
     }
   }
@@ -48,6 +59,7 @@ class StudentRepository {
       return Student.fromJson(response);
     } catch (e) {
       debugPrint('[StudentRepo][OFFLINE] getStudentById($id) failed: $e');
+      _handleException(e);
       rethrow;
     }
   }
@@ -75,6 +87,7 @@ class StudentRepository {
           .toList();
     } catch (e) {
       debugPrint('[StudentRepo][OFFLINE] getStudentBalances failed: $e');
+      _handleException(e);
       rethrow;
     }
   }
@@ -106,6 +119,10 @@ class StudentRepository {
         throw Exception(
             'This student is already enrolled in the selected batch.');
       }
+      _handleException(e);
+      rethrow;
+    } catch (e) {
+      _handleException(e);
       rethrow;
     }
   }
@@ -178,9 +195,11 @@ class StudentRepository {
         throw Exception(
             'This student is already enrolled in the selected batch.');
       }
+      _handleException(e);
       rethrow;
     } catch (e) {
       debugPrint('[StudentRepo] Exception in updateStudent: $e');
+      _handleException(e);
       rethrow;
     }
   }
@@ -194,6 +213,7 @@ class StudentRepository {
           .timeout(_timeout);
     } catch (e) {
       debugPrint('[StudentRepo] deleteStudent($id) failed: $e');
+      _handleException(e);
       rethrow;
     }
   }

@@ -298,6 +298,61 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
       final batches = ref.read(batchNotifierProvider).value ?? [];
       final selectedBatch = batches.firstWhere((b) => b.id == _selectedBatchId);
 
+      // Validate email format
+      final email = _parentEmailController.text.trim();
+      if (email.isNotEmpty) {
+        final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+        if (!emailRegex.hasMatch(email)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please enter a valid email address.'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+          setState(() => _isLoading = false);
+          return;
+        }
+      }
+
+      // Validate phone format
+      final phone = _parentPhoneController.text.trim();
+      if (phone.isNotEmpty) {
+        final digitsOnly = phone.replaceAll(RegExp(r'[^0-9]'), '');
+        if (digitsOnly.length < 10) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please enter a valid phone number (at least 10 digits).'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+          setState(() => _isLoading = false);
+          return;
+        }
+      }
+
+      // Validate discount
+      final discount = double.tryParse(_discountController.text) ?? 0;
+      if (discount < 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Discount amount cannot be negative.'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+        setState(() => _isLoading = false);
+        return;
+      }
+      if (discount > selectedBatch.monthlyFee) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Discount cannot exceed the batch monthly fee (₹${selectedBatch.monthlyFee.toStringAsFixed(0)}).'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+        setState(() => _isLoading = false);
+        return;
+      }
+
       final parentPhone = _parentPhoneController.text.trim();
       String? formattedPhone;
       if (parentPhone.isNotEmpty) {

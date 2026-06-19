@@ -145,12 +145,7 @@ class BillingService {
     await _loadProducts();
     debugPrint('[Billing] Initialized. Available products: ${_productDetails.keys}');
 
-    // Restore purchases automatically on app startup.
-    try {
-      await restorePurchases();
-    } catch (e) {
-      debugPrint('[Billing] Restore on startup failed: $e');
-    }
+    // Do not restore purchases automatically on app startup to avoid policy violations.
   }
 
   Future<void> _loadProducts() async {
@@ -289,9 +284,9 @@ class BillingService {
       debugPrint('[Billing] Verification failed: $e');
       _resultController.add(
           BillingResult.failed('Verification failed: $e'));
-      if (purchase.pendingCompletePurchase) {
-        await _iap.completePurchase(purchase);
-      }
+      // DO NOT call completePurchase if verification fails.
+      // This allows the store to re-deliver the purchase details next time the app launches,
+      // preventing user from paying but not receiving their subscription.
     }
   }
 

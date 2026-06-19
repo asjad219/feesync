@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -114,6 +115,22 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
       }
     }
 
+    if (_isAdvancePayment) {
+      final batches = ref.read(batchNotifierProvider).value ?? [];
+      final selectedBatch = batches.firstWhere((b) => b.id == _selectedBatchId, orElse: () => null);
+      if (selectedBatch != null) {
+        if (amount > selectedBatch.monthlyFee) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Advance payment cannot exceed the batch monthly fee (₹${selectedBatch.monthlyFee.toStringAsFixed(0)}).'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+          return;
+        }
+      }
+    }
+
     setState(() => _isLoading = true);
     try {
       final accountId = ref.read(currentUserProfileProvider).value?.accountId;
@@ -146,6 +163,20 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
         dbPaymentMethod = 'bank_transfer';
       }
 
+      // Generate client-side UUID for idempotency_key
+      final random = Random.secure();
+      final values = List<int>.generate(16, (i) => random.nextInt(256));
+      values[6] = (values[6] & 0x0f) | 0x40;
+      values[8] = (values[8] & 0x3f) | 0x80;
+      final buffer = StringBuffer();
+      for (int i = 0; i < 16; i++) {
+        if (i == 4 || i == 6 || i == 8 || i == 10) {
+          buffer.write('-');
+        }
+        buffer.write(values[i].toRadixString(16).padLeft(2, '0'));
+      }
+      final idempotencyKey = buffer.toString();
+
       final paymentData = {
         'account_id': accountId,
         'student_id': _selectedStudent!.id,
@@ -156,6 +187,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
             ? (_selectedDueIds.isEmpty ? 'Advance Payment' : null) 
             : _notesController.text.trim(),
         'status': 'completed',
+        'idempotency_key': idempotencyKey,
       };
 
       await ref.read(paymentNotifierProvider.notifier).createPayment(paymentData, allocations);
