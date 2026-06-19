@@ -8,6 +8,7 @@ import '../../providers/providers.dart';
 import '../../models/fee.dart';
 import '../../core/widgets/custom_widgets.dart';
 import '../../core/widgets/offline_widgets.dart';
+import '../../core/widgets/permission_guard.dart';
 
 class FeesScreen extends ConsumerStatefulWidget {
   const FeesScreen({super.key});
@@ -38,35 +39,38 @@ class _FeesScreenState extends ConsumerState<FeesScreen> with SingleTickerProvid
     final settingsAsync = ref.watch(settingsProvider);
     final currencyFormatter = CurrencyFormatter.numberFormat(settingsAsync.value?.currency, decimalDigits: 0);
 
-    return Scaffold(
-      backgroundColor: AppColors.darkBg,
-      appBar: AppBar(
-        title: Text('Fee Management', style: GoogleFonts.manrope(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: AppColors.primary,
-          indicatorWeight: 3,
-          labelColor: AppColors.textPrimary,
-          unselectedLabelColor: AppColors.textTertiary,
-          labelStyle: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13, letterSpacing: 0.5),
-          unselectedLabelStyle: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 13),
-          tabs: const [Tab(text: 'CATEGORIES'), Tab(text: 'STRUCTURES')],
+    return PermissionGuard(
+      permission: 'view_payments',
+      child: Scaffold(
+        backgroundColor: AppColors.darkBg,
+        appBar: AppBar(
+          title: Text('Fee Management', style: GoogleFonts.manrope(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+          bottom: TabBar(
+            controller: _tabController,
+            indicatorColor: AppColors.primary,
+            indicatorWeight: 3,
+            labelColor: AppColors.textPrimary,
+            unselectedLabelColor: AppColors.textTertiary,
+            labelStyle: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13, letterSpacing: 0.5),
+            unselectedLabelStyle: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 13),
+            tabs: const [Tab(text: 'CATEGORIES'), Tab(text: 'STRUCTURES')],
+          ),
         ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildAsyncList(categoriesAsync, (data) => _buildCategoryList(data)),
-          _buildAsyncList(structuresAsync, (data) => _buildStructureList(data, currencyFormatter)),
-        ],
-      ),
-      floatingActionButton: Container(
-        decoration: BoxDecoration(gradient: AppGradients.primary, shape: BoxShape.circle),
-        child: FloatingActionButton(
-          onPressed: () {},
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          child: const Icon(Icons.add_rounded, size: 32, color: Colors.white),
+        body: TabBarView(
+          controller: _tabController,
+          children: [
+            _buildAsyncList(categoriesAsync, (data) => _buildCategoryList(data)),
+            _buildAsyncList(structuresAsync, (data) => _buildStructureList(data, currencyFormatter)),
+          ],
+        ),
+        floatingActionButton: Container(
+          decoration: BoxDecoration(gradient: AppGradients.primary, shape: BoxShape.circle),
+          child: FloatingActionButton(
+            onPressed: () {},
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            child: const Icon(Icons.add_rounded, size: 32, color: Colors.white),
+          ),
         ),
       ),
     );

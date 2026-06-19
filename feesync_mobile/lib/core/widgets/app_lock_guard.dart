@@ -63,7 +63,7 @@ class _AppLockGuardState extends ConsumerState<AppLockGuard>
         // App was locked while in background (or startup), try biometric auth again
         _tryBiometricUnlock();
       }
-    } else if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+    } else if (state == AppLifecycleState.paused) {
       final settings = ref.read(localSettingsProvider);
       if ((settings.biometricEnabled || settings.pinLockEnabled) && settings.lockOnMinimize) {
         if (!_isLocked && !_isAuthenticating) {

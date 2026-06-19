@@ -22,8 +22,8 @@ final paymentMethodFilterProvider = StateProvider<PaymentMethod?>((ref) => null)
 // ── Account id helper ─────────────────────────────────────────────────────────
 
 final _paymentAccountIdProvider = Provider<String?>((ref) {
-  final client = ref.watch(supabaseClientProvider);
-  return client.auth.currentUser?.id;
+  final authState = ref.watch(authStateProvider);
+  return authState.value?.id;
 });
 
 // ── PaymentNotifier ───────────────────────────────────────────────────────────

@@ -191,8 +191,8 @@ class ClassStatsNotifier extends StateNotifier<AsyncValue<List<ClassStat>>> {
 // ── Providers ─────────────────────────────────────────────────────────────────
 
 final _accountIdProvider = Provider<String?>((ref) {
-  final client = ref.watch(supabaseClientProvider);
-  return client.auth.currentUser?.id;
+  final authState = ref.watch(authStateProvider);
+  return authState.value?.id;
 });
 
 final dashboardStatsProvider =

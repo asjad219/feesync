@@ -11,6 +11,7 @@ class StaffRepository {
         .from('users')
         .select()
         .eq('account_id', accountId)
+        .neq('role', 'admin')
         .order('created_at', ascending: false);
     
     return (response as List).map((json) => UserProfile.fromJson(json)).toList();

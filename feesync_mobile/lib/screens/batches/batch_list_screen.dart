@@ -12,6 +12,7 @@ import '../../../providers/batch_provider.dart';
 import '../../../providers/subscription_provider.dart';
 import '../../../models/batch.dart';
 import 'widgets/batch_card.dart';
+import '../../../core/widgets/permission_guard.dart';
 
 class BatchListScreen extends ConsumerWidget {
   const BatchListScreen({super.key});
@@ -47,82 +48,85 @@ class BatchListScreen extends ConsumerWidget {
       if (context.mounted) context.push('/batches/create');
     }
 
-    return Scaffold(
-      backgroundColor: scaffoldBgColor,
-      extendBodyBehindAppBar: true,
-      appBar: const _BatchesTopBar(),
-      body: RefreshIndicator(
-        onRefresh: () => ref.read(batchNotifierProvider.notifier).loadBatches(),
-        color: primaryColor,
-        backgroundColor: isDark ? const Color(0xFF12121F) : const Color(0xFFFFFFFF),
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 128, 20, 32),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildAiInsightChip(isDark, primaryColor, batches),
-                const SizedBox(height: 20),
-                _buildKpiSection(isDark, primaryColor, batches),
-                const SizedBox(height: 24),
-                _buildSearchAndFilters(context, ref, search, isDark, primaryColor, surfaceColor, textPrimaryColor),
-                const SizedBox(height: 20),
-                batchesAsync.when(
-                  data: (batches) {
-                    final filteredBatches = batches.where((b) {
-                      final matchesSearch = search.isEmpty || 
-                          b.name.toLowerCase().contains(search.toLowerCase()) ||
-                          b.subject.toLowerCase().contains(search.toLowerCase());
-                      final matchesStatus = statusFilter == null || b.status == statusFilter;
-                      return matchesSearch && matchesStatus;
-                    }).toList();
-
-                    if (filteredBatches.isEmpty) {
-                      return _buildEmptyState(isDark);
-                    }
-
-                    return ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      padding: EdgeInsets.zero,
-                      itemCount: filteredBatches.length,
-                      itemBuilder: (context, index) {
-                        final batch = filteredBatches[index];
-                        return BatchCard(
-                          batch: batch,
-                          onView: () => context.push('/batches/${batch.id}'),
-                          onMarkAttendance: () => context.push('/batches/${batch.id}?tab=2'),
-                           onAddStudent: () async {
-                            final FeatureGate gate = ref.read(featureGateProvider).valueOrNull 
-                                ?? await ref.read(featureGateProvider.future);
-                            if (!gate.canAddStudent) {
-                              if (context.mounted) {
-                                await showPaywallDialog(
-                                  context,
-                                  ref,
-                                  trigger: PaywallTrigger.studentLimit,
-                                );
+    return PermissionGuard(
+      permission: 'view_students',
+      child: Scaffold(
+        backgroundColor: scaffoldBgColor,
+        extendBodyBehindAppBar: true,
+        appBar: const _BatchesTopBar(),
+        body: RefreshIndicator(
+          onRefresh: () => ref.read(batchNotifierProvider.notifier).loadBatches(),
+          color: primaryColor,
+          backgroundColor: isDark ? const Color(0xFF12121F) : const Color(0xFFFFFFFF),
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 128, 20, 32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildAiInsightChip(isDark, primaryColor, batches),
+                  const SizedBox(height: 20),
+                  _buildKpiSection(isDark, primaryColor, batches),
+                  const SizedBox(height: 24),
+                  _buildSearchAndFilters(context, ref, search, isDark, primaryColor, surfaceColor, textPrimaryColor),
+                  const SizedBox(height: 20),
+                  batchesAsync.when(
+                    data: (batches) {
+                      final filteredBatches = batches.where((b) {
+                        final matchesSearch = search.isEmpty || 
+                            b.name.toLowerCase().contains(search.toLowerCase()) ||
+                            b.subject.toLowerCase().contains(search.toLowerCase());
+                        final matchesStatus = statusFilter == null || b.status == statusFilter;
+                        return matchesSearch && matchesStatus;
+                      }).toList();
+  
+                      if (filteredBatches.isEmpty) {
+                        return _buildEmptyState(isDark);
+                      }
+  
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        padding: EdgeInsets.zero,
+                        itemCount: filteredBatches.length,
+                        itemBuilder: (context, index) {
+                          final batch = filteredBatches[index];
+                          return BatchCard(
+                            batch: batch,
+                            onView: () => context.push('/batches/${batch.id}'),
+                            onMarkAttendance: () => context.push('/batches/${batch.id}?tab=2'),
+                             onAddStudent: () async {
+                              final FeatureGate gate = ref.read(featureGateProvider).valueOrNull 
+                                  ?? await ref.read(featureGateProvider.future);
+                              if (!gate.canAddStudent) {
+                                if (context.mounted) {
+                                  await showPaywallDialog(
+                                    context,
+                                    ref,
+                                    trigger: PaywallTrigger.studentLimit,
+                                  );
+                                }
+                                return;
                               }
-                              return;
-                            }
-                            if (context.mounted) {
-                              context.push('/students/add?batchId=${batch.id}');
-                            }
-                          },
-                        );
-                      },
-                    );
-                  },
-                  loading: () => _buildLoadingState(primaryColor),
-                  error: (err, stack) => _buildErrorState(err.toString()),
-                ),
-              ],
+                              if (context.mounted) {
+                                context.push('/students/add?batchId=${batch.id}');
+                              }
+                            },
+                          );
+                        },
+                      );
+                    },
+                    loading: () => _buildLoadingState(primaryColor),
+                    error: (err, stack) => _buildErrorState(err.toString()),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
+        floatingActionButton: _buildPremiumFab(onAddBatchTap, primaryColor, isDark),
       ),
-      floatingActionButton: _buildPremiumFab(onAddBatchTap, primaryColor, isDark),
     );
   }
 

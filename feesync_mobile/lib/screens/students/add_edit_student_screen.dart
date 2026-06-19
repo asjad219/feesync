@@ -10,6 +10,7 @@ import '../../core/widgets/error_dialog.dart';
 import '../../models/models.dart';
 import '../../providers/providers.dart';
 import '../../providers/subscription_provider.dart';
+import '../../core/widgets/permission_guard.dart';
 
 class AddEditStudentScreen extends ConsumerStatefulWidget {
   final String? studentId;
@@ -419,103 +420,106 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
     final autoRollNumber = selectedBatch?.autoRollNumber ?? false;
     final collectParentDetails = selectedBatch?.collectParentDetails ?? true;
 
-    return Scaffold(
-      backgroundColor: scaffoldBgColor,
-      appBar: AppBar(
+    return PermissionGuard(
+      permission: 'manage_students',
+      child: Scaffold(
         backgroundColor: scaffoldBgColor,
-        elevation: 0,
-        iconTheme: IconThemeData(color: textPrimaryColor),
-        title: Text(
-          isEdit ? 'Edit Student' : 'Add New Student', 
-          style: GoogleFonts.manrope(fontWeight: FontWeight.w800, color: textPrimaryColor)
+        appBar: AppBar(
+          backgroundColor: scaffoldBgColor,
+          elevation: 0,
+          iconTheme: IconThemeData(color: textPrimaryColor),
+          title: Text(
+            isEdit ? 'Edit Student' : 'Add New Student', 
+            style: GoogleFonts.manrope(fontWeight: FontWeight.w800, color: textPrimaryColor)
+          ),
+          actions: [
+            if (_isLoading)
+              Center(child: Padding(padding: const EdgeInsets.all(16), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: primaryColor))))
+            else
+              IconButton(
+                onPressed: _saveStudent, 
+                icon: Icon(Icons.check_rounded, color: textPrimaryColor)
+              ),
+          ],
         ),
-        actions: [
-          if (_isLoading)
-            Center(child: Padding(padding: const EdgeInsets.all(16), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: primaryColor))))
-          else
-            IconButton(
-              onPressed: _saveStudent, 
-              icon: Icon(Icons.check_rounded, color: textPrimaryColor)
-            ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _SectionHeader(title: 'Personal Identity', subtitle: 'Administrative records and identity detail'),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(child: _buildField(label: 'FIRST NAME', controller: _firstNameController, hint: 'First name', icon: Icons.person_outline_rounded)),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildField(label: 'LAST NAME', controller: _lastNameController, hint: 'Last name', icon: Icons.person_outline_rounded)),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(child: _buildField(
-                    label: 'ROLL NO', 
-                    controller: _rollNumberController, 
-                    hint: autoRollNumber ? 'Auto-generated' : 'Roll number', 
-                    icon: Icons.tag_rounded,
-                    enabled: !autoRollNumber,
-                    isRequired: !autoRollNumber,
-                  )),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildBatchDropdown(batchesAsync)),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(child: _buildDatePicker(label: 'JOINING DATE', date: _joiningDate, onTap: _selectJoiningDate)),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildField(label: 'DISCOUNT (₹)', controller: _discountController, hint: '0', icon: Icons.percent_rounded, keyboardType: TextInputType.number, isRequired: false)),
-                ],
-              ),
-              const SizedBox(height: 24),
-              _buildGenderPicker(),
-              const SizedBox(height: 48),
-              if (collectParentDetails) ...[
-                _SectionHeader(title: 'Parent/Guardian', subtitle: 'Primary contact for fee reminders and updates'),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _SectionHeader(title: 'Personal Identity', subtitle: 'Administrative records and identity detail'),
                 const SizedBox(height: 24),
-                _buildField(label: 'PARENT NAME', controller: _parentNameController, hint: 'Full name', icon: Icons.family_restroom_rounded, isRequired: false),
+                Row(
+                  children: [
+                    Expanded(child: _buildField(label: 'FIRST NAME', controller: _firstNameController, hint: 'First name', icon: Icons.person_outline_rounded)),
+                    const SizedBox(width: 16),
+                    Expanded(child: _buildField(label: 'LAST NAME', controller: _lastNameController, hint: 'Last name', icon: Icons.person_outline_rounded)),
+                  ],
+                ),
                 const SizedBox(height: 24),
-              ] else ...[
-                _SectionHeader(title: 'Contact Information', subtitle: 'Primary contact for fee reminders and updates'),
+                Row(
+                  children: [
+                    Expanded(child: _buildField(
+                      label: 'ROLL NO', 
+                      controller: _rollNumberController, 
+                      hint: autoRollNumber ? 'Auto-generated' : 'Roll number', 
+                      icon: Icons.tag_rounded,
+                      enabled: !autoRollNumber,
+                      isRequired: !autoRollNumber,
+                    )),
+                    const SizedBox(width: 16),
+                    Expanded(child: _buildBatchDropdown(batchesAsync)),
+                  ],
+                ),
                 const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(child: _buildDatePicker(label: 'JOINING DATE', date: _joiningDate, onTap: _selectJoiningDate)),
+                    const SizedBox(width: 16),
+                    Expanded(child: _buildField(label: 'DISCOUNT (₹)', controller: _discountController, hint: '0', icon: Icons.percent_rounded, keyboardType: TextInputType.number, isRequired: false)),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                _buildGenderPicker(),
+                const SizedBox(height: 48),
+                if (collectParentDetails) ...[
+                  _SectionHeader(title: 'Parent/Guardian', subtitle: 'Primary contact for fee reminders and updates'),
+                  const SizedBox(height: 24),
+                  _buildField(label: 'PARENT NAME', controller: _parentNameController, hint: 'Full name', icon: Icons.family_restroom_rounded, isRequired: false),
+                  const SizedBox(height: 24),
+                ] else ...[
+                  _SectionHeader(title: 'Contact Information', subtitle: 'Primary contact for fee reminders and updates'),
+                  const SizedBox(height: 24),
+                ],
+                Row(
+                  children: [
+                    Expanded(child: _buildField(
+                      label: collectParentDetails ? 'PHONE' : 'STUDENT PHONE', 
+                      controller: _parentPhoneController, 
+                      hint: 'Phone no.', 
+                      icon: Icons.phone_android_rounded, 
+                      keyboardType: TextInputType.phone,
+                      isRequired: false,
+                    )),
+                    const SizedBox(width: 16),
+                    Expanded(child: _buildField(
+                      label: collectParentDetails ? 'EMAIL' : 'STUDENT EMAIL', 
+                      controller: _parentEmailController, 
+                      hint: 'Email address', 
+                      icon: Icons.email_outlined, 
+                      keyboardType: TextInputType.emailAddress,
+                      isRequired: false,
+                    )),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                _buildField(label: 'ADDRESS', controller: _addressController, hint: 'Residential address', icon: Icons.location_on_outlined, maxLines: 3, isRequired: false),
+                const SizedBox(height: 64),
+                _buildSaveButton(),
               ],
-              Row(
-                children: [
-                  Expanded(child: _buildField(
-                    label: collectParentDetails ? 'PHONE' : 'STUDENT PHONE', 
-                    controller: _parentPhoneController, 
-                    hint: 'Phone no.', 
-                    icon: Icons.phone_android_rounded, 
-                    keyboardType: TextInputType.phone,
-                    isRequired: false,
-                  )),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildField(
-                    label: collectParentDetails ? 'EMAIL' : 'STUDENT EMAIL', 
-                    controller: _parentEmailController, 
-                    hint: 'Email address', 
-                    icon: Icons.email_outlined, 
-                    keyboardType: TextInputType.emailAddress,
-                    isRequired: false,
-                  )),
-                ],
-              ),
-              const SizedBox(height: 24),
-              _buildField(label: 'ADDRESS', controller: _addressController, hint: 'Residential address', icon: Icons.location_on_outlined, maxLines: 3, isRequired: false),
-              const SizedBox(height: 64),
-              _buildSaveButton(),
-            ],
+            ),
           ),
         ),
       ),

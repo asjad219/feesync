@@ -15,6 +15,7 @@ import '../../core/widgets/paywall_dialog.dart';
 import '../../core/billing/feature_gate.dart';
 import '../../core/utils/receipt_service.dart';
 import '../../core/widgets/student_avatar.dart';
+import '../../core/widgets/permission_guard.dart';
 
 class RecordPaymentScreen extends ConsumerStatefulWidget {
   final Student? student;
@@ -363,94 +364,97 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
     final currencyCode = ref.watch(settingsProvider).value?.currency;
     final currencySymbol = CurrencyFormatter.symbolFor(currencyCode);
 
-    return Scaffold(
-      backgroundColor: AppColors.darkBg,
-      appBar: AppBar(
-        title: Text('Record Payment', style: GoogleFonts.manrope(fontWeight: FontWeight.w800)),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _SectionHeader(title: 'Transaction Details', subtitle: 'Link payment to a student and select due periods'),
-              const SizedBox(height: 32),
-
-              _buildLabel('BATCH / CLASS'),
-              const SizedBox(height: 12),
-              batchesAsync.when(
-                data: (batches) => _buildBatchPicker(batches),
-                loading: () => const LinearProgressIndicator(),
-                error: (e, _) => Text('Error: $e'),
-              ),
-              const SizedBox(height: 24),
-              
-              _buildLabel('STUDENT NAME'),
-              const SizedBox(height: 12),
-              studentsAsync.when(
-                data: (balances) => _buildStudentPicker(balances),
-                loading: () => const LinearProgressIndicator(),
-                error: (e, _) => Text('Error: $e'),
-              ),
-              const SizedBox(height: 32),
-
-              if (_selectedStudent != null) ...[
-                _buildLabel('SELECT PENDING DUES'),
+    return PermissionGuard(
+      permission: 'manage_payments',
+      child: Scaffold(
+        backgroundColor: AppColors.darkBg,
+        appBar: AppBar(
+          title: Text('Record Payment', style: GoogleFonts.manrope(fontWeight: FontWeight.w800)),
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _SectionHeader(title: 'Transaction Details', subtitle: 'Link payment to a student and select due periods'),
+                const SizedBox(height: 32),
+  
+                _buildLabel('BATCH / CLASS'),
                 const SizedBox(height: 12),
-                duesAsync.when(
-                  data: (dues) => _buildDuesList(dues),
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Text('Error loading dues'),
+                batchesAsync.when(
+                  data: (batches) => _buildBatchPicker(batches),
+                  loading: () => const LinearProgressIndicator(),
+                  error: (e, _) => Text('Error: $e'),
+                ),
+                const SizedBox(height: 24),
+                
+                _buildLabel('STUDENT NAME'),
+                const SizedBox(height: 12),
+                studentsAsync.when(
+                  data: (balances) => _buildStudentPicker(balances),
+                  loading: () => const LinearProgressIndicator(),
+                  error: (e, _) => Text('Error: $e'),
                 ),
                 const SizedBox(height: 32),
-              ],
-
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildField(
-                      label: 'AMOUNT ($currencySymbol)',
-                      controller: _amountController,
-                      hint: '0',
-                      icon: Icons.currency_rupee_rounded,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+  
+                if (_selectedStudent != null) ...[
+                  _buildLabel('SELECT PENDING DUES'),
+                  const SizedBox(height: 12),
+                  duesAsync.when(
+                    data: (dues) => _buildDuesList(dues),
+                    loading: () => const Center(child: CircularProgressIndicator()),
+                    error: (e, _) => Text('Error loading dues'),
+                  ),
+                  const SizedBox(height: 32),
+                ],
+  
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildField(
+                        label: 'AMOUNT ($currencySymbol)',
+                        controller: _amountController,
+                        hint: '0',
+                        icon: Icons.currency_rupee_rounded,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildDatePicker(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-
-              _buildLabel('PAYMENT MODE'),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  _buildModeToggle('online', Icons.account_balance_wallet_rounded, 'Online'),
-                  const SizedBox(width: 12),
-                  _buildModeToggle('cash', Icons.payments_rounded, 'Cash'),
-                  const SizedBox(width: 12),
-                  _buildModeToggle('bank', Icons.account_balance_rounded, 'Bank'),
-                ],
-              ),
-              const SizedBox(height: 32),
-
-              _buildField(
-                label: 'NOTES (OPTIONAL)',
-                controller: _notesController,
-                hint: 'Internal remarks...',
-                icon: Icons.notes_rounded,
-                maxLines: 2,
-                isRequired: false,
-              ),
-              const SizedBox(height: 64),
-
-              _buildSubmitButton(duesAsync.value ?? [], duesAsync.isLoading),
-            ],
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildDatePicker(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32),
+  
+                _buildLabel('PAYMENT MODE'),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    _buildModeToggle('online', Icons.account_balance_wallet_rounded, 'Online'),
+                    const SizedBox(width: 12),
+                    _buildModeToggle('cash', Icons.payments_rounded, 'Cash'),
+                    const SizedBox(width: 12),
+                    _buildModeToggle('bank', Icons.account_balance_rounded, 'Bank'),
+                  ],
+                ),
+                const SizedBox(height: 32),
+  
+                _buildField(
+                  label: 'NOTES (OPTIONAL)',
+                  controller: _notesController,
+                  hint: 'Internal remarks...',
+                  icon: Icons.notes_rounded,
+                  maxLines: 2,
+                  isRequired: false,
+                ),
+                const SizedBox(height: 64),
+  
+                _buildSubmitButton(duesAsync.value ?? [], duesAsync.isLoading),
+              ],
+            ),
           ),
         ),
       ),

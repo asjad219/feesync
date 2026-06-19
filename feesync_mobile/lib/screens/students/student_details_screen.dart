@@ -18,6 +18,7 @@ import '../../core/widgets/paywall_dialog.dart';
 import '../../core/billing/feature_gate.dart';
 import '../../core/widgets/offline_widgets.dart';
 import '../../core/services/network_service.dart';
+import '../../core/widgets/permission_guard.dart';
 
 class StudentDetailsScreen extends ConsumerWidget {
   final String studentId;
@@ -33,72 +34,75 @@ class StudentDetailsScreen extends ConsumerWidget {
     final settingsAsync = ref.watch(settingsProvider);
     final currencyFormatter = CurrencyFormatter.numberFormat(settingsAsync.value?.currency, decimalDigits: 0);
 
-    return Scaffold(
-      backgroundColor: AppColors.darkBg,
-      appBar: AppBar(
-        title: Text(
-          'Student Details',
-          style: GoogleFonts.manrope(fontWeight: FontWeight.w800),
-        ),
-        actions: [
-          IconButton(
-            onPressed: () => context.push('/students/edit/$studentId'),
-            icon: const Icon(Icons.edit_note_rounded),
+    return PermissionGuard(
+      permission: 'view_students',
+      child: Scaffold(
+        backgroundColor: AppColors.darkBg,
+        appBar: AppBar(
+          title: Text(
+            'Student Details',
+            style: GoogleFonts.manrope(fontWeight: FontWeight.w800),
           ),
-          IconButton(
-            onPressed: () => _confirmDelete(context, ref),
-            icon: Icon(Icons.delete_outline_rounded, color: AppColors.error),
-          ),
-        ],
-      ),
-      body: studentAsync.when(
-        data: (student) {
-          if (student == null) return const Center(child: Text('Student not found'));
-          return RefreshIndicator(
-            onRefresh: () async {
-              ref.invalidate(studentByIdProvider(studentId));
-              ref.invalidate(studentBalanceByIdProvider(studentId));
-              ref.invalidate(studentPaymentsProvider(studentId));
-              ref.invalidate(studentBatchesProvider(studentId));
-              invalidateDashboardAnalytics(ref);
-            },
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _ProfileHeader(student: student, balance: balanceAsync.value),
-                  const SizedBox(height: 32),
-                  _MetricsSection(
-                    balance: balanceAsync.value,
-                    discountAmount: student.discountAmount,
-                    currencyFormatter: currencyFormatter,
-                  ),
-                  const SizedBox(height: 32),
-                  _BatchEnrollmentSection(studentId: studentId, batchesAsync: batchesAsync),
-                  const SizedBox(height: 32),
-                  _RecentPaymentsList(
-                    paymentsAsync: paymentsAsync,
-                    studentId: studentId,
-                    student: student,
-                    currencyFormatter: currencyFormatter,
-                  ),
-                  const SizedBox(height: 32),
-                  _ContactInfoCard(student: student),
-                  const SizedBox(height: 40),
-                  _ActionButtons(student: student),
-                ],
-              ),
+          actions: [
+            IconButton(
+              onPressed: () => context.push('/students/edit/$studentId'),
+              icon: const Icon(Icons.edit_note_rounded),
             ),
-          );
-        },
-        loading: () => const Scaffold(
-          body: Center(
-            child: ShimmerList(itemCount: 4, itemHeight: 100),
-          ),
+            IconButton(
+              onPressed: () => _confirmDelete(context, ref),
+              icon: Icon(Icons.delete_outline_rounded, color: AppColors.error),
+            ),
+          ],
         ),
-        error: (e, _) => Center(child: Text('Student not found')),
+        body: studentAsync.when(
+          data: (student) {
+            if (student == null) return const Center(child: Text('Student not found'));
+            return RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(studentByIdProvider(studentId));
+                ref.invalidate(studentBalanceByIdProvider(studentId));
+                ref.invalidate(studentPaymentsProvider(studentId));
+                ref.invalidate(studentBatchesProvider(studentId));
+                invalidateDashboardAnalytics(ref);
+              },
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _ProfileHeader(student: student, balance: balanceAsync.value),
+                    const SizedBox(height: 32),
+                    _MetricsSection(
+                      balance: balanceAsync.value,
+                      discountAmount: student.discountAmount,
+                      currencyFormatter: currencyFormatter,
+                    ),
+                    const SizedBox(height: 32),
+                    _BatchEnrollmentSection(studentId: studentId, batchesAsync: batchesAsync),
+                    const SizedBox(height: 32),
+                    _RecentPaymentsList(
+                      paymentsAsync: paymentsAsync,
+                      studentId: studentId,
+                      student: student,
+                      currencyFormatter: currencyFormatter,
+                    ),
+                    const SizedBox(height: 32),
+                    _ContactInfoCard(student: student),
+                    const SizedBox(height: 40),
+                    _ActionButtons(student: student),
+                  ],
+                ),
+              ),
+            );
+          },
+          loading: () => const Scaffold(
+            body: Center(
+              child: ShimmerList(itemCount: 4, itemHeight: 100),
+            ),
+          ),
+          error: (e, _) => Center(child: Text('Student not found')),
+        ),
       ),
     );
   }

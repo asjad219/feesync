@@ -11,6 +11,7 @@ import '../../../providers/user_provider.dart';
 import '../../../providers/subscription_provider.dart';
 import '../../../providers/settings_provider.dart';
 import '../../../providers/student_provider.dart';
+import '../../../core/widgets/permission_guard.dart';
 
 class BatchCreationScreen extends ConsumerStatefulWidget {
   final String? batchId;
@@ -297,37 +298,40 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
     final Color textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final Color primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
 
-    return Scaffold(
-      backgroundColor: scaffoldBgColor,
-      appBar: AppBar(
-        title: Text(widget.batchId == null ? 'New Batch' : 'Edit Batch', style: GoogleFonts.manrope(fontWeight: FontWeight.w800, color: textPrimaryColor)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.close_rounded, color: textPrimaryColor),
-          onPressed: () => context.pop(),
-        ),
-      ),
-      body: Column(
-        children: [
-          _buildProgressIndicator(isDark, primaryColor),
-          Expanded(
-            child: PageView(
-              controller: _pageController,
-              onPageChanged: (idx) => setState(() => _currentStep = idx),
-              physics: const NeverScrollableScrollPhysics(),
-              children: [
-                _buildBasicInfoStep(isDark, textPrimaryColor, primaryColor),
-                _buildScheduleStep(isDark, textPrimaryColor, primaryColor),
-                _buildCapacityFeeStep(isDark, textPrimaryColor, primaryColor),
-                _buildSettingsStep(isDark, textPrimaryColor, primaryColor),
-                _buildVisualsStep(isDark, textPrimaryColor),
-                _buildConfirmationStep(isDark, textPrimaryColor),
-              ],
-            ),
+    return PermissionGuard(
+      permission: 'manage_students',
+      child: Scaffold(
+        backgroundColor: scaffoldBgColor,
+        appBar: AppBar(
+          title: Text(widget.batchId == null ? 'New Batch' : 'Edit Batch', style: GoogleFonts.manrope(fontWeight: FontWeight.w800, color: textPrimaryColor)),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.close_rounded, color: textPrimaryColor),
+            onPressed: () => context.pop(),
           ),
-          _buildBottomNav(isDark, primaryColor),
-        ],
+        ),
+        body: Column(
+          children: [
+            _buildProgressIndicator(isDark, primaryColor),
+            Expanded(
+              child: PageView(
+                controller: _pageController,
+                onPageChanged: (idx) => setState(() => _currentStep = idx),
+                physics: const NeverScrollableScrollPhysics(),
+                children: [
+                  _buildBasicInfoStep(isDark, textPrimaryColor, primaryColor),
+                  _buildScheduleStep(isDark, textPrimaryColor, primaryColor),
+                  _buildCapacityFeeStep(isDark, textPrimaryColor, primaryColor),
+                  _buildSettingsStep(isDark, textPrimaryColor, primaryColor),
+                  _buildVisualsStep(isDark, textPrimaryColor),
+                  _buildConfirmationStep(isDark, textPrimaryColor),
+                ],
+              ),
+            ),
+            _buildBottomNav(isDark, primaryColor),
+          ],
+        ),
       ),
     );
   }

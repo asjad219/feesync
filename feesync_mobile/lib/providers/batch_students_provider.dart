@@ -7,7 +7,8 @@ import 'sync_provider.dart';
 final batchStudentsProvider = FutureProvider.family<List<StudentBalance>, String>((ref, batchId) async {
   final client = ref.watch(supabaseClientProvider);
   final cache = ref.watch(cacheServiceProvider);
-  final accountId = client.auth.currentUser?.id;
+  final authState = ref.watch(authStateProvider);
+  final accountId = authState.value?.id;
   
   try {
     // Step 1: Get the list of student IDs belonging to this batch from student_enrollments.

@@ -15,6 +15,7 @@ import '../../../providers/local_settings_provider.dart';
 import '../../../services/app_lock_service.dart';
 import '../../../core/services/network_service.dart';
 import 'package:intl/intl.dart';
+import '../../../core/widgets/permission_guard.dart';
 
 class BatchDetailScreen extends ConsumerStatefulWidget {
   final String batchId;
@@ -55,114 +56,117 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
     final Color primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
     final Color textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
 
-    return Scaffold(
-      backgroundColor: scaffoldBgColor,
-      body: batchAsync.when(
-        data: (batch) {
-          if (batch == null) return const Center(child: Text('Batch not found'));
-          
-          double actualAttendance = batch.attendancePercentage;
-          double actualRevenue = batch.revenueGenerated;
-          double actualPending = batch.pendingDues;
+    return PermissionGuard(
+      permission: 'view_students',
+      child: Scaffold(
+        backgroundColor: scaffoldBgColor,
+        body: batchAsync.when(
+          data: (batch) {
+            if (batch == null) return const Center(child: Text('Batch not found'));
+            
+            double actualAttendance = batch.attendancePercentage;
+            double actualRevenue = batch.revenueGenerated;
+            double actualPending = batch.pendingDues;
 
-          if (analytics != null && analytics.attendanceTrend.isNotEmpty) {
-            actualAttendance = analytics.attendanceTrend.values.reduce((a, b) => a + b) / analytics.attendanceTrend.length;
-          }
-          
-          if (students != null && students.isNotEmpty) {
-            actualRevenue = students.fold<double>(0.0, (sum, s) => sum + s.totalPaidAmount);
-            actualPending = students.fold<double>(0.0, (sum, s) => sum + s.balance);
-          }
+            if (analytics != null && analytics.attendanceTrend.isNotEmpty) {
+              actualAttendance = analytics.attendanceTrend.values.reduce((a, b) => a + b) / analytics.attendanceTrend.length;
+            }
+            
+            if (students != null && students.isNotEmpty) {
+              actualRevenue = students.fold<double>(0.0, (sum, s) => sum + s.totalPaidAmount);
+              actualPending = students.fold<double>(0.0, (sum, s) => sum + s.balance);
+            }
 
-          final displayBatch = batch.copyWith(
-            attendancePercentage: actualAttendance,
-            revenueGenerated: actualRevenue,
-            pendingDues: actualPending,
-          );
+            final displayBatch = batch.copyWith(
+              attendancePercentage: actualAttendance,
+              revenueGenerated: actualRevenue,
+              pendingDues: actualPending,
+            );
 
-          return _buildContent(displayBatch);
-        },
-        loading: () {
-          final isOnline = ref.watch(isOnlineProvider).value ?? true;
-          if (!isOnline) {
+            return _buildContent(displayBatch);
+          },
+          loading: () {
+            final isOnline = ref.watch(isOnlineProvider).value ?? true;
+            if (!isOnline) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.wifi_off, size: 80, color: Color(0xFFDC2626)),
+                    const SizedBox(height: 24),
+                    Text(
+                      "📡 No Internet Connection",
+                      style: GoogleFonts.manrope(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: textPrimaryColor,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      "Please check your network and try again.",
+                      style: GoogleFonts.inter(
+                        fontSize: 15,
+                        color: isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 32),
+                    ElevatedButton(
+                      onPressed: () => ref.invalidate(batchByIdProvider(widget.batchId)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2563EB),
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text("Retry"),
+                    ),
+                  ],
+                ),
+              );
+            }
+            return Center(child: CircularProgressIndicator(color: primaryColor));
+          },
+          error: (err, _) {
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.wifi_off, size: 80, color: Color(0xFFDC2626)),
-                  const SizedBox(height: 24),
-                  Text(
-                    "📡 No Internet Connection",
-                    style: GoogleFonts.manrope(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: textPrimaryColor,
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline_rounded, size: 80, color: Color(0xFFDC2626)),
+                    const SizedBox(height: 24),
+                    Text(
+                      "Error Loading Batch Details",
+                      style: GoogleFonts.manrope(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: textPrimaryColor,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    "Please check your network and try again.",
-                    style: GoogleFonts.inter(
-                      fontSize: 15,
-                      color: isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B),
+                    const SizedBox(height: 12),
+                    Text(
+                      err.toString(),
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        color: isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B),
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
-                  ElevatedButton(
-                    onPressed: () => ref.invalidate(batchByIdProvider(widget.batchId)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2563EB),
-                      foregroundColor: Colors.white,
+                    const SizedBox(height: 32),
+                    ElevatedButton(
+                      onPressed: () => ref.invalidate(batchByIdProvider(widget.batchId)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2563EB),
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text("Retry"),
                     ),
-                    child: const Text("Retry"),
-                  ),
-                ],
+                  ],
+                ),
               ),
             );
-          }
-          return Center(child: CircularProgressIndicator(color: primaryColor));
-        },
-        error: (err, _) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline_rounded, size: 80, color: Color(0xFFDC2626)),
-                  const SizedBox(height: 24),
-                  Text(
-                    "Error Loading Batch Details",
-                    style: GoogleFonts.manrope(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: textPrimaryColor,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    err.toString(),
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      color: isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B),
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
-                  ElevatedButton(
-                    onPressed: () => ref.invalidate(batchByIdProvider(widget.batchId)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2563EB),
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text("Retry"),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
+          },
+        ),
       ),
     );
   }
@@ -2726,6 +2730,19 @@ class _AnalyticsTab extends ConsumerWidget {
               Text('Delete Batch', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFFCA5A5) : const Color(0xFFB91C1C))),
               const SizedBox(height: 4),
               Text('Once you delete a batch, there is no going back. Please be certain.', style: GoogleFonts.inter(fontSize: 12, color: isDark ? const Color(0xFFFECACA) : const Color(0xFFDC2626))),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.info_outline_rounded, size: 14, color: isDark ? const Color(0xFFFCA5A5) : const Color(0xFFB91C1C)),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Note: Batch will not delete if App Lock is enabled.',
+                      style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFFFCA5A5) : const Color(0xFFB91C1C)),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
@@ -2803,14 +2820,18 @@ class _AnalyticsTab extends ConsumerWidget {
                       child: CircularProgressIndicator(color: Color(0xFFEF4444)),
                     ),
                   ),
-                  Text(
-                    'Deleting batch and updating related records. Please wait...',
-                    style: GoogleFonts.inter(color: isDark ? Colors.white70 : Colors.black87),
+                  const SizedBox(height: 12),
+                  Center(
+                    child: Text(
+                      'Deleting batch and updating related records. Please wait...',
+                      style: GoogleFonts.inter(color: isDark ? Colors.white70 : Colors.black87),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 ] else ...[
                   Text(
                     'Are you sure you want to delete this batch? All related records will be updated or deleted. This action cannot be undone.', 
-                    style: GoogleFonts.inter(color: isDark ? Colors.white70 : Colors.black87),
+                    style: GoogleFonts.inter(color: isDark ? Colors.white70 : Colors.black87, height: 1.4),
                   ),
                   if (errorMessage != null) ...[
                     const SizedBox(height: 12),
@@ -2822,12 +2843,10 @@ class _AnalyticsTab extends ConsumerWidget {
                 ],
               ],
             ),
+            actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            actionsAlignment: MainAxisAlignment.end,
             actions: isDeleting ? [] : [
               TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: const Text('CANCEL'),
-              ),
-              ElevatedButton(
                 onPressed: () async {
                   setState(() {
                     isDeleting = true;
@@ -2872,8 +2891,36 @@ class _AnalyticsTab extends ConsumerWidget {
                     });
                   }
                 },
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
-                child: const Text('DELETE', style: TextStyle(color: Colors.white)),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFFEF4444),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: Text(
+                  'DELETE',
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.onPrimary,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  'CANCEL',
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           );

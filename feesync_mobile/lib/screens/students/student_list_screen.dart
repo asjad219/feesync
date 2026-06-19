@@ -10,6 +10,7 @@ import '../../core/billing/feature_gate.dart';
 import '../../models/student.dart';
 import '../../providers/providers.dart';
 import '../../providers/subscription_provider.dart';
+import '../../core/widgets/permission_guard.dart';
 
 final studentSearchProvider = StateProvider<String>((ref) => '');
 final studentClassFilterProvider = StateProvider<String?>((ref) => null);
@@ -132,181 +133,184 @@ class _StudentListScreenState extends ConsumerState<StudentListScreen> {
     final settingsAsync = ref.watch(settingsProvider);
     final aiPredictionsEnabled = settingsAsync.value?.aiPredictionsEnabled ?? false;
 
-    return Scaffold(
-      backgroundColor: AppColors.darkBg,
-      appBar: AppBar(
-        title: Text(
-          'Students',
-          style: GoogleFonts.manrope(
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        actions: [
-          IconButton(
-            onPressed: () => _showFilterBottomSheet(context),
-            icon: Icon(Icons.tune_rounded, color: AppColors.textPrimary),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-            child: TextField(
-              controller: _searchController,
-              onChanged: (value) => ref.read(studentSearchProvider.notifier).state = value,
-              style: GoogleFonts.inter(color: AppColors.textPrimary),
-              decoration: InputDecoration(
-                hintText: 'Search students...',
-                prefixIcon: Icon(Icons.search_rounded, color: AppColors.textTertiary),
-                fillColor: AppColors.surfaceContainer.withValues(alpha: 0.5),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: Icon(Icons.close_rounded, color: AppColors.textTertiary),
-                        onPressed: () {
-                          _searchController.clear();
-                          ref.read(studentSearchProvider.notifier).state = '';
-                        },
-                      )
-                    : null,
-              ),
+    return PermissionGuard(
+      permission: 'view_students',
+      child: Scaffold(
+        backgroundColor: AppColors.darkBg,
+        appBar: AppBar(
+          title: Text(
+            'Students',
+            style: GoogleFonts.manrope(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
             ),
           ),
-
-          studentBalancesAsync.when(
-            data: (students) {
-              final searchQuery = ref.watch(studentSearchProvider).toLowerCase();
-              final classFilter = ref.watch(studentClassFilterProvider);
-              final statusFilter = ref.watch(studentStatusFilterProvider);
-
-              final filteredStudents = students.where((student) {
-                final matchesSearch = searchQuery.isEmpty ||
-                    student.fullName.toLowerCase().contains(searchQuery) ||
-                    student.admissionNumber.toLowerCase().contains(searchQuery);
-
-                final matchesClass = classFilter == null ||
-                    classFilter.isEmpty ||
-                    student.studentClass == classFilter;
-
-                final matchesStatus = statusFilter == null ||
-                    (statusFilter == 'PAID' && _getPaymentStatus(student, aiPredictionsEnabled: aiPredictionsEnabled) == 'PAID') ||
-                    (statusFilter == 'OVERDUE' && _getPaymentStatus(student, aiPredictionsEnabled: aiPredictionsEnabled) != 'PAID');
-
-                return matchesSearch && matchesClass && matchesStatus;
-              }).toList();
-
-              final classes = students.map((s) => s.studentClass).toSet().toList();
-              classes.sort();
-
-              return Expanded(
-                child: Column(
-                  children: [
-                    if (classes.isNotEmpty)
-                      Container(
-                        height: 72,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          itemCount: classes.length,
-                          itemBuilder: (context, index) {
-                            final classItem = classes[index];
-                            final isSelected = selectedClass == classItem;
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 12),
-                              child: FilterChipButton(
-                                label: classItem,
-                                isSelected: isSelected,
-                                onTap: () => ref.read(studentClassFilterProvider.notifier).state = isSelected ? null : classItem,
-                              ),
-                            );
+          actions: [
+            IconButton(
+              onPressed: () => _showFilterBottomSheet(context),
+              icon: Icon(Icons.tune_rounded, color: AppColors.textPrimary),
+            ),
+          ],
+        ),
+        body: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (value) => ref.read(studentSearchProvider.notifier).state = value,
+                style: GoogleFonts.inter(color: AppColors.textPrimary),
+                decoration: InputDecoration(
+                  hintText: 'Search students...',
+                  prefixIcon: Icon(Icons.search_rounded, color: AppColors.textTertiary),
+                  fillColor: AppColors.surfaceContainer.withValues(alpha: 0.5),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(Icons.close_rounded, color: AppColors.textTertiary),
+                          onPressed: () {
+                            _searchController.clear();
+                            ref.read(studentSearchProvider.notifier).state = '';
                           },
+                        )
+                      : null,
+                ),
+              ),
+            ),
+  
+            studentBalancesAsync.when(
+              data: (students) {
+                final searchQuery = ref.watch(studentSearchProvider).toLowerCase();
+                final classFilter = ref.watch(studentClassFilterProvider);
+                final statusFilter = ref.watch(studentStatusFilterProvider);
+  
+                final filteredStudents = students.where((student) {
+                  final matchesSearch = searchQuery.isEmpty ||
+                      student.fullName.toLowerCase().contains(searchQuery) ||
+                      student.admissionNumber.toLowerCase().contains(searchQuery);
+  
+                  final matchesClass = classFilter == null ||
+                      classFilter.isEmpty ||
+                      student.studentClass == classFilter;
+  
+                  final matchesStatus = statusFilter == null ||
+                      (statusFilter == 'PAID' && _getPaymentStatus(student, aiPredictionsEnabled: aiPredictionsEnabled) == 'PAID') ||
+                      (statusFilter == 'OVERDUE' && _getPaymentStatus(student, aiPredictionsEnabled: aiPredictionsEnabled) != 'PAID');
+  
+                  return matchesSearch && matchesClass && matchesStatus;
+                }).toList();
+  
+                final classes = students.map((s) => s.studentClass).toSet().toList();
+                classes.sort();
+  
+                return Expanded(
+                  child: Column(
+                    children: [
+                      if (classes.isNotEmpty)
+                        Container(
+                          height: 72,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            itemCount: classes.length,
+                            itemBuilder: (context, index) {
+                              final classItem = classes[index];
+                              final isSelected = selectedClass == classItem;
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 12),
+                                child: FilterChipButton(
+                                  label: classItem,
+                                  isSelected: isSelected,
+                                  onTap: () => ref.read(studentClassFilterProvider.notifier).state = isSelected ? null : classItem,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+  
+                      Expanded(
+                        child: RefreshIndicator(
+                          onRefresh: () => ref.read(studentBalancesProvider.notifier).loadStudents(),
+                          color: AppColors.primaryContainer,
+                          child: filteredStudents.isEmpty
+                              ? _EmptyState()
+                              : ListView.separated(
+                                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+                                  itemCount: filteredStudents.length,
+                                  separatorBuilder: (context, index) => const SizedBox(height: 16),
+                                  itemBuilder: (context, index) {
+                                    final student = filteredStudents[index];
+                                    return StudentCard(
+                                      studentId: student.id,
+                                      firstName: student.firstName,
+                                      gender: student.gender,
+                                      name: student.fullName,
+                                      className: student.studentClass,
+                                      admissionNo: student.admissionNumber,
+                                      dueAmount: student.dueAmount,
+                                      status: _getPaymentStatus(student, aiPredictionsEnabled: aiPredictionsEnabled),
+                                      onTap: () => context.push('/students/${student.id}'),
+                                    );
+                                  },
+                                ),
                         ),
                       ),
-
-                    Expanded(
-                      child: RefreshIndicator(
-                        onRefresh: () => ref.read(studentBalancesProvider.notifier).loadStudents(),
-                        color: AppColors.primaryContainer,
-                        child: filteredStudents.isEmpty
-                            ? _EmptyState()
-                            : ListView.separated(
-                                padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
-                                itemCount: filteredStudents.length,
-                                separatorBuilder: (context, index) => const SizedBox(height: 16),
-                                itemBuilder: (context, index) {
-                                  final student = filteredStudents[index];
-                                  return StudentCard(
-                                    studentId: student.id,
-                                    firstName: student.firstName,
-                                    gender: student.gender,
-                                    name: student.fullName,
-                                    className: student.studentClass,
-                                    admissionNo: student.admissionNumber,
-                                    dueAmount: student.dueAmount,
-                                    status: _getPaymentStatus(student, aiPredictionsEnabled: aiPredictionsEnabled),
-                                    onTap: () => context.push('/students/${student.id}'),
-                                  );
-                                },
-                              ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-            loading: () => const Expanded(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: ShimmerList(itemCount: 5, itemHeight: 88),
-              ),
-            ),
-            error: (err, stack) => Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    RetryErrorPlaceholder(
-                      message: 'Could not load students. Tap to retry.',
-                      isDark: AppColors.isDarkMode,
-                      onRetry: () => ref.read(studentBalancesProvider.notifier).loadStudents(),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: Container(
-        decoration: BoxDecoration(
-          gradient: AppGradients.primary,
-          shape: BoxShape.circle,
-        ),
-        child: FloatingActionButton(
-          onPressed: () async {
-            final FeatureGate gate = ref.read(featureGateProvider).valueOrNull 
-                ?? await ref.read(featureGateProvider.future);
-            if (!gate.canAddStudent) {
-              if (context.mounted) {
-                await showPaywallDialog(
-                  context,
-                  ref,
-                  trigger: PaywallTrigger.studentLimit,
+                    ],
+                  ),
                 );
+              },
+              loading: () => const Expanded(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: ShimmerList(itemCount: 5, itemHeight: 88),
+                ),
+              ),
+              error: (err, stack) => Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      RetryErrorPlaceholder(
+                        message: 'Could not load students. Tap to retry.',
+                        isDark: AppColors.isDarkMode,
+                        onRetry: () => ref.read(studentBalancesProvider.notifier).loadStudents(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        floatingActionButton: Container(
+          decoration: BoxDecoration(
+            gradient: AppGradients.primary,
+            shape: BoxShape.circle,
+          ),
+          child: FloatingActionButton(
+            onPressed: () async {
+              final FeatureGate gate = ref.read(featureGateProvider).valueOrNull 
+                  ?? await ref.read(featureGateProvider.future);
+              if (!gate.canAddStudent) {
+                if (context.mounted) {
+                  await showPaywallDialog(
+                    context,
+                    ref,
+                    trigger: PaywallTrigger.studentLimit,
+                  );
+                }
+                return;
               }
-              return;
-            }
-            if (context.mounted) {
-              context.push('/students/add');
-            }
-          },
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          child: const Icon(Icons.add, size: 32, color: Colors.white),
+              if (context.mounted) {
+                context.push('/students/add');
+              }
+            },
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            child: const Icon(Icons.add, size: 32, color: Colors.white),
+          ),
         ),
       ),
     );

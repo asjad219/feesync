@@ -275,6 +275,34 @@ class _ImportDataScreenState extends ConsumerState<ImportDataScreen> {
     });
   }
 
+  Future<void> _pickAndParseFile() async {
+    setState(() {
+      _isParsing = true;
+      _parseError = null;
+    });
+    try {
+      final params = OpenFileDialogParams(
+        dialogType: OpenFileDialogType.document,
+        fileExtensionsFilter: const ['csv'],
+        mimeTypesFilter: const ['text/csv', 'text/comma-separated-values'],
+      );
+      final filePath = await FlutterFileDialog.pickFile(params: params);
+      if (filePath == null) {
+        setState(() => _isParsing = false);
+        return;
+      }
+
+      final file = File(filePath);
+      final content = await file.readAsString();
+      _parseContent(content);
+    } catch (e) {
+      setState(() {
+        _parseError = 'Failed to pick or read file: $e';
+        _isParsing = false;
+      });
+    }
+  }
+
   void _showSnack(String msg, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -412,29 +440,104 @@ class _ImportDataScreenState extends ConsumerState<ImportDataScreen> {
 
   // ── Action buttons (before paste mode) ────────────────────────────────────
   Widget _buildActionButtons() {
+    if (_parsedRows != null) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: _reset,
+            icon: Icon(Icons.clear_rounded, color: AppColors.error),
+            label: Text(
+              'Clear & Choose Different File',
+              style: GoogleFonts.inter(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: AppColors.error,
+              ),
+            ),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: AppColors.error),
+              minimumSize: const Size(double.infinity, 50),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Column(
       children: [
+        // Import CSV File Button
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            gradient: AppGradients.primary,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primaryContainer.withValues(alpha: 0.2),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              )
+            ],
+          ),
+          child: ElevatedButton.icon(
+            onPressed: _isParsing ? null : _pickAndParseFile,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              foregroundColor: Colors.white,
+              shadowColor: Colors.transparent,
+              minimumSize: const Size(double.infinity, 54),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+            ),
+            icon: _isParsing
+                ? SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(Icons.file_open_rounded, size: 20),
+            label: Text(
+              _isParsing ? 'VALIDATING FILE…' : 'IMPORT CSV FILE',
+              style: GoogleFonts.inter(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Paste CSV Content Button
         SizedBox(
           width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: () => setState(() => _showPasteMode = true),
+          child: OutlinedButton.icon(
+            onPressed: _isParsing ? null : () => setState(() => _showPasteMode = true),
             icon: const Icon(Icons.content_paste_rounded, size: 18),
             label: Text(
               'Paste CSV Content',
-              style:
-                  GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700),
+              style: GoogleFonts.inter(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
             ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF10B981),
-              foregroundColor: Colors.white,
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: AppColors.outline.withValues(alpha: 0.3)),
               minimumSize: const Size(double.infinity, 52),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16)),
-              elevation: 0,
             ),
           ),
         ),
         const SizedBox(height: 12),
+        // Download Template Button
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
@@ -968,9 +1071,6 @@ class _ImportDataScreenState extends ConsumerState<ImportDataScreen> {
           const SizedBox(height: 12),
           _stepRow(
               4, '"Validate & Preview" checks for errors before import'),
-          const SizedBox(height: 12),
-          _stepRow(5,
-              '"Import" sends all records to your Supabase account securely'),
         ],
       ),
     );

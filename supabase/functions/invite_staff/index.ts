@@ -63,7 +63,7 @@ serve(async (req: Request) => {
     const { data: subData } = await supabaseAdmin
       .from('subscriptions')
       .select('max_staff')
-      .eq('owner_id', ownerId)
+      .eq('user_id', ownerId)
       .maybeSingle()
 
     // Assuming subData might not exist if they haven't set it up, default to 2.
@@ -73,7 +73,7 @@ serve(async (req: Request) => {
       .from('users')
       .select('*', { count: 'exact', head: true })
       .eq('account_id', callerData.account_id)
-      .in('role', ['admin', 'accountant'])
+      .neq('role', 'admin')
       .eq('is_active', true)
 
     if (countError) throw countError

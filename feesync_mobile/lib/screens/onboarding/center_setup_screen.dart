@@ -63,6 +63,34 @@ class _CenterSetupScreenState extends ConsumerState<CenterSetupScreen> {
     }
   }
 
+  Future<void> _skip() async {
+    setState(() => _isLoading = true);
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) throw Exception('User not logged in');
+
+      // Bootstrap with default/placeholder values so that RLS and database queries function correctly
+      await ref.read(accountRepositoryProvider).bootstrapOwner(
+        centerName: 'My Institution',
+        contactEmail: user.email ?? '',
+        ownerFullName: user.userMetadata?['full_name']?.toString() ?? 'Owner',
+        contactPhone: user.phone ?? '',
+        centerAddress: '',
+      );
+
+      await Supabase.instance.client.auth.updateUser(UserAttributes(data: {
+        'onboarding_step': 'complete',
+        'onboarding_center_setup_complete': true,
+        'onboarding_complete': true,
+      }));
+      if (mounted) context.go('/dashboard');
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -84,6 +112,22 @@ class _CenterSetupScreenState extends ConsumerState<CenterSetupScreen> {
               _buildField(label: 'OFFICIAL ADDRESS', controller: _addressController, hint: 'Street, City, State', icon: Icons.location_on_outlined, maxLines: 3),
               const SizedBox(height: 64),
               _buildContinueButton(),
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.center,
+                child: TextButton(
+                  onPressed: _isLoading ? null : _skip,
+                  child: Text(
+                    'SKIP FOR NOW',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.2,
+                      color: AppColors.textTertiary,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),

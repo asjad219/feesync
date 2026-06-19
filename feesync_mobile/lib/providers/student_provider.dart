@@ -23,8 +23,8 @@ final studentClassFilterProvider = StateProvider<String?>((ref) => null);
 // ── Account id helper ─────────────────────────────────────────────────────────
 
 final _studentAccountIdProvider = Provider<String?>((ref) {
-  final client = ref.watch(supabaseClientProvider);
-  return client.auth.currentUser?.id;
+  final authState = ref.watch(authStateProvider);
+  return authState.value?.id;
 });
 
 // ── StudentBalances Notifier ──────────────────────────────────────────────────

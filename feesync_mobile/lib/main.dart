@@ -25,43 +25,58 @@ void main() async {
   };
 
   runZonedGuarded(() async {
-    // Initialize Firebase (non-fatal if it fails)
-    try {
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      );
-    } catch (e) {
-      debugPrint('Firebase init error: $e');
-    }
+    SharedPreferences? prefs;
+    String? initError;
 
-    // Initialize Supabase
     try {
-      await Supabase.initialize(
-        url: SupabaseConfig.supabaseUrl,
-        anonKey: SupabaseConfig.supabaseAnonKey,
-      );
+      // Initialize Firebase (non-fatal, with 5-second timeout)
+      try {
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        ).timeout(const Duration(seconds: 5));
+      } catch (e) {
+        debugPrint('Firebase init error: $e');
+      }
+
+      // Initialize Supabase (with 10-second timeout to prevent hangs)
+      try {
+        await Supabase.initialize(
+          url: SupabaseConfig.supabaseUrl,
+          anonKey: SupabaseConfig.supabaseAnonKey,
+        ).timeout(const Duration(seconds: 10));
+      } catch (e) {
+        debugPrint('Supabase init error: $e');
+        if (e.toString().contains('invalid') || e.toString().contains('config')) {
+          initError = 'Invalid server configuration: $e';
+        }
+      }
+
+      // Initialize SharedPreferences (with 5-second timeout)
+      try {
+        prefs = await SharedPreferences.getInstance().timeout(const Duration(seconds: 5));
+      } catch (e) {
+        debugPrint('SharedPreferences init error: $e');
+        initError = 'Failed to initialize local storage: $e';
+      }
     } catch (e) {
-      debugPrint('Supabase init error: $e');
-      // Do NOT crash — app may still work offline with cached data
-      // Only show error if it was a config problem (not a network problem)
-      if (e.toString().contains('invalid') || e.toString().contains('config')) {
-        runApp(_ErrorApp(error: 'Invalid server configuration: $e'));
-        return;
+      debugPrint('General initialization error: $e');
+      initError = 'Initialization failed: $e';
+    } finally {
+      // Always call runApp to prevent infinite blank/loading screen
+      if (initError != null) {
+        runApp(_ErrorApp(error: initError));
+      } else {
+        runApp(
+          ProviderScope(
+            overrides: [
+              if (prefs != null)
+                sharedPreferencesProvider.overrideWithValue(prefs),
+            ],
+            child: const FeeSyncApp(),
+          ),
+        );
       }
     }
-
-    // Initialize SharedPreferences for local cache
-    final prefs = await SharedPreferences.getInstance();
-
-    runApp(
-      ProviderScope(
-        overrides: [
-          // Provide the SharedPreferences instance to the provider graph
-          sharedPreferencesProvider.overrideWithValue(prefs),
-        ],
-        child: const FeeSyncApp(),
-      ),
-    );
   }, (error, stack) {
     debugPrint('Uncaught error: $error\n$stack');
   });

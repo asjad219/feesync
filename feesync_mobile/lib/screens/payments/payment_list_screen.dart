@@ -12,6 +12,7 @@ import '../../models/payment.dart';
 import '../../core/widgets/custom_widgets.dart';
 import '../../core/widgets/glass/glass_card.dart';
 import '../../core/widgets/offline_widgets.dart';
+import '../../core/widgets/permission_guard.dart';
 
 class PaymentListScreen extends ConsumerStatefulWidget {
   final String? studentId;
@@ -63,18 +64,21 @@ class _PaymentListScreenState extends ConsumerState<PaymentListScreen> {
             })
           : paymentsAsync;
 
-      return Scaffold(
-        backgroundColor: AppColors.darkBg,
-        body: CustomScrollView(
-          slivers: [
-            _buildAppBar(),
-            if (widget.studentId == null) _buildStatsSection(),
-            _buildFiltersSection(),
-            _buildPaymentsList(filteredAsync),
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
-          ],
+      return PermissionGuard(
+        permission: 'view_payments',
+        child: Scaffold(
+          backgroundColor: AppColors.darkBg,
+          body: CustomScrollView(
+            slivers: [
+              _buildAppBar(),
+              if (widget.studentId == null) _buildStatsSection(),
+              _buildFiltersSection(),
+              _buildPaymentsList(filteredAsync),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            ],
+          ),
+          floatingActionButton: _buildFAB(),
         ),
-        floatingActionButton: _buildFAB(),
       );
     }
 

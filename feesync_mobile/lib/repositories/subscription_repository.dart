@@ -77,7 +77,8 @@ class SubscriptionRepository {
       final response = await _client
           .from('users')
           .select('id')
-          .eq('is_active', true);
+          .eq('is_active', true)
+          .neq('role', 'admin');
       return (response as List).length;
     } catch (e) {
       debugPrint('[SubscriptionRepo] getActiveStaffCount error: $e');

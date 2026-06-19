@@ -21,8 +21,8 @@ final batchStatusFilterProvider = StateProvider<BatchStatus?>((ref) => null);
 // ── Account id helper ─────────────────────────────────────────────────────────
 
 final _batchAccountIdProvider = Provider<String?>((ref) {
-  final client = ref.watch(supabaseClientProvider);
-  return client.auth.currentUser?.id;
+  final authState = ref.watch(authStateProvider);
+  return authState.value?.id;
 });
 
 // ── BatchNotifier ─────────────────────────────────────────────────────────────
