@@ -12,21 +12,19 @@ class NotificationRepository {
     String? status,
     String? type,
   }) async {
-    final query = _client.from('notifications').select('*, students(first_name, last_name, class)');
+    var query = _client.from('notifications').select('*, students(first_name, last_name, class)');
 
     if (studentId != null) {
-      query.eq('student_id', studentId);
+      query = query.eq('student_id', studentId);
     }
     if (status != null) {
-      query.eq('status', status);
+      query = query.eq('status', status);
     }
     if (type != null) {
-      query.eq('type', type);
+      query = query.eq('type', type);
     }
 
-    query.order('created_at', ascending: false);
-
-    final response = await query;
+    final response = await query.order('created_at', ascending: false);
     return (response as List).map((json) => AppNotification.fromJson(json)).toList();
   }
 

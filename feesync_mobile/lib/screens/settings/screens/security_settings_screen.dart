@@ -22,6 +22,7 @@ class _SecuritySettingsScreenState
     extends ConsumerState<SecuritySettingsScreen> {
   bool _isSendingReset = false;
   bool _isSigningOutAll = false;
+  bool _isSigningOut = false;
 
   // ── Change Password ────────────────────────────────────────────────────────
   Future<void> _sendPasswordReset(String email) async {
@@ -40,6 +41,28 @@ class _SecuritySettingsScreenState
       }
     } finally {
       if (mounted) setState(() => _isSendingReset = false);
+    }
+  }
+
+  // ── Sign Out Current Device ────────────────────────────────────────────────
+  Future<void> _signOutAccount() async {
+    final confirmed = await _showConfirmDialog(
+      title: 'Sign Out',
+      message: 'Are you sure you want to securely sign out of your account on this device?',
+      confirmLabel: 'Sign Out',
+      isDanger: true,
+    );
+    if (!confirmed || !mounted) return;
+
+    setState(() => _isSigningOut = true);
+    try {
+      await Supabase.instance.client.auth.signOut();
+      if (mounted) context.go('/login');
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSigningOut = false);
+        _showSnack('Failed to sign out: $e');
+      }
     }
   }
 
@@ -120,21 +143,33 @@ class _SecuritySettingsScreenState
             ),
           ],
         ),
+        actionsAlignment: MainAxisAlignment.spaceBetween,
+        actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel',
-                style: GoogleFonts.inter(color: AppColors.textSecondary)),
-          ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.errorContainer,
-              foregroundColor: AppColors.onErrorContainer,
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                  borderRadius: BorderRadius.circular(12)),
             ),
-            child: Text('Submit Request', style: GoogleFonts.inter()),
+            child: Text(
+              'Submit Request',
+              style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+            child: Text('Cancel',
+                style: GoogleFonts.inter(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -376,6 +411,25 @@ class _SecuritySettingsScreenState
                   _divider(),
                   _actionTile(
                     icon: Icons.logout_rounded,
+                    iconColor: AppColors.error,
+                    title: 'Sign Out Account',
+                    subtitle: 'Securely log out from this device',
+                    isDanger: true,
+                    trailingWidget: _isSigningOut
+                        ? SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.error,
+                            ),
+                          )
+                        : null,
+                    onTap: _isSigningOut ? null : _signOutAccount,
+                  ),
+                  _divider(),
+                  _actionTile(
+                    icon: Icons.devices_other_rounded,
                     iconColor: AppColors.error,
                     title: 'Sign Out All Devices',
                     subtitle:

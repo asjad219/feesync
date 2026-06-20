@@ -238,6 +238,37 @@ class _ImportDataScreenState extends ConsumerState<ImportDataScreen> {
           continue;
         }
 
+        // Sanitize Gender
+        if (data.containsKey('gender')) {
+          final g = data['gender'].toString().toLowerCase().trim();
+          if (['male', 'female', 'other'].contains(g)) {
+            data['gender'] = g;
+          } else {
+            data.remove('gender');
+          }
+        }
+
+        // Sanitize Date of Birth
+        if (data.containsKey('date_of_birth')) {
+          var dob = data['date_of_birth'].toString().trim();
+          try {
+            final parts = dob.split(RegExp(r'[-/]'));
+            if (parts.length == 3) {
+              if (parts[0].length <= 2 && parts[2].length == 4) {
+                // DD-MM-YYYY or D/M/YYYY
+                dob = '${parts[2]}-${parts[1].padLeft(2, '0')}-${parts[0].padLeft(2, '0')}';
+              } else if (parts[0].length == 4) {
+                // YYYY-MM-DD
+                dob = '${parts[0]}-${parts[1].padLeft(2, '0')}-${parts[2].padLeft(2, '0')}';
+              }
+            }
+            DateTime.parse(dob); // strict validation
+            data['date_of_birth'] = dob;
+          } catch (e) {
+            data.remove('date_of_birth');
+          }
+        }
+
         data['account_id'] = accountId;
 
         await client.from('students').upsert(

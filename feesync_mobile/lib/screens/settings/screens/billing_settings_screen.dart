@@ -24,7 +24,6 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
   late TextEditingController _earlyPaymentDiscountPercentController;
   late TextEditingController _earlyPaymentDaysController;
   
-  late TextEditingController _convenienceFeePercentController;
   late TextEditingController _taxPercentageController;
 
   int _defaultDueDay = 5;
@@ -33,7 +32,6 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
   bool _partialPaymentsAllowed = true;
   
   bool _earlyPaymentDiscountEnabled = false;
-  bool _convenienceFeeEnabled = false;
 
   bool _isInitialized = false;
   bool _isSaving = false;
@@ -45,7 +43,6 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
       _lateFineController.dispose();
       _earlyPaymentDiscountPercentController.dispose();
       _earlyPaymentDaysController.dispose();
-      _convenienceFeePercentController.dispose();
       _taxPercentageController.dispose();
     }
     super.dispose();
@@ -65,9 +62,6 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
     _earlyPaymentDaysController = TextEditingController(
       text: settings.earlyPaymentDays.toString(),
     );
-    _convenienceFeePercentController = TextEditingController(
-      text: settings.convenienceFeePercent.toStringAsFixed(1),
-    );
     _taxPercentageController = TextEditingController(
       text: settings.taxPercentage.toStringAsFixed(1),
     );
@@ -78,7 +72,6 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
     _partialPaymentsAllowed = settings.partialPaymentsAllowed;
     
     _earlyPaymentDiscountEnabled = settings.earlyPaymentDiscountEnabled;
-    _convenienceFeeEnabled = settings.convenienceFeeEnabled;
 
     _isInitialized = true;
   }
@@ -101,9 +94,6 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
       final earlyPaymentDays = _earlyPaymentDiscountEnabled
           ? (int.tryParse(_earlyPaymentDaysController.text.trim()) ?? 0)
           : 0;
-      final convenienceFeePercent = _convenienceFeeEnabled
-          ? (double.tryParse(_convenienceFeePercentController.text.trim()) ?? 0.0)
-          : 0.0;
       final taxPercentage = double.tryParse(_taxPercentageController.text.trim()) ?? 18.0;
 
       final updatedData = {
@@ -116,8 +106,6 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
         'early_payment_discount_enabled': _earlyPaymentDiscountEnabled,
         'early_payment_discount_percent': earlyPaymentPercent,
         'early_payment_days': earlyPaymentDays,
-        'convenience_fee_enabled': _convenienceFeeEnabled,
-        'convenience_fee_percent': convenienceFeePercent,
         'tax_percentage': taxPercentage,
       };
 
@@ -387,66 +375,6 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
                             ],
                           ),
                           crossFadeState: _earlyPaymentDiscountEnabled
-                              ? CrossFadeState.showSecond
-                              : CrossFadeState.showFirst,
-                          duration: const Duration(milliseconds: 250),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-
-                  _buildSectionHeader('Payment Gateways & Surcharges'),
-                  const SizedBox(height: 12),
-                  GlassCard(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SwitchListTile.adaptive(
-                          value: _convenienceFeeEnabled,
-                          title: Text(
-                            'Enable Convenience Fee',
-                            style: GoogleFonts.inter(
-                              color: AppColors.textPrimary,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                            ),
-                          ),
-                          subtitle: Text(
-                            'Pass online payment gateway charges to parents',
-                            style: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 11),
-                          ),
-                          secondary: Icon(Icons.account_balance_rounded, color: AppColors.primary),
-                          activeThumbColor: AppColors.primary,
-                          contentPadding: EdgeInsets.zero,
-                          onChanged: (val) => setState(() => _convenienceFeeEnabled = val),
-                        ),
-                        AnimatedCrossFade(
-                          firstChild: const SizedBox.shrink(),
-                          secondChild: Column(
-                            children: [
-                              const SizedBox(height: 16),
-                              Divider(color: AppColors.outline.withValues(alpha: 0.1), height: 1),
-                              const SizedBox(height: 16),
-                              _buildNumericTextField(
-                                controller: _convenienceFeePercentController,
-                                label: 'Convenience Fee Percentage (%)',
-                                icon: Icons.percent_rounded,
-                                hint: 'e.g. 2.0',
-                                isInteger: false,
-                                enabled: _convenienceFeeEnabled,
-                                validator: (val) {
-                                  if (!_convenienceFeeEnabled) return null;
-                                  if (val == null || val.trim().isEmpty) return 'Required';
-                                  final parsed = double.tryParse(val.trim());
-                                  if (parsed == null || parsed < 0) return 'Invalid percentage';
-                                  return null;
-                                },
-                              ),
-                            ],
-                          ),
-                          crossFadeState: _convenienceFeeEnabled
                               ? CrossFadeState.showSecond
                               : CrossFadeState.showFirst,
                           duration: const Duration(milliseconds: 250),

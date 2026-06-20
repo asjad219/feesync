@@ -316,8 +316,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             _buildSectionHeader('Subscription & Billing'),
             const SizedBox(height: 12),
             _buildSubscriptionCard(),
-            const SizedBox(height: 28),
-            _buildLogoutButton(context),
             const SizedBox(height: 48),
           ],
         ),
@@ -602,38 +600,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ],
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLogoutButton(BuildContext context) {
-    return GlassCard(
-      padding: EdgeInsets.zero,
-      borderColor: AppColors.error.withValues(alpha: 0.2),
-      child: InkWell(
-        onTap: () async {
-          await Supabase.instance.client.auth.signOut();
-          if (context.mounted) context.go('/login');
-        },
-        borderRadius: BorderRadius.circular(24),
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.logout_rounded, color: AppColors.error, size: 20),
-              const SizedBox(width: 12),
-              Text(
-                'Sign Out Account',
-                style: GoogleFonts.inter(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.error,
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );

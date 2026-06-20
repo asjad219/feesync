@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:flutter_file_dialog/flutter_file_dialog.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/glass/glass_card.dart';
@@ -20,6 +21,8 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
   bool _exportStudents = true;
   bool _exportPayments = true;
   bool _exportFeeStructures = true;
+  bool _exportBatches = true;
+  bool _exportDues = true;
 
   bool _isExporting = false;
   String _statusMessage = '';
@@ -29,6 +32,8 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
   int? _studentsCount;
   int? _paymentsCount;
   int? _feeStructuresCount;
+  int? _batchesCount;
+  int? _duesCount;
   final List<String> _exportedFiles = [];
   bool _exportCompleted = false;
 
@@ -43,7 +48,7 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
   }
 
   Future<void> _startExport() async {
-    if (!_exportStudents && !_exportPayments && !_exportFeeStructures) {
+    if (!_exportStudents && !_exportPayments && !_exportFeeStructures && !_exportBatches && !_exportDues) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -66,6 +71,8 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
       _studentsCount = null;
       _paymentsCount = null;
       _feeStructuresCount = null;
+      _batchesCount = null;
+      _duesCount = null;
     });
 
     try {
@@ -205,6 +212,44 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
         _exportedFiles.add(file.path);
       }
 
+      // 4. Export Batches
+      if (_exportBatches) {
+        setState(() => _statusMessage = 'Fetching Batches data...');
+        final res = await client.from('batches').select().eq('account_id', accountId).order('name');
+        final list = res as List<dynamic>;
+        _batchesCount = list.length;
+        
+        setState(() => _statusMessage = 'Generating Batches CSV...');
+        final headers = list.isNotEmpty ? list.first.keys.toList() : ['id', 'name', 'created_at'];
+        final csvBuffer = StringBuffer()..writeln(headers.join(','));
+        for (final row in list) {
+          final rowMap = row as Map<String, dynamic>;
+          csvBuffer.writeln(headers.map((h) => _escapeCsv(rowMap[h])).join(','));
+        }
+        final file = File('${dir.path}/feesync_batches_$timestamp.csv');
+        await file.writeAsString(csvBuffer.toString());
+        _exportedFiles.add(file.path);
+      }
+
+      // 5. Export Dues
+      if (_exportDues) {
+        setState(() => _statusMessage = 'Fetching Dues data...');
+        final res = await client.from('dues').select().eq('account_id', accountId).order('due_date');
+        final list = res as List<dynamic>;
+        _duesCount = list.length;
+        
+        setState(() => _statusMessage = 'Generating Dues CSV...');
+        final headers = list.isNotEmpty ? list.first.keys.toList() : ['id', 'student_id', 'amount', 'due_date', 'status'];
+        final csvBuffer = StringBuffer()..writeln(headers.join(','));
+        for (final row in list) {
+          final rowMap = row as Map<String, dynamic>;
+          csvBuffer.writeln(headers.map((h) => _escapeCsv(rowMap[h])).join(','));
+        }
+        final file = File('${dir.path}/feesync_dues_$timestamp.csv');
+        await file.writeAsString(csvBuffer.toString());
+        _exportedFiles.add(file.path);
+      }
+
       if (mounted) {
         setState(() {
           _isExporting = false;
@@ -243,6 +288,8 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
       _studentsCount = null;
       _paymentsCount = null;
       _feeStructuresCount = null;
+      _batchesCount = null;
+      _duesCount = null;
     });
   }
 
@@ -359,6 +406,24 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
           subtitle: 'Assigned fees, class-wise structures, late fine rules',
           value: _exportFeeStructures,
           onChanged: (val) => setState(() => _exportFeeStructures = val ?? false),
+        ),
+        const SizedBox(height: 12),
+        _buildSelectionCard(
+          icon: Icons.class_rounded,
+          iconColor: const Color(0xFF3B82F6),
+          title: 'Batches / Classes',
+          subtitle: 'Batch details, capacity, and assignments',
+          value: _exportBatches,
+          onChanged: (val) => setState(() => _exportBatches = val ?? false),
+        ),
+        const SizedBox(height: 12),
+        _buildSelectionCard(
+          icon: Icons.pending_actions_rounded,
+          iconColor: const Color(0xFFEF4444),
+          title: 'Pending Dues',
+          subtitle: 'Unpaid fee invoices and late fines',
+          value: _exportDues,
+          onChanged: (val) => setState(() => _exportDues = val ?? false),
         ),
       ],
     );
@@ -499,8 +564,10 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 24,
+                runSpacing: 16,
                 children: [
                   if (_studentsCount != null)
                     _statChip('$_studentsCount', 'Students', AppColors.primary),
@@ -508,6 +575,10 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
                     _statChip('$_paymentsCount', 'Payments', const Color(0xFF10B981)),
                   if (_feeStructuresCount != null)
                     _statChip('$_feeStructuresCount', 'Fees', const Color(0xFFF59E0B)),
+                  if (_batchesCount != null)
+                    _statChip('$_batchesCount', 'Batches', const Color(0xFF3B82F6)),
+                  if (_duesCount != null)
+                    _statChip('$_duesCount', 'Dues', const Color(0xFFEF4444)),
                 ],
               ),
             ],
@@ -540,16 +611,47 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
                     color: AppColors.textPrimary,
                   ),
                 ),
-                trailing: IconButton(
-                  icon: const Icon(Icons.share_rounded),
-                  onPressed: () {
-                    SharePlus.instance.share(
-                      ShareParams(
-                        files: [XFile(path, mimeType: 'text/csv')],
-                        subject: 'FeeSync Export - $fileName',
-                      ),
-                    );
-                  },
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.download_rounded),
+                      tooltip: 'Save to Device',
+                      onPressed: () async {
+                        try {
+                          final params = SaveFileDialogParams(sourceFilePath: path);
+                          final savedPath = await FlutterFileDialog.saveFile(params: params);
+                          if (savedPath != null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('File saved to $savedPath'),
+                                backgroundColor: AppColors.success,
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Error saving file: $e'),
+                              backgroundColor: AppColors.error,
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.share_rounded),
+                      tooltip: 'Share File',
+                      onPressed: () {
+                        SharePlus.instance.share(
+                          ShareParams(
+                            files: [XFile(path, mimeType: 'text/csv')],
+                            subject: 'FeeSync Export - $fileName',
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ),
             );

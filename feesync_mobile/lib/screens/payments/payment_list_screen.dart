@@ -466,7 +466,9 @@ class _PaymentTransactionCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
-            // TODO: Show payment details or receipt
+            if (payment.studentId.isNotEmpty) {
+              context.push('/students/${payment.studentId}');
+            }
           },
           borderRadius: BorderRadius.circular(24),
           child: Padding(

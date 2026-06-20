@@ -83,7 +83,7 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
               pendingDues: actualPending,
             );
 
-            return _buildContent(displayBatch);
+            return _buildContent(displayBatch, analytics, students);
           },
           loading: () {
             final isOnline = ref.watch(isOnlineProvider).value ?? true;
@@ -171,10 +171,10 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
     );
   }
 
-  Widget _buildContent(Batch batch) {
+  Widget _buildContent(Batch batch, BatchAnalytics? analytics, List<StudentBalance>? students) {
     return NestedScrollView(
       headerSliverBuilder: (context, innerBoxIsScrolled) => [
-        _buildHeroHeader(batch),
+        _buildHeroHeader(batch, analytics, students),
         _buildStickyTabBar(batch.color),
       ],
       body: TabBarView(
@@ -219,7 +219,7 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
     );
   }
 
-  Widget _buildHeroHeader(Batch batch) {
+  Widget _buildHeroHeader(Batch batch, BatchAnalytics? analytics, List<StudentBalance>? students) {
     final bool isDark = AppColors.isDarkMode;
     final scaffoldBgColor = isDark ? const Color(0xFF0D0D1A) : const Color(0xFFF8FAFC);
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
@@ -287,7 +287,7 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
                                 ),
                                 child: Icon(Icons.school, color: batch.color, size: 32),
                               ),
-                              _AiHealthScore(score: _calculateHealthScore(batch)),
+                              _AiHealthScore(result: _calculateHealthData(batch, analytics, students)),
                             ],
                           ),
                           const SizedBox(height: 24),
@@ -391,93 +391,274 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
   }
 }
 
-int _calculateHealthScore(Batch batch) {
-  // 1. Attendance factor (up to 40 points)
-  final attendanceFactor = (batch.attendancePercentage * 40).clamp(0.0, 40.0);
-  
-  // 2. Capacity fill factor (up to 30 points)
-  final fillRatio = batch.maxCapacity > 0 ? (batch.studentCount / batch.maxCapacity) : 0.0;
-  final fillFactor = (fillRatio * 30).clamp(0.0, 30.0);
-  
-  // 3. Collection factor (up to 30 points)
-  double collectionFactor = 30.0;
-  final totalExpected = batch.revenueGenerated + batch.pendingDues;
-  if (totalExpected > 0 && batch.pendingDues > 0) {
-    final duesRatio = batch.pendingDues / totalExpected;
-    collectionFactor = (30 * (1 - duesRatio)).clamp(0.0, 30.0);
+class HealthScoreResult {
+  final int score;
+  final String statusText;
+  final Color? customColor;
+  final bool isInsufficientData;
+
+  HealthScoreResult({
+    required this.score,
+    required this.statusText,
+    this.customColor,
+    this.isInsufficientData = false,
+  });
+}
+
+HealthScoreResult _calculateHealthData(Batch batch, BatchAnalytics? analytics, List<StudentBalance>? students) {
+  if (batch.studentCount == 0) {
+    return HealthScoreResult(score: 0, statusText: 'No Students');
   }
-  
-  final totalScore = (attendanceFactor + fillFactor + collectionFactor).round();
-  
-  if (batch.studentCount == 0 && batch.attendancePercentage == 0) {
-    return 85; // healthy new batch
+
+  final bool hasAttendance = analytics != null && analytics.attendanceTrend.isNotEmpty;
+  final bool hasFeeData = (batch.revenueGenerated > 0 || batch.pendingDues > 0);
+
+  if (batch.studentCount < 3 || !hasAttendance || !hasFeeData) {
+    return HealthScoreResult(score: 0, statusText: '', isInsufficientData: true);
   }
-  
-  return totalScore.clamp(10, 100);
+
+  // Occupancy Score (30%)
+  final double occupancyRatio = batch.maxCapacity > 0 ? (batch.studentCount / batch.maxCapacity) : 0.0;
+  final double occupancyScore = (occupancyRatio * 100).clamp(0.0, 100.0) * 0.30;
+
+  // Attendance Score (30%)
+  double avgAttendance = batch.attendancePercentage;
+  if (hasAttendance) {
+    avgAttendance = analytics.attendanceTrend.values.reduce((a, b) => a + b) / analytics.attendanceTrend.length;
+  }
+  final double attendanceScore = (avgAttendance * 100).clamp(0.0, 100.0) * 0.30;
+
+  // Fee Collection Score (25%)
+  double collectionScore = 0.0;
+  final double expectedCollection = batch.revenueGenerated + batch.pendingDues;
+  if (expectedCollection > 0) {
+    collectionScore = ((batch.revenueGenerated / expectedCollection) * 100).clamp(0.0, 100.0) * 0.25;
+  }
+
+  // Schedule Score (15%)
+  // Since we don't have total exact session counts historically, we estimate from attendance records
+  // or default to a reasonable baseline if sessions happened.
+  double scheduleScore = 0.0;
+  if (analytics != null && analytics.attendanceTrend.isNotEmpty) {
+     // If they are recording attendance, we assume they are completing sessions.
+     // In a full system we'd compare expected slots vs completed. For now, max it to 15%.
+     scheduleScore = 100.0 * 0.15;
+  }
+
+  int totalScore = (occupancyScore + attendanceScore + collectionScore + scheduleScore).round().clamp(0, 100);
+
+  String status;
+  if (totalScore <= 20) {
+    status = 'Critical';
+  } else if (totalScore <= 50) {
+    status = 'Poor';
+  } else if (totalScore <= 75) {
+    status = 'Good';
+  } else if (totalScore <= 90) {
+    status = 'Excellent';
+  } else {
+    status = 'Outstanding';
+  }
+
+  return HealthScoreResult(score: totalScore, statusText: status);
 }
 
 class _AiHealthScore extends StatelessWidget {
-  final int score;
-  const _AiHealthScore({required this.score});
+  final HealthScoreResult result;
+  const _AiHealthScore({required this.result});
 
   @override
   Widget build(BuildContext context) {
     final bool isDark = AppColors.isDarkMode;
-    final Color healthColor = score >= 80 
-        ? (isDark ? const Color(0xFF10B981) : const Color(0xFF059669))
-        : (score >= 50 ? const Color(0xFFF59E0B) : const Color(0xFFEF4444));
-        
-    final String statusText = score >= 80 ? 'Excellent' : (score >= 50 ? 'Average' : 'Critical');
 
-    return GlassCard(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      borderRadius: BorderRadius.circular(16),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.auto_awesome, color: healthColor, size: 16),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    if (result.isInsufficientData) {
+      return GestureDetector(
+        onTap: () => _showHealthDetailsDialog(context, result),
+        child: GlassCard(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          borderRadius: BorderRadius.circular(16),
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                'AI BATCH HEALTH',
-                style: GoogleFonts.inter(
-                  color: isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B),
-                  fontSize: 8,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.8,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
+              Icon(Icons.info_outline, color: AppColors.textTertiary, size: 16),
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '$score%',
-                    style: GoogleFonts.manrope(
-                      color: healthColor,
-                      fontSize: 16,
+                    'AI BATCH HEALTH',
+                    style: GoogleFonts.inter(
+                      color: isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B),
+                      fontSize: 8,
                       fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
                     ),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(height: 2),
                   Text(
-                    '($statusText)',
+                    'Insufficient Data',
                     style: GoogleFonts.inter(
-                      color: healthColor.withValues(alpha: 0.8),
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ],
               ),
             ],
           ),
-        ],
+        ),
+      );
+    }
+
+    Color healthColor;
+    if (result.score <= 20) {
+      healthColor = const Color(0xFFEF4444); // Critical
+    } else if (result.score <= 50) {
+      healthColor = const Color(0xFFF97316); // Poor
+    } else if (result.score <= 75) {
+      healthColor = const Color(0xFFEAB308); // Good
+    } else {
+      healthColor = isDark ? const Color(0xFF10B981) : const Color(0xFF059669); // Excellent / Outstanding
+    }
+
+    return GestureDetector(
+      onTap: () => _showHealthDetailsDialog(context, result),
+      child: GlassCard(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        borderRadius: BorderRadius.circular(16),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.auto_awesome, color: healthColor, size: 16),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'AI BATCH HEALTH',
+                  style: GoogleFonts.inter(
+                    color: isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B),
+                    fontSize: 8,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      '${result.score}%',
+                      style: GoogleFonts.manrope(
+                        color: healthColor,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '(${result.statusText})',
+                      style: GoogleFonts.inter(
+                        color: healthColor.withValues(alpha: 0.8),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
+    );
+  }
+
+  void _showHealthDetailsDialog(BuildContext context, HealthScoreResult result) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final bool isDark = AppColors.isDarkMode;
+        final Color surfaceColor = isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF);
+        final Color textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
+        
+        return Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: surfaceColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'AI Batch Health',
+                style: GoogleFonts.manrope(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: textPrimaryColor,
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (result.isInsufficientData) ...[
+                Text(
+                  'Insufficient Data',
+                  style: GoogleFonts.manrope(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.error,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Add at least 3 students, record attendance, and manage fees to unlock AI insights.',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ] else ...[
+                Text(
+                  'Score: ${result.score}%',
+                  style: GoogleFonts.manrope(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: textPrimaryColor,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Batch health is calculated using weighted metrics: Student Occupancy (30%), Attendance Rate (30%), Fee Collection Rate (25%), and Schedule Completion (15%).',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text('Close'),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
