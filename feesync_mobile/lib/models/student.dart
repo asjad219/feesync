@@ -151,27 +151,17 @@ class StudentBalance {
   String get fullName => '$firstName $lastName';
 
   factory StudentBalance.fromJson(Map<String, dynamic> json) {
-    // We compute the true net balance locally to preserve advance payments.
     final double totalFee = double.parse((json['total_fee_amount'] ?? 0).toString());
     final double totalPaid = double.parse((json['total_paid_amount'] ?? 0).toString());
-    // Note: discount is not in student_balances JSON by default unless joined, but we can compute netBalance
-    // using the provided balance or raw sum if balance is the raw un-clamped value.
-    // In Supabase SQL `student_balances` view, `balance` is the sum of dues due_amount (which might be clamped).
-    // Let's rely on totalFee - totalPaid - student discount if possible. 
-    // Wait, the dues might already have discount applied to amount_assigned.
-    // Let's use the actual balance if it's not clamped, but if it's clamped, we use totalFee - totalPaid.
-    final double netBalance = totalFee - totalPaid;
     
-    double computedDueAmount = 0;
-    double computedAdvanceBalance = 0;
-    String computedStatus = 'PAID';
+    // We now rely on the database view for exact balances
+    final double computedDueAmount = double.parse((json['due_amount'] ?? 0).toString());
+    final double computedAdvanceBalance = double.parse((json['advance_balance'] ?? 0).toString());
+    final double balance = double.parse((json['balance'] ?? 0).toString());
     
-    if (netBalance > 0) {
-      computedDueAmount = netBalance;
-      computedStatus = json['status'] == 'OVERDUE' ? 'OVERDUE' : 'DUE';
-    } else if (netBalance < 0) {
-      computedAdvanceBalance = netBalance.abs();
-      computedStatus = 'ADVANCE';
+    String computedStatus = json['status'] ?? 'DUE';
+    if (computedStatus == 'ADVANCE') {
+      computedStatus = 'ADVANCE ₹${computedAdvanceBalance.toStringAsFixed(0)}';
     }
 
     return StudentBalance(
@@ -193,7 +183,7 @@ class StudentBalance {
       ) : null,
       totalFeeAmount: totalFee,
       totalPaidAmount: totalPaid,
-      balance: netBalance,
+      balance: balance,
       dueAmount: computedDueAmount,
       advanceBalance: computedAdvanceBalance,
       status: computedStatus,

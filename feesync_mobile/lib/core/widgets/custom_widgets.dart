@@ -19,7 +19,8 @@ class StatusBadge extends StatelessWidget {
   Color _getStatusColor() {
     if (color != null) return color!;
     if (status == 'OVERDUE' || status == 'HIGH RISK') return AppColors.error;
-    if (status == 'PENDING' || status == 'AT RISK') return const Color(0xFFF59E0B); // Amber/Warning color
+    if (status == 'PENDING' || status == 'AT RISK') return const Color(0xFFF59E0B);
+    if (status.startsWith('ADVANCE')) return const Color(0xFF10B981); // Emerald green
     return AppColors.primary;
   }
 
@@ -149,7 +150,17 @@ class StudentCard extends StatelessWidget {
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
+                        color: const Color(0xFF10B981), // Emerald green
+                      ),
+                    ),
+                  ] else ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Due Amount: ₹0',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textTertiary,
                       ),
                     ),
                   ],

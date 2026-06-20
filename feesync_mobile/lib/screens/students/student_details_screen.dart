@@ -274,9 +274,9 @@ class _MetricsSection extends StatelessWidget {
             _MetricCard(
               label: balance!.advanceBalance > 0 ? 'ADVANCE BALANCE' : 'DUE AMOUNT',
               value: currencyFormatter.format(balance!.advanceBalance > 0 ? balance!.advanceBalance : balance!.dueAmount),
-              color: balance!.advanceBalance > 0 ? AppColors.primary : (balance!.dueAmount > 0 ? AppColors.error : AppColors.success),
+              color: balance!.advanceBalance > 0 ? const Color(0xFF10B981) : (balance!.dueAmount > 0 ? AppColors.error : AppColors.success),
               icon: balance!.advanceBalance > 0 ? Icons.account_balance_wallet_rounded : (balance!.dueAmount > 0 ? Icons.warning_amber_rounded : Icons.verified_rounded),
-              iconBgColor: balance!.advanceBalance > 0 ? AppColors.primary : (balance!.dueAmount > 0 ? AppColors.error : AppColors.success),
+              iconBgColor: balance!.advanceBalance > 0 ? const Color(0xFF10B981) : (balance!.dueAmount > 0 ? AppColors.error : AppColors.success),
             ),
           ],
         ),

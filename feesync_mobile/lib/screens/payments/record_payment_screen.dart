@@ -39,7 +39,6 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
   final _notesController = TextEditingController();
   DateTime _paymentDate = DateTime.now();
   String _paymentMode = 'online';
-  bool _isAdvancePayment = false;
   
   final List<String> _selectedDueIds = [];
 
@@ -101,41 +100,11 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
     }
 
     if (availableDues.isNotEmpty) {
-      _isAdvancePayment = false;
       if (_selectedDueIds.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Please select at least one pending due period.')),
         );
         return;
-      }
-    } else {
-      if (!_isAdvancePayment) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please turn on Advance Payment to proceed.')),
-        );
-        return;
-      }
-    }
-
-    if (_isAdvancePayment) {
-      final batches = ref.read(batchNotifierProvider).value ?? [];
-      Batch? selectedBatch;
-      for (final b in batches) {
-        if (b.id == _selectedBatchId) {
-          selectedBatch = b;
-          break;
-        }
-      }
-      if (selectedBatch != null) {
-        if (amount > selectedBatch.monthlyFee) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Advance payment cannot exceed the batch monthly fee (₹${selectedBatch.monthlyFee.toStringAsFixed(0)}).'),
-              backgroundColor: AppColors.error,
-            ),
-          );
-          return;
-        }
       }
     }
 
@@ -172,6 +141,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
       }
 
       final idempotencyKey = const Uuid().v4();
+      final bool isAdvancePayment = availableDues.isEmpty || amount > allocations.fold(0.0, (sum, a) => sum + (a['amount'] as double));
 
       final paymentData = {
         'account_id': accountId,
@@ -199,7 +169,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
       ref.read(classCollectionDataProvider.notifier).fetch();
 
       if (mounted) {
-        _showSuccessDialog(amount);
+        _showSuccessDialog(amount, isAdvancePayment);
       }
     } catch (e) {
       if (mounted) _showErrorDialog(e.toString());
@@ -258,7 +228,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
     );
   }
 
-  void _showSuccessDialog(double amount) {
+  void _showSuccessDialog(double amount, bool isAdvancePayment) {
     final settings = ref.read(settingsProvider).value;
     final currencyFormatter = CurrencyFormatter.numberFormat(settings?.currency, decimalDigits: 0);
     final canShareReceipt = (settings?.autoReceiptEnabled ?? true) && (settings?.whatsappEnabled ?? true);
@@ -287,7 +257,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => _shareReceipt(amount),
+                  onPressed: () => _shareReceipt(amount, isAdvancePayment),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF25D366),
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -320,7 +290,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
     );
   }
 
-  void _shareReceipt(double amount) async {
+  void _shareReceipt(double amount, bool isAdvancePayment) async {
     final FeatureGate featureGate = ref.read(featureGateProvider).valueOrNull ?? await ref.read(featureGateProvider.future);
     if (!featureGate.canSendWhatsappReceipt) {
       if (mounted) {
@@ -348,7 +318,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
         date: _paymentDate,
         invoiceNo: invoiceNo,
         institutionName: institutionName,
-        isAdvance: _isAdvancePayment,
+        isAdvance: isAdvancePayment,
       );
 
       final pdfFile = await ReceiptService.generatePdfReceipt(
@@ -358,7 +328,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
         date: _paymentDate,
         invoiceNo: invoiceNo,
         institutionName: institutionName,
-        isAdvance: _isAdvancePayment,
+        isAdvance: isAdvancePayment,
       );
 
       String cleanPhone = (student.parentPhone ?? '').replaceAll(RegExp(r'[^0-9]'), '');
@@ -414,7 +384,6 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
               updatedAt: DateTime.now(),
             );
             _selectedDueIds.clear();
-            _isAdvancePayment = false;
             _amountController.clear();
           });
         },
@@ -464,7 +433,6 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
                           if (!existsInBatch) {
                             _selectedStudent = null;
                             _selectedDueIds.clear();
-                            _isAdvancePayment = false;
                             _amountController.clear();
                           }
                         }
@@ -495,9 +463,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
                     data: (dues) => PendingDuesSelector(
                       dues: dues,
                       selectedDueIds: _selectedDueIds,
-                      isAdvancePayment: _isAdvancePayment,
                       currencyCode: currencyCode,
-                      onAdvancePaymentChanged: (v) => setState(() => _isAdvancePayment = v),
                       onDueToggled: (due, isSelected) {
                         setState(() {
                           if (isSelected) {

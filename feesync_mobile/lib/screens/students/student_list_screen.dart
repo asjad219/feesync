@@ -196,8 +196,8 @@ class _StudentListScreenState extends ConsumerState<StudentListScreen> {
                       student.studentClass == classFilter;
   
                   final matchesStatus = statusFilter == null ||
-                      (statusFilter == 'PAID' && _getPaymentStatus(student, aiPredictionsEnabled: aiPredictionsEnabled) == 'PAID') ||
-                      (statusFilter == 'OVERDUE' && _getPaymentStatus(student, aiPredictionsEnabled: aiPredictionsEnabled) != 'PAID');
+                      (statusFilter == 'PAID' && student.dueAmount <= 0) ||
+                      (statusFilter == 'OVERDUE' && student.dueAmount > 0);
   
                   return matchesSearch && matchesClass && matchesStatus;
                 }).toList();

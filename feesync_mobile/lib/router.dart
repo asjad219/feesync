@@ -194,34 +194,59 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
 
       // Main app routes with shell
-      ShellRoute(
-        builder: (context, state, child) => MainShell(child: child),
-        routes: [
-          GoRoute(
-            path: '/dashboard',
-            builder: (context, state) => const DashboardScreen(),
+      StatefulShellRoute(
+        navigatorContainerBuilder: (context, navigationShell, children) {
+          return MainShell(navigationShell: navigationShell, children: children);
+        },
+        builder: (context, state, navigationShell) {
+          return const SizedBox.shrink(); // ignored when using navigatorContainerBuilder
+        },
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/dashboard',
+                builder: (context, state) => const DashboardScreen(),
+              ),
+              GoRoute(
+                path: '/fees',
+                builder: (context, state) => const FeesScreen(),
+              ),
+            ],
           ),
-          GoRoute(
-            path: '/batches',
-            builder: (context, state) => const BatchListScreen(),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/batches',
+                builder: (context, state) => const BatchListScreen(),
+              ),
+            ],
           ),
-          GoRoute(
-            path: '/students',
-            builder: (context, state) => const StudentListScreen(),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/students',
+                builder: (context, state) => const StudentListScreen(),
+              ),
+            ],
           ),
-          GoRoute(
-            path: '/fees',
-            builder: (context, state) => const FeesScreen(),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/payments',
+                builder: (context, state) => PaymentListScreen(
+                  studentId: state.uri.queryParameters['studentId'],
+                ),
+              ),
+            ],
           ),
-          GoRoute(
-            path: '/payments',
-            builder: (context, state) => PaymentListScreen(
-              studentId: state.uri.queryParameters['studentId'],
-            ),
-          ),
-          GoRoute(
-            path: '/settings',
-            builder: (context, state) => const SettingsScreen(),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/settings',
+                builder: (context, state) => const SettingsScreen(),
+              ),
+            ],
           ),
         ],
       ),

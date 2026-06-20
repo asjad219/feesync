@@ -6,84 +6,128 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/user_provider.dart';
 
-class MainShell extends ConsumerWidget {
-  final Widget child;
+class MainShell extends ConsumerStatefulWidget {
+  final StatefulNavigationShell navigationShell;
+  final List<Widget> children;
 
-  const MainShell({super.key, required this.child});
+  const MainShell({
+    super.key,
+    required this.navigationShell,
+    required this.children,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MainShell> createState() => _MainShellState();
+}
+
+class _MainShellState extends ConsumerState<MainShell> {
+  PageController? _pageController;
+  int _lastRouterIndex = -1;
+
+  @override
+  void dispose() {
+    _pageController?.dispose();
+    super.dispose();
+  }
+
+  void _onPageChanged(int visibleIndex, List<int> visibleIndices) {
+    final targetBranch = visibleIndices[visibleIndex];
+    if (widget.navigationShell.currentIndex != targetBranch) {
+      widget.navigationShell.goBranch(
+        targetBranch,
+        initialLocation: targetBranch == widget.navigationShell.currentIndex,
+      );
+    }
+  }
+
+  void _onItemTapped(int branchIndex) {
+    widget.navigationShell.goBranch(
+      branchIndex,
+      initialLocation: branchIndex == widget.navigationShell.currentIndex,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final userProfileAsync = ref.watch(currentUserProfileProvider);
     final user = userProfileAsync.value;
     
     final bool canViewStudents = user?.role == 'admin' || (user?.permissions['view_students'] == true);
     final bool canViewPayments = user?.role == 'admin' || (user?.permissions['view_payments'] == true);
 
-    final selectedIndex = _calculateSelectedIndex(context);
+    // Filter visible branches based on role
+    List<int> visibleIndices = [0, 1];
+    if (canViewStudents) visibleIndices.add(2);
+    if (canViewPayments) visibleIndices.add(3);
+    visibleIndices.add(4);
+
+    List<Widget> visiblePages = [];
+    for (int idx in visibleIndices) {
+      visiblePages.add(KeepAliveWidget(child: widget.children[idx]));
+    }
+
+    final currentIndex = widget.navigationShell.currentIndex;
+    final int initialVisibleIndex = visibleIndices.indexOf(currentIndex);
+
+    // Initialize or Sync PageController
+    if (_pageController == null) {
+      _pageController = PageController(initialPage: initialVisibleIndex == -1 ? 0 : initialVisibleIndex);
+      _lastRouterIndex = currentIndex;
+    } else if (currentIndex != _lastRouterIndex) {
+      _lastRouterIndex = currentIndex;
+      if (initialVisibleIndex != -1) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_pageController?.hasClients == true) {
+            final int currentPage = _pageController!.page?.round() ?? 0;
+            if (currentPage != initialVisibleIndex) {
+              _pageController!.animateToPage(
+                initialVisibleIndex,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOutCubic,
+              );
+            }
+          }
+        });
+      }
+    }
 
     return Scaffold(
       extendBody: false,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onHorizontalDragEnd: (details) {
-          final primaryVelocity = details.primaryVelocity ?? 0;
-          if (primaryVelocity < -300) {
-            // Swiped left -> Go to next page
-            final nextIndex = selectedIndex + 1;
-            if (nextIndex <= 4) {
-              HapticFeedback.lightImpact();
-              _onItemTapped(nextIndex, context);
-            }
-          } else if (primaryVelocity > 300) {
-            // Swiped right -> Go to previous page
-            final prevIndex = selectedIndex - 1;
-            if (prevIndex >= 0) {
-              HapticFeedback.lightImpact();
-              _onItemTapped(prevIndex, context);
-            }
-          }
-        },
-        child: child,
-      ),
+      body: initialVisibleIndex == -1 
+          // If navigated via URL to a hidden branch, show it directly (so PermissionGuard triggers)
+          ? widget.children[currentIndex]
+          : PageView(
+              controller: _pageController,
+              onPageChanged: (index) => _onPageChanged(index, visibleIndices),
+              children: visiblePages,
+            ),
       bottomNavigationBar: _StyledBottomNav(
-        selectedIndex: selectedIndex,
+        selectedIndex: currentIndex,
         canViewStudents: canViewStudents,
         canViewPayments: canViewPayments,
-        onTap: (index) => _onItemTapped(index, context),
+        onTap: _onItemTapped,
       ),
     );
   }
+}
 
-  int _calculateSelectedIndex(BuildContext context) {
-    final String location = GoRouterState.of(context).uri.path;
-    if (location.startsWith('/dashboard')) return 0;
-    if (location.startsWith('/batches')) return 1;
-    if (location.startsWith('/students')) return 2;
-    if (location.startsWith('/payments')) return 3;
-    if (location.startsWith('/settings')) return 4;
-    if (location.startsWith('/reports')) return 4;
-    return 0;
-  }
+class KeepAliveWidget extends StatefulWidget {
+  final Widget child;
+  const KeepAliveWidget({super.key, required this.child});
 
-  void _onItemTapped(int index, BuildContext context) {
-    switch (index) {
-      case 0:
-        context.go('/dashboard');
-        break;
-      case 1:
-        context.go('/batches');
-        break;
-      case 2:
-        context.go('/students');
-        break;
-      case 3:
-        context.go('/payments');
-        break;
-      case 4:
-        context.go('/settings');
-        break;
-    }
+  @override
+  State<KeepAliveWidget> createState() => _KeepAliveWidgetState();
+}
+
+class _KeepAliveWidgetState extends State<KeepAliveWidget> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
   }
 }
 

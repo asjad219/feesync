@@ -105,8 +105,6 @@ class StudentSelectionButton extends StatelessWidget {
 class PendingDuesSelector extends StatelessWidget {
   final List<Due> dues;
   final List<String> selectedDueIds;
-  final bool isAdvancePayment;
-  final ValueChanged<bool> onAdvancePaymentChanged;
   final void Function(Due due, bool isSelected) onDueToggled;
   final String? currencyCode;
 
@@ -114,8 +112,6 @@ class PendingDuesSelector extends StatelessWidget {
     super.key,
     required this.dues,
     required this.selectedDueIds,
-    required this.isAdvancePayment,
-    required this.onAdvancePaymentChanged,
     required this.onDueToggled,
     this.currencyCode,
   });
@@ -146,17 +142,13 @@ class PendingDuesSelector extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Record as Advance Payment', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                      Text('Advance Payment Mode', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
                       const SizedBox(height: 4),
-                      Text('Since there are no pending dues, this payment will be added to the student\'s advance balance.', style: GoogleFonts.inter(fontSize: 11, color: AppColors.textTertiary)),
+                      Text('Since there are no pending dues, any amount recorded will be automatically added to the student\'s advance balance.', style: GoogleFonts.inter(fontSize: 11, color: AppColors.textTertiary)),
                     ],
                   ),
                 ),
-                Switch(
-                  value: isAdvancePayment,
-                  onChanged: onAdvancePaymentChanged,
-                  activeThumbColor: AppColors.primary,
-                ),
+                Icon(Icons.account_balance_wallet_rounded, color: AppColors.primary),
               ],
             ),
           ),
