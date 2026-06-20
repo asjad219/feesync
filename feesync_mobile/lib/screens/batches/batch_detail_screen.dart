@@ -1342,7 +1342,7 @@ class _AttendanceHistoryView extends ConsumerWidget {
 
     return historyAsync.when(
       data: (records) {
-        if (records.isEmpty) return _buildEmptyHistory();
+        if (records.isEmpty) return _buildEmptyHistory(context);
         
         // Group by date
         final Map<String, List<AttendanceRecord>> grouped = {};
@@ -1380,7 +1380,7 @@ class _AttendanceHistoryView extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyHistory() {
+  Widget _buildEmptyHistory(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
     return Center(
@@ -2662,13 +2662,13 @@ class _AnalyticsTab extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildAttendanceTrend(analytics),
+              _buildAttendanceTrend(context, analytics),
               const SizedBox(height: 24),
-              _buildCollectionTrend(analytics),
+              _buildCollectionTrend(context, analytics),
               const SizedBox(height: 24),
-              _buildStudentMetrics(analytics),
+              _buildStudentMetrics(context, analytics),
               const SizedBox(height: 24),
-              _buildAiInsights(analytics),
+              _buildAiInsights(context, analytics),
               const SizedBox(height: 32),
               _buildAdminDangerZone(context, ref),
             ],
@@ -2680,7 +2680,7 @@ class _AnalyticsTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildAttendanceTrend(BatchAnalytics data) {
+  Widget _buildAttendanceTrend(BuildContext context, BatchAnalytics data) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
@@ -2693,7 +2693,7 @@ class _AnalyticsTab extends ConsumerWidget {
           Text('Attendance Trend', style: GoogleFonts.manrope(fontWeight: FontWeight.bold, color: textPrimaryColor)),
           const SizedBox(height: 24),
           if (data.attendanceTrend.isEmpty)
-            _buildEmptyState('No attendance recorded yet')
+            _buildEmptyState(context, 'No attendance recorded yet')
           else
             SizedBox(
               height: 120,
@@ -2732,7 +2732,7 @@ class _AnalyticsTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildCollectionTrend(BatchAnalytics data) {
+  Widget _buildCollectionTrend(BuildContext context, BatchAnalytics data) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
@@ -2745,7 +2745,7 @@ class _AnalyticsTab extends ConsumerWidget {
           Text('Collection Trend', style: GoogleFonts.manrope(fontWeight: FontWeight.bold, color: textPrimaryColor)),
           const SizedBox(height: 24),
           if (data.collectionTrend.isEmpty)
-            _buildEmptyState('No collections recorded yet')
+            _buildEmptyState(context, 'No collections recorded yet')
           else
             SizedBox(
               height: 120,
@@ -2787,7 +2787,7 @@ class _AnalyticsTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildStudentMetrics(BatchAnalytics data) {
+  Widget _buildStudentMetrics(BuildContext context, BatchAnalytics data) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textSecondaryColor = isDark ? const Color(0xFFC3C6D7) : const Color(0xFF475569);
@@ -2833,7 +2833,7 @@ class _AnalyticsTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildAiInsights(BatchAnalytics data) {
+  Widget _buildAiInsights(BuildContext context, BatchAnalytics data) {
     return GlassCard(
       padding: const EdgeInsets.all(20),
       borderColor: activeAccentColor.withValues(alpha: 0.3),
@@ -2848,13 +2848,13 @@ class _AnalyticsTab extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 16),
-          ...data.aiInsights.map((text) => _buildInsightRow(text)),
+          ...data.aiInsights.map((text) => _buildInsightRow(context, text)),
         ],
       ),
     );
   }
 
-  Widget _buildInsightRow(String text) {
+  Widget _buildInsightRow(BuildContext context, String text) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textSecondaryColor = isDark ? const Color(0xFFC3C6D7) : const Color(0xFF475569);
     return Padding(
@@ -2869,7 +2869,7 @@ class _AnalyticsTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(String msg) {
+  Widget _buildEmptyState(BuildContext context, String msg) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
     return Center(
