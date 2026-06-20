@@ -51,7 +51,7 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
     final analytics = ref.watch(batchAnalyticsProvider(widget.batchId)).valueOrNull;
     final students = ref.watch(batchStudentsProvider(widget.batchId)).valueOrNull;
 
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final Color scaffoldBgColor = isDark ? const Color(0xFF0D0D1A) : const Color(0xFFF8FAFC);
     final Color primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
     final Color textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
@@ -220,7 +220,7 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
   }
 
   Widget _buildHeroHeader(Batch batch, BatchAnalytics? analytics, List<StudentBalance>? students) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final scaffoldBgColor = isDark ? const Color(0xFF0D0D1A) : const Color(0xFFF8FAFC);
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textSecondaryColor = isDark ? const Color(0xFFC3C6D7) : const Color(0xFF475569);
@@ -347,7 +347,7 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
   }
 
   Widget _buildStickyTabBar(Color accentColor) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final Color unselectedLabelColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
     return SliverPersistentHeader(
       pinned: true,
@@ -410,12 +410,11 @@ HealthScoreResult _calculateHealthData(Batch batch, BatchAnalytics? analytics, L
     return HealthScoreResult(score: 0, statusText: 'No Students');
   }
 
-  final bool hasAttendance = analytics != null && analytics.attendanceTrend.isNotEmpty;
-  final bool hasFeeData = (batch.revenueGenerated > 0 || batch.pendingDues > 0);
-
-  if (batch.studentCount < 3 || !hasAttendance || !hasFeeData) {
+  if (batch.studentCount < 3) {
     return HealthScoreResult(score: 0, statusText: '', isInsufficientData: true);
   }
+
+  final bool hasAttendance = analytics != null && analytics.attendanceTrend.isNotEmpty;
 
   // Occupancy Score (30%)
   final double occupancyRatio = batch.maxCapacity > 0 ? (batch.studentCount / batch.maxCapacity) : 0.0;
@@ -469,7 +468,7 @@ class _AiHealthScore extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (result.isInsufficientData) {
       return GestureDetector(
@@ -583,7 +582,7 @@ class _AiHealthScore extends StatelessWidget {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        final bool isDark = AppColors.isDarkMode;
+        final bool isDark = Theme.of(context).brightness == Brightness.dark;
         final Color surfaceColor = isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF);
         final Color textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
         
@@ -617,7 +616,7 @@ class _AiHealthScore extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Add at least 3 students, record attendance, and manage fees to unlock AI insights.',
+                  'Add at least 3 students to unlock AI insights.',
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     color: AppColors.textSecondary,
@@ -670,7 +669,7 @@ class _HeaderStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
 
@@ -696,7 +695,7 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final scaffoldBgColor = isDark ? const Color(0xFF0D0D1A) : const Color(0xFFF8FAFC);
     return Container(
       color: scaffoldBgColor,
@@ -777,7 +776,7 @@ class _OverviewTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final sessions = _generateUpcomingSessions(batch);
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textSecondaryColor = isDark ? const Color(0xFFC3C6D7) : const Color(0xFF475569);
@@ -790,7 +789,7 @@ class _OverviewTab extends StatelessWidget {
         children: [
           _buildQuickActions(context),
           const SizedBox(height: 28),
-          _buildSectionHeader('Upcoming Schedule'),
+          _buildSectionHeader(context, 'Upcoming Schedule'),
           const SizedBox(height: 12),
           ...sessions.map((session) {
             final date = session['date'] as DateTime;
@@ -910,8 +909,8 @@ class _OverviewTab extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
-    final bool isDark = AppColors.isDarkMode;
+  Widget _buildSectionHeader(BuildContext context, String title) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -937,7 +936,7 @@ class _QuickAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textSecondaryColor = isDark ? const Color(0xFFC3C6D7) : const Color(0xFF475569);
     return GestureDetector(
       onTap: onTap,
@@ -968,7 +967,7 @@ class _StudentsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final studentsAsync = ref.watch(batchStudentsProvider(batchId));
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
 
@@ -1038,7 +1037,7 @@ class _StudentListTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
 
@@ -1115,7 +1114,7 @@ class _AttendanceTabState extends ConsumerState<_AttendanceTab> {
   }
 
   Widget _buildViewToggle() {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final surfaceContainerColor = isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF);
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
@@ -1161,7 +1160,7 @@ class _ToggleItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
 
@@ -1198,7 +1197,7 @@ class _MarkAttendanceView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final studentsAsync = ref.watch(batchStudentsProvider(batchId));
     final attendanceState = ref.watch(dailyAttendanceProvider(batchId));
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
 
     return Column(
@@ -1289,7 +1288,7 @@ class _MarkAttendanceView extends ConsumerWidget {
   }
 
   Widget _buildAttendanceHeader(BuildContext context, WidgetRef ref, List<StudentBalance> students) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
 
@@ -1338,7 +1337,7 @@ class _AttendanceHistoryView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final historyAsync = ref.watch(batchAttendanceProvider(batchId));
     final studentsAsync = ref.watch(batchStudentsProvider(batchId));
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
 
     return historyAsync.when(
@@ -1382,7 +1381,7 @@ class _AttendanceHistoryView extends ConsumerWidget {
   }
 
   Widget _buildEmptyHistory() {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
     return Center(
       child: Column(
@@ -1397,7 +1396,7 @@ class _AttendanceHistoryView extends ConsumerWidget {
   }
 
   void _showSessionDetails(BuildContext context, DateTime date, List<AttendanceRecord> records, Map<String, String> studentNames) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
       isDismissible: false,
@@ -1426,7 +1425,7 @@ class _HistoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final percentage = (presentCount / totalCount * 100).toInt();
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
     final healthColor = percentage > 80 
@@ -1552,7 +1551,7 @@ class _SessionDetailsSheetState extends ConsumerState<_SessionDetailsSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
     final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
@@ -1733,7 +1732,7 @@ class _AttendanceRosterTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final status = ref.watch(dailyAttendanceProvider(batchId).select((s) => s.statuses[student.id]));
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
 
     return GlassCard(
@@ -1797,7 +1796,7 @@ class _StatusToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -1831,7 +1830,7 @@ class _FeesTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final studentsAsync = ref.watch(batchStudentsProvider(batchId));
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
@@ -1944,7 +1943,7 @@ class _FeesTab extends ConsumerWidget {
   }
 
   void _sendBulkReminders(BuildContext context, List<StudentBalance> defaulters) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
       backgroundColor: isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF),
@@ -1990,7 +1989,7 @@ class _CircleProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textSecondaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
 
@@ -2035,7 +2034,7 @@ class _DefaulterTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
 
     return Container(
@@ -2087,7 +2086,7 @@ class _DefaulterTile extends ConsumerWidget {
   }
 
   void _showSingleReminder(BuildContext context) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
       backgroundColor: isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF),
@@ -2181,7 +2180,7 @@ class _ReminderPreviewSheetState extends ConsumerState<_ReminderPreviewSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
 
@@ -2514,7 +2513,7 @@ class _BulkSendProgressDialogState extends ConsumerState<_BulkSendProgressDialog
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textSecondaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
 
@@ -2650,7 +2649,7 @@ class _AnalyticsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final analyticsAsync = ref.watch(batchAnalyticsProvider(batchId));
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
 
     return analyticsAsync.when(
@@ -2682,7 +2681,7 @@ class _AnalyticsTab extends ConsumerWidget {
   }
 
   Widget _buildAttendanceTrend(BatchAnalytics data) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
 
@@ -2734,7 +2733,7 @@ class _AnalyticsTab extends ConsumerWidget {
   }
 
   Widget _buildCollectionTrend(BatchAnalytics data) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
 
@@ -2789,7 +2788,7 @@ class _AnalyticsTab extends ConsumerWidget {
   }
 
   Widget _buildStudentMetrics(BatchAnalytics data) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textSecondaryColor = isDark ? const Color(0xFFC3C6D7) : const Color(0xFF475569);
 
@@ -2856,7 +2855,7 @@ class _AnalyticsTab extends ConsumerWidget {
   }
 
   Widget _buildInsightRow(String text) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textSecondaryColor = isDark ? const Color(0xFFC3C6D7) : const Color(0xFF475569);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -2871,7 +2870,7 @@ class _AnalyticsTab extends ConsumerWidget {
   }
 
   Widget _buildEmptyState(String msg) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
     return Center(
       child: Padding(
@@ -2890,7 +2889,7 @@ class _AnalyticsTab extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2973,7 +2972,7 @@ class _AnalyticsTab extends ConsumerWidget {
   }
 
   void _confirmDeleteBatch(BuildContext context, WidgetRef ref) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     bool isDeleting = false;
     String? errorMessage;

@@ -199,8 +199,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           return MainShell(navigationShell: navigationShell, children: children);
         },
         builder: (context, state, navigationShell) {
-          return const SizedBox.shrink(); // ignored when using navigatorContainerBuilder
+          // Must return navigationShell so GoRouter puts StatefulNavigationShell
+          // in the widget tree. navigatorContainerBuilder is then invoked by
+          // navigationShell.build() to produce the actual MainShell UI.
+          // Returning SizedBox.shrink() here caused the black screen — the shell
+          // was never rendered because navigationShell was never mounted.
+          return navigationShell;
         },
+
         branches: [
           StatefulShellBranch(
             routes: [

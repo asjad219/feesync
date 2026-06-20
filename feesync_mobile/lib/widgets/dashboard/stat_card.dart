@@ -28,7 +28,7 @@ class StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
     final primaryLightColor = isDark ? const Color(0xFFEEEFFF) : const Color(0xFFEBF0FF);
     final secondaryColor = isDark ? const Color(0xFFD0BCFF) : const Color(0xFF7C3AED);

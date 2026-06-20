@@ -9,6 +9,31 @@ import 'student_provider.dart';
 import 'batch_provider.dart';
 import 'dashboard_provider.dart';
 
+// ── Toast cooldown guard ─────────────────────────────────────────────────────
+
+/// Tracks the last time the offline toast was shown.
+/// Prevents multiple providers from spamming the user with repeated toasts.
+final _lastOfflineToastTimeProvider = StateProvider<DateTime?>((ref) => null);
+
+/// Shows the offline toast at most once every 30 seconds.
+/// Call this instead of directly setting [offlineToastProvider].
+void showOfflineToastIfCooledDown(
+  Ref ref, [
+  String message = "You're offline. Showing saved data.",
+]) {
+  const cooldown = Duration(seconds: 30);
+  final lastTime = ref.read(_lastOfflineToastTimeProvider);
+  final now = DateTime.now();
+
+  if (lastTime == null || now.difference(lastTime) >= cooldown) {
+    ref.read(_lastOfflineToastTimeProvider.notifier).state = now;
+    ref.read(offlineToastProvider.notifier).state = message;
+    debugPrint('[Toast] Offline toast shown at $now');
+  } else {
+    debugPrint('[Toast] Offline toast suppressed (cooldown active)');
+  }
+}
+
 // Provides the SharedPreferences instance (overridden in main.dart)
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError('sharedPreferencesProvider must be overridden in ProviderScope');

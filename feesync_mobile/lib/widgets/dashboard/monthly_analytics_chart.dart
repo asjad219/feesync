@@ -28,7 +28,7 @@ class _MonthlyAnalyticsChartState extends State<MonthlyAnalyticsChart> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final activeData = selectedPeriod == 'weekly' && widget.weeklyData != null
         ? widget.weeklyData!
         : widget.data;

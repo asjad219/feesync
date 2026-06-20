@@ -26,7 +26,7 @@ class BatchListScreen extends ConsumerWidget {
 
     final batches = batchesAsync.valueOrNull;
 
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final Color primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
     final Color scaffoldBgColor = isDark ? const Color(0xFF0D0D1A) : const Color(0xFFF8FAFC);
     final Color textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
@@ -118,7 +118,7 @@ class BatchListScreen extends ConsumerWidget {
                       );
                     },
                     loading: () => _buildLoadingState(primaryColor),
-                    error: (err, stack) => _buildErrorState(err.toString()),
+                    error: (err, stack) => _buildErrorState(err.toString(), isDark),
                   ),
                 ],
               ),
@@ -357,12 +357,12 @@ class BatchListScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildErrorState(String error) {
+  Widget _buildErrorState(String error, bool isDark) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
       child: RetryErrorPlaceholder(
         message: 'Could not load batches. Tap to retry.',
-        isDark: AppColors.isDarkMode,
+        isDark: isDark,
         onRetry: () {},
       ),
     );
@@ -404,7 +404,7 @@ class _BatchesTopBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final surfaceContainerColor = isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF);
 
@@ -461,7 +461,7 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
 

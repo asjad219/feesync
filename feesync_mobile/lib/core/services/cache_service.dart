@@ -173,6 +173,14 @@ class CacheService {
     return _loadList(_getKey(accountId, 'monthly_stats'), MonthlyStat.fromJson);
   }
 
+  Future<void> saveWeeklyStats(String accountId, List<MonthlyStat> stats) async {
+    await _saveList(_getKey(accountId, 'weekly_stats'), stats, (s) => s.toJson());
+  }
+
+  Future<List<MonthlyStat>?> loadWeeklyStats(String accountId) async {
+    return _loadList(_getKey(accountId, 'weekly_stats'), MonthlyStat.fromJson);
+  }
+
   Future<void> saveRecentTransactions(String accountId, List<RecentTransaction> txs) async {
     await _saveList(_getKey(accountId, 'recent_transactions'), txs, (t) => t.toJson());
   }

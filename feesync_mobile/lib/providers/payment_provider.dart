@@ -59,7 +59,7 @@ class PaymentNotifier extends StateNotifier<AsyncValue<List<Payment>>> {
     try {
       final payments = await _repository
           .getPayments()
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 15));
       await _cache.savePayments(_accountId, payments);
       _ref.read(lastSyncTimesProvider.notifier).update(
             (s) => {...s, 'payments': DateTime.now()},
@@ -69,7 +69,7 @@ class PaymentNotifier extends StateNotifier<AsyncValue<List<Payment>>> {
     } catch (e, st) {
       debugPrint('[Payments][OFFLINE] loadPayments failed: $e');
       if (state is AsyncData) {
-        _ref.read(offlineToastProvider.notifier).state = "You're offline. Showing saved data.";
+        showOfflineToastIfCooledDown(_ref);
       } else {
         state = AsyncValue.error(e, st);
       }

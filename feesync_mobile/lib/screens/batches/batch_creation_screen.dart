@@ -139,7 +139,7 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
   }
 
   Future<void> _selectTime(int day, bool isStart) async {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final currentTime = _daySchedules[day]![isStart ? 'start' : 'end']!;
     final TimeOfDay? picked = await showTimePicker(
       context: context,
@@ -329,7 +329,7 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final Color scaffoldBgColor = isDark ? const Color(0xFF0D0D1A) : const Color(0xFFF8FAFC);
     final Color textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final Color primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
@@ -1134,7 +1134,7 @@ class _StepWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textSecondaryColor = isDark ? const Color(0xFFC3C6D7) : const Color(0xFF475569);
 

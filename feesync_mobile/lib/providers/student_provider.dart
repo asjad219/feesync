@@ -58,7 +58,7 @@ class StudentBalancesNotifier
     try {
       final balances = await _repo
           .getStudentBalances()
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 15));
       await _cache.saveStudentBalances(_accountId, balances);
       _ref.read(lastSyncTimesProvider.notifier).update(
             (s) => {...s, 'students': DateTime.now()},
@@ -68,7 +68,8 @@ class StudentBalancesNotifier
     } catch (e, st) {
       debugPrint('[Students][OFFLINE] getStudentBalances failed: $e');
       if (state is AsyncData) {
-        _ref.read(offlineToastProvider.notifier).state = "You're offline. Showing saved data.";
+        // Keep showing cached data — only notify once per cooldown period.
+        showOfflineToastIfCooledDown(_ref);
       } else {
         state = AsyncValue.error(e, st);
       }
@@ -97,10 +98,11 @@ class StudentsNotifier extends StateNotifier<AsyncValue<List<Student>>> {
     try {
       final students = await _repo
           .getStudents()
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 15));
       state = AsyncValue.data(students);
     } catch (e, st) {
       debugPrint('[Students][OFFLINE] getStudents failed: $e');
+      // Preserve existing data on error — don't overwrite with error state
       if (state is! AsyncData) {
         state = AsyncValue.error(e, st);
       }
@@ -186,15 +188,21 @@ class StudentNotifier extends StateNotifier<AsyncValue<List<Student>>> {
   }
 
   Future<void> loadStudents() async {
-    state = const AsyncValue.loading();
+    // Do NOT reset to loading if we already have data — prevents flickering on refresh
+    if (state is! AsyncData) {
+      state = const AsyncValue.loading();
+    }
     try {
       final students = await _repository
           .getStudents()
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 15));
       state = AsyncValue.data(students);
     } catch (e, st) {
       debugPrint('[StudentNotifier][OFFLINE] loadStudents failed: $e');
-      state = AsyncValue.error(e, st);
+      // Only set error if there's no existing data to show
+      if (state is! AsyncData) {
+        state = AsyncValue.error(e, st);
+      }
     }
   }
 

@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/dashboard_stats.dart';
+import '../models/student.dart';
+import '../models/fee.dart';
 import '../repositories/payment_repository.dart';
 import '../repositories/student_repository.dart';
 import '../repositories/fee_repository.dart';
@@ -70,7 +72,8 @@ class DashboardStatsNotifier extends StateNotifier<AsyncValue<DashboardStats>> {
     } catch (e, st) {
       debugPrint('[Dashboard][OFFLINE] getDashboardStats failed: $e');
       if (state is AsyncData) {
-        _ref.read(offlineToastProvider.notifier).state = "You're offline. Showing saved data.";
+        // Keep showing cached data — only toast once per cooldown period.
+        showOfflineToastIfCooledDown(_ref);
       } else {
         state = AsyncValue.error(e, st);
       }
@@ -84,8 +87,9 @@ class MonthlyStatsNotifier extends StateNotifier<AsyncValue<List<MonthlyStat>>> 
   final DashboardAnalyticsRepository _repo;
   final CacheService _cache;
   final String? _accountId;
+  final Ref _ref;
 
-  MonthlyStatsNotifier(this._repo, this._cache, this._accountId)
+  MonthlyStatsNotifier(this._repo, this._cache, this._accountId, this._ref)
       : super(const AsyncValue.loading()) {
     _init();
   }
@@ -109,7 +113,9 @@ class MonthlyStatsNotifier extends StateNotifier<AsyncValue<List<MonthlyStat>>> 
       state = AsyncValue.data(data);
     } catch (e, st) {
       debugPrint('[Dashboard][OFFLINE] getMonthlyCollectionData failed: $e');
-      if (state is! AsyncData) {
+      if (state is AsyncData) {
+        showOfflineToastIfCooledDown(_ref);
+      } else {
         state = AsyncValue.error(e, st);
       }
     }
@@ -120,19 +126,42 @@ class MonthlyStatsNotifier extends StateNotifier<AsyncValue<List<MonthlyStat>>> 
 
 class WeeklyStatsNotifier extends StateNotifier<AsyncValue<List<MonthlyStat>>> {
   final DashboardAnalyticsRepository _repo;
+  final CacheService _cache;
+  final String? _accountId;
+  final Ref _ref;
 
-  WeeklyStatsNotifier(this._repo)
+  WeeklyStatsNotifier(this._repo, this._cache, this._accountId, this._ref)
       : super(const AsyncValue.loading()) {
-    fetch();
+    _init();
+  }
+
+  Future<void> _init() async {
+    if (_accountId != null) {
+      // 1. Emit cached data immediately (zero-wait render)
+      final cached = await _cache.loadWeeklyStats(_accountId);
+      if (cached != null) {
+        state = AsyncValue.data(cached);
+        debugPrint('[Dashboard] Loaded weekly stats from cache');
+      }
+    }
+    // 2. Fetch from network in background
+    await fetch();
   }
 
   Future<void> fetch() async {
     try {
       final data = await _repo.getWeeklyCollectionData();
+      if (_accountId != null) {
+        await _cache.saveWeeklyStats(_accountId, data);
+      }
       state = AsyncValue.data(data);
+      debugPrint('[Dashboard] Fetched fresh weekly stats from network');
     } catch (e, st) {
       debugPrint('[Dashboard][OFFLINE] getWeeklyCollectionData failed: $e');
-      if (state is! AsyncData) {
+      // Only set error state if there is no cached data to show
+      if (state is AsyncData) {
+        showOfflineToastIfCooledDown(_ref);
+      } else {
         state = AsyncValue.error(e, st);
       }
     }
@@ -146,8 +175,9 @@ class RecentTransactionsNotifier
   final DashboardAnalyticsRepository _repo;
   final CacheService _cache;
   final String? _accountId;
+  final Ref _ref;
 
-  RecentTransactionsNotifier(this._repo, this._cache, this._accountId)
+  RecentTransactionsNotifier(this._repo, this._cache, this._accountId, this._ref)
       : super(const AsyncValue.loading()) {
     _init();
   }
@@ -171,7 +201,9 @@ class RecentTransactionsNotifier
       state = AsyncValue.data(data);
     } catch (e, st) {
       debugPrint('[Dashboard][OFFLINE] getRecentTransactions failed: $e');
-      if (state is! AsyncData) {
+      if (state is AsyncData) {
+        showOfflineToastIfCooledDown(_ref);
+      } else {
         state = AsyncValue.error(e, st);
       }
     }
@@ -223,8 +255,6 @@ final _accountIdProvider = Provider<String?>((ref) {
   return authState.value?.id;
 });
 
-
-
 final dashboardStatsProvider =
     StateNotifierProvider<DashboardStatsNotifier, AsyncValue<DashboardStats>>(
         (ref) {
@@ -239,12 +269,14 @@ final monthlyCollectionDataProvider = StateNotifierProvider<MonthlyStatsNotifier
   final repo = ref.watch(dashboardAnalyticsRepositoryProvider);
   final cache = ref.watch(cacheServiceProvider);
   final accountId = ref.watch(_accountIdProvider);
-  return MonthlyStatsNotifier(repo, cache, accountId);
+  return MonthlyStatsNotifier(repo, cache, accountId, ref);
 });
 
 final weeklyCollectionDataProvider = StateNotifierProvider<WeeklyStatsNotifier, AsyncValue<List<MonthlyStat>>>((ref) {
   final repo = ref.watch(dashboardAnalyticsRepositoryProvider);
-  return WeeklyStatsNotifier(repo);
+  final cache = ref.watch(cacheServiceProvider);
+  final accountId = ref.watch(_accountIdProvider);
+  return WeeklyStatsNotifier(repo, cache, accountId, ref);
 });
 
 final recentTransactionsProvider = StateNotifierProvider<
@@ -252,7 +284,7 @@ final recentTransactionsProvider = StateNotifierProvider<
   final repo = ref.watch(dashboardAnalyticsRepositoryProvider);
   final cache = ref.watch(cacheServiceProvider);
   final accountId = ref.watch(_accountIdProvider);
-  return RecentTransactionsNotifier(repo, cache, accountId);
+  return RecentTransactionsNotifier(repo, cache, accountId, ref);
 });
 
 final classCollectionDataProvider = StateNotifierProvider<
@@ -280,7 +312,7 @@ class DashboardAnalyticsRepository {
   final FeeRepository _feeRepo;
   final SupabaseClient _client;
   static const _excludedDueStatuses = {'cancelled', 'deleted'};
-  static const _timeout = Duration(seconds: 10);
+  static const _timeout = Duration(seconds: 15);
 
   DashboardAnalyticsRepository(
     this._paymentRepo,
@@ -311,18 +343,36 @@ class DashboardAnalyticsRepository {
       final previousCycleRange = _previousRangeForCycle(cycleRange, cycle);
 
       final results = await Future.wait<dynamic>([
-        _studentRepo.getStudents().timeout(_timeout),
-        _studentRepo.getStudentBalances().timeout(_timeout),
+        _studentRepo.getStudents().catchError((e) {
+          debugPrint('[DashboardAnalytics] getStudents error: $e');
+          return <Student>[];
+        }).timeout(_timeout),
+        _studentRepo.getStudentBalances().catchError((e) {
+          debugPrint('[DashboardAnalytics] getStudentBalances error: $e');
+          return <StudentBalance>[];
+        }).timeout(_timeout),
         _paymentRepo.getTotalCollection(
           startDate: cycleRange.start,
           endDate: cycleRange.endInclusive,
-        ).timeout(_timeout),
+        ).catchError((e) {
+          debugPrint('[DashboardAnalytics] getTotalCollection (current) error: $e');
+          return {'total': 0.0, 'count': 0};
+        }).timeout(_timeout),
         _paymentRepo.getTotalCollection(
           startDate: previousCycleRange.start,
           endDate: previousCycleRange.endInclusive,
-        ).timeout(_timeout),
-        _paymentRepo.getTotalCollection().timeout(_timeout),
-        _feeRepo.getDues().timeout(_timeout),
+        ).catchError((e) {
+          debugPrint('[DashboardAnalytics] getTotalCollection (prev) error: $e');
+          return {'total': 0.0, 'count': 0};
+        }).timeout(_timeout),
+        _paymentRepo.getTotalCollection().catchError((e) {
+          debugPrint('[DashboardAnalytics] getTotalCollection (all time) error: $e');
+          return {'total': 0.0, 'count': 0};
+        }).timeout(_timeout),
+        _feeRepo.getDues().catchError((e) {
+          debugPrint('[DashboardAnalytics] getDues error: $e');
+          return <Due>[];
+        }).timeout(_timeout),
       ]);
 
       final students = results[0] as List;

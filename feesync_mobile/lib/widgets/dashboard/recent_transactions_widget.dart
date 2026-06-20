@@ -18,7 +18,7 @@ class RecentTransactionsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
     final cardColor = isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF);
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
@@ -155,7 +155,7 @@ class _TransactionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = AppColors.isDarkMode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);

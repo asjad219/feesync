@@ -54,7 +54,7 @@ class BatchNotifier extends StateNotifier<AsyncValue<List<Batch>>> {
     try {
       final batches = await _repository
           .getBatches()
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 15));
       await _cache.saveBatches(_accountId, batches);
       _ref.read(lastSyncTimesProvider.notifier).update(
             (s) => {...s, 'batches': DateTime.now()},
@@ -64,7 +64,7 @@ class BatchNotifier extends StateNotifier<AsyncValue<List<Batch>>> {
     } catch (e, st) {
       debugPrint('[Batches][OFFLINE] loadBatches failed: $e');
       if (state is AsyncData) {
-        _ref.read(offlineToastProvider.notifier).state = "You're offline. Showing saved data.";
+        showOfflineToastIfCooledDown(_ref);
       } else {
         state = AsyncValue.error(e, st);
       }

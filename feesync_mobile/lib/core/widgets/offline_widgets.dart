@@ -5,17 +5,59 @@ import 'package:intl/intl.dart';
 import '../services/network_service.dart';
 import '../../providers/sync_provider.dart';
 
-// ── Offline Banner ────────────────────────────────────────────────────────────
+// ── Offline Banner ─────────────────────────────────────────────────────
 
 /// Amber banner shown when the device is offline.
 /// Shows the most recent sync time below the message.
-class OfflineBanner extends ConsumerWidget {
+class OfflineBanner extends ConsumerStatefulWidget {
   const OfflineBanner({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<OfflineBanner> createState() => _OfflineBannerState();
+}
+
+class _OfflineBannerState extends ConsumerState<OfflineBanner>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _fadeAnimation;
+  bool _wasOffline = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, -1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final isOnlineAsync = ref.watch(isOnlineProvider);
+    // While checking connectivity, assume online to avoid flash
     final isOnline = isOnlineAsync.value ?? true;
+
+    if (!isOnline && !_wasOffline) {
+      _wasOffline = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _controller.forward();
+      });
+    } else if (isOnline && _wasOffline) {
+      _wasOffline = false;
+      _controller.reverse();
+    }
 
     if (isOnline) return const SizedBox.shrink();
 
@@ -28,59 +70,58 @@ class OfflineBanner extends ConsumerWidget {
       }
     }
 
-    // Removed synchronous CacheService read since it is now async and backed by SQLite.
-    // The session's lastSyncTimesProvider is sufficient for real-time updates.
-
     final syncLabel = latestSync != null
         ? 'Last synced: ${_formatSyncTime(latestSync)}'
-        : 'Not synced yet — connect to download data';
+        : 'Not synced yet — connect once to download data';
 
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 300),
-      child: Container(
-        key: const ValueKey('offline_banner'),
-        width: double.infinity,
-        color: const Color(0xFFB45309),
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-        child: SafeArea(
-          bottom: false,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  const Icon(
-                    Icons.wifi_off_rounded,
-                    color: Colors.white,
-                    size: 16,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'No internet — showing cached data',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
+    return SlideTransition(
+      position: _slideAnimation,
+      child: FadeTransition(
+        opacity: _fadeAnimation,
+        child: Container(
+          width: double.infinity,
+          color: const Color(0xFFB45309),
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.wifi_off_rounded,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'No internet — showing cached data',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 2),
-              Padding(
-                padding: const EdgeInsets.only(left: 24),
-                child: Text(
-                  syncLabel,
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white.withValues(alpha: 0.8),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Padding(
+                  padding: const EdgeInsets.only(left: 24),
+                  child: Text(
+                    syncLabel,
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white.withValues(alpha: 0.8),
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
