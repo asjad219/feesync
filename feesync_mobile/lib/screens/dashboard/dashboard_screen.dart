@@ -15,6 +15,7 @@ import '../../providers/dashboard_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/subscription_provider.dart';
+
 import '../../widgets/dashboard/monthly_analytics_chart.dart';
 import '../../widgets/dashboard/recent_transactions_widget.dart';
 import '../../widgets/dashboard/stat_card.dart';
@@ -214,25 +215,37 @@ class _DashboardTopBar extends StatelessWidget implements PreferredSizeWidget {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               child: Row(
                 children: [
-                  Container(
-                    width: 46,
-                    height: 46,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: primaryColor.withValues(alpha: isDark ? 0.25 : 0.15),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
+                  Consumer(
+                    builder: (context, ref, _) {
+                      return Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isDark
+                              ? const Color(0xFF2A2A3C)
+                              : const Color(0xFFE8EEFF),
+                          boxShadow: [
+                            BoxShadow(
+                              color: primaryColor
+                                  .withValues(alpha: isDark ? 0.25 : 0.15),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                          border: Border.all(
+                              color: primaryColor.withValues(alpha: 0.3),
+                              width: 2),
                         ),
-                      ],
-                      border: Border.all(color: primaryColor.withValues(alpha: 0.3), width: 2),
-                      image: const DecorationImage(
-                        image: NetworkImage('https://lh3.googleusercontent.com/aida-public/AB6AXuDFatqCXii6QXM23ITxI_J4L-gdJ3kpvJv3DVnywZap9XQDhFpegBVGt_Sj_kClmsz_lg-7ld9TAuw-ynUMnTURqFRfYSBK5X86Qu7tT9zDN4XKNsxFubjQfu50sy9M_AAL57qfJKz2WL0TDKAhrkAUpkfbAJAfbaQe5uAcPOkbXgxXEjRC_iKVXAJ2hTohysOQA6Is60PVERp8yHLsNF4sjZmQ0YrvcZevc91XzzHhwknnfHTk1eUvO_jq-vhKTqWhWFNQd1yHXpMb'),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
+                        child: Icon(
+                          Icons.person_rounded,
+                          color: primaryColor,
+                          size: 24,
+                        ),
+                      );
+                    },
                   ),
+
                   const SizedBox(width: 14),
                   Expanded(
                     child: Consumer(

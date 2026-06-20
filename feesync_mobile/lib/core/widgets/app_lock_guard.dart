@@ -4,6 +4,13 @@ import '../../providers/local_settings_provider.dart';
 import '../../services/app_lock_service.dart';
 import '../../screens/settings/screens/pin_lock_screen.dart';
 
+/// Guards the app with biometric/PIN lock when security settings are enabled.
+///
+/// Design principle: the [child] is ALWAYS rendered — we never block it with an
+/// invisible placeholder. When a lock is required the [PinLockScreen] is shown
+/// as a full-screen overlay on top of [child] via a [Stack]. This eliminates
+/// the black-screen flash that occurred when the old implementation replaced the
+/// entire widget tree with [SizedBox.shrink()] during the async init check.
 class AppLockGuard extends ConsumerStatefulWidget {
   final Widget child;
 
@@ -17,37 +24,13 @@ class _AppLockGuardState extends ConsumerState<AppLockGuard>
     with WidgetsBindingObserver {
   bool _isLocked = false;
   bool _isAuthenticating = false;
-  bool _isCheckingInitialState = true;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Always lock on startup if any lock is enabled, but wait for settings to load first.
-    // Cap at 5 s — if init hangs (e.g. slow storage), proceed anyway so we never freeze.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref
-          .read(localSettingsProvider.notifier)
-          .initFuture
-          .timeout(
-            const Duration(seconds: 5),
-            onTimeout: () {
-              // Settings didn't load in time — proceed with defaults.
-            },
-          )
-          .then((_) {
-        if (mounted) {
-          _checkLock(isStartup: true).then((_) {
-            if (mounted) {
-              setState(() => _isCheckingInitialState = false);
-            }
-          });
-        }
-      }).catchError((_) {
-        // Any other error — unblock the UI.
-        if (mounted) setState(() => _isCheckingInitialState = false);
-      });
-    });
+    // Run after the first frame so the child (splash/login) is already visible.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _initLock());
   }
 
   @override
@@ -56,39 +39,42 @@ class _AppLockGuardState extends ConsumerState<AppLockGuard>
     super.dispose();
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      if (_isLocked) {
-        // App was locked while in background (or startup), try biometric auth again
-        _tryBiometricUnlock();
-      }
-    } else if (state == AppLifecycleState.paused) {
-      final settings = ref.read(localSettingsProvider);
-      if ((settings.biometricEnabled || settings.pinLockEnabled) && settings.lockOnMinimize) {
-        if (!_isLocked && !_isAuthenticating) {
-          setState(() {
-            _isLocked = true;
-          });
-        }
-      }
+  Future<void> _initLock() async {
+    try {
+      // Wait for local settings to load (max 5 s).
+      await ref
+          .read(localSettingsProvider.notifier)
+          .initFuture
+          .timeout(const Duration(seconds: 5));
+    } catch (_) {
+      // Timeout or error — treat as no lock needed.
     }
-  }
 
-  Future<void> _checkLock({required bool isStartup}) async {
-    if (_isAuthenticating) return;
+    if (!mounted) return;
 
     final settings = ref.read(localSettingsProvider);
     if (!settings.biometricEnabled && !settings.pinLockEnabled) {
-      if (_isLocked) setState(() => _isLocked = false);
+      // No lock configured — nothing to do.
       return;
     }
 
-    if (isStartup || settings.lockOnMinimize) {
-      if (!_isLocked) {
-        setState(() => _isLocked = true);
+    // Lock is configured — show the lock screen and attempt biometric unlock.
+    if (mounted) setState(() => _isLocked = true);
+    await _tryBiometricUnlock();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      if (_isLocked) _tryBiometricUnlock();
+    } else if (state == AppLifecycleState.paused) {
+      final settings = ref.read(localSettingsProvider);
+      if ((settings.biometricEnabled || settings.pinLockEnabled) &&
+          settings.lockOnMinimize) {
+        if (!_isLocked && !_isAuthenticating) {
+          setState(() => _isLocked = true);
+        }
       }
-      await _tryBiometricUnlock();
     }
   }
 
@@ -97,48 +83,52 @@ class _AppLockGuardState extends ConsumerState<AppLockGuard>
     if (!settings.biometricEnabled || _isAuthenticating) return;
 
     _isAuthenticating = true;
-    final authService = ref.read(appLockServiceProvider);
-    final canUse = await authService.canUseBiometrics();
-    if (canUse) {
-      final success = await authService.authenticateWithBiometrics('Unlock FeeSync');
-      if (success && mounted) {
-        setState(() {
-          _isLocked = false;
-          _isAuthenticating = false;
-        });
-        return; // Unlocked successfully
+    try {
+      final authService = ref.read(appLockServiceProvider);
+      final canUse = await authService.canUseBiometrics();
+      if (canUse) {
+        final success =
+            await authService.authenticateWithBiometrics('Unlock FeeSync');
+        if (success && mounted) {
+          setState(() {
+            _isLocked = false;
+            _isAuthenticating = false;
+          });
+          return;
+        }
       }
+    } catch (_) {
+      // Biometric failed — fall back to PIN.
     }
     _isAuthenticating = false;
   }
 
   void _unlock() {
-    setState(() {
-      _isLocked = false;
-    });
+    if (mounted) setState(() => _isLocked = false);
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isCheckingInitialState) {
-      // Show an empty container that matches the dark background to prevent flashing the app content
-      return Directionality(
-        textDirection: TextDirection.ltr,
-        child: Container(color: const Color(0xFF0D0D1A)),
-      );
-    }
-
+    // Always render the child so the app content (splash, login, dashboard)
+    // is never blocked. The lock screen appears as an overlay when needed.
     if (!_isLocked) {
       return widget.child;
     }
 
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: PinLockScreen(
-        mode: PinLockMode.verify,
-        onSuccess: _unlock,
-        canCancel: false,
-      ),
+    // Overlay the full-screen lock screen on top of the child.
+    return Stack(
+      children: [
+        // Keep child alive underneath so it doesn't lose state.
+        Offstage(child: widget.child),
+        MaterialApp(
+          debugShowCheckedModeBanner: false,
+          home: PinLockScreen(
+            mode: PinLockMode.verify,
+            onSuccess: _unlock,
+            canCancel: false,
+          ),
+        ),
+      ],
     );
   }
 }

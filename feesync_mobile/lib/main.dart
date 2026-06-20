@@ -25,6 +25,41 @@ void main() async {
     FlutterError.presentError(details);
   };
 
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Material(
+        color: const Color(0xFF0D0D1A),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
+                const SizedBox(height: 16),
+                const Text(
+                  'Something went wrong',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  details.exceptionAsString(),
+                  style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  };
+
   runZonedGuarded(() async {
     SharedPreferences? prefs;
     CacheService? cacheService;
@@ -48,9 +83,7 @@ void main() async {
         ).timeout(const Duration(seconds: 10));
       } catch (e) {
         debugPrint('Supabase init error: $e');
-        if (e.toString().contains('invalid') || e.toString().contains('config')) {
-          initError = 'Invalid server configuration: $e';
-        }
+        initError = 'Supabase initialization failed: $e';
       }
 
       // Initialize SharedPreferences (with 5-second timeout)
@@ -135,6 +168,9 @@ class FeeSyncApp extends ConsumerWidget {
       themeMode: appThemeMode,
       routerConfig: router,
       builder: (context, child) {
+        // Guard against null child during GoRouter redirect transitions.
+        // In release APKs, a null child here causes a black ErrorWidget crash.
+        final safeChild = child ?? const SizedBox.shrink();
         return AppLockGuard(
           child: Consumer(
             builder: (context, ref, _) {
@@ -167,7 +203,7 @@ class FeeSyncApp extends ConsumerWidget {
                   ref.read(offlineToastProvider.notifier).state = null;
                 }
               });
-              return child!;
+              return safeChild;
             },
           ),
         );

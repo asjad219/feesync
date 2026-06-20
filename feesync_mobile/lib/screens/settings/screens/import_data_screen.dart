@@ -59,6 +59,21 @@ class _ImportDataScreenState extends ConsumerState<ImportDataScreen> {
     'class',
   ];
 
+  static const _allowedHeaders = [
+    'admission_number',
+    'first_name',
+    'last_name',
+    'class',
+    'section',
+    'stream',
+    'gender',
+    'date_of_birth',
+    'parent_name',
+    'parent_phone',
+    'parent_email',
+    'address',
+  ];
+
   @override
   void dispose() {
     _csvPasteController.dispose();
@@ -97,7 +112,9 @@ class _ImportDataScreenState extends ConsumerState<ImportDataScreen> {
 
   // ── CSV parsing ───────────────────────────────────────────────────────────
   List<List<String>> _parseCsv(String content) {
-    final lines = content
+    // Strip BOM
+    final cleanContent = content.replaceAll('\uFEFF', '');
+    final lines = cleanContent
         .replaceAll('\r\n', '\n')
         .replaceAll('\r', '\n')
         .split('\n')
@@ -149,12 +166,12 @@ class _ImportDataScreenState extends ConsumerState<ImportDataScreen> {
         return;
       }
 
-      final headers = rows[0].map((h) => h.toLowerCase().trim()).toList();
+      final headers = rows[0].map((h) => h.toLowerCase().replaceAll(' ', '_').trim()).toList();
       for (final req in _requiredHeaders) {
         if (!headers.contains(req)) {
           setState(() {
             _parseError =
-                'Missing required column: "$req". Download the template to see the correct format.';
+                'Missing required column: "$req". Download the template to see the correct format. Found headers: ${headers.join(', ')}';
             _isParsing = false;
           });
           return;
@@ -225,8 +242,11 @@ class _ImportDataScreenState extends ConsumerState<ImportDataScreen> {
       try {
         final Map<String, dynamic> data = {};
         for (int j = 0; j < _headers!.length && j < row.length; j++) {
+          final headerName = _headers![j];
           final val = row[j].trim();
-          if (val.isNotEmpty) data[_headers![j]] = val;
+          if (val.isNotEmpty && _allowedHeaders.contains(headerName)) {
+            data[headerName] = val;
+          }
         }
 
         if ((data['admission_number'] ?? '').toString().isEmpty ||
