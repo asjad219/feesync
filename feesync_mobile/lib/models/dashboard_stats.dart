@@ -20,10 +20,10 @@ class DashboardStats {
   factory DashboardStats.fromJson(Map<String, dynamic> json) {
     return DashboardStats(
       totalStudents: json['totalStudents'] as int,
-      totalFeesCollected: (json['totalFeesCollected'] as num).toDouble(),
-      pendingFees: (json['pendingFees'] as num).toDouble(),
-      collectionRate: (json['collectionRate'] as num).toDouble(),
-      growthPercentage: (json['growthPercentage'] as num).toDouble(),
+      totalFeesCollected: double.parse((json['totalFeesCollected'] ?? 0).toString()),
+      pendingFees: double.parse((json['pendingFees'] ?? 0).toString()),
+      collectionRate: double.parse((json['collectionRate'] ?? 0).toString()),
+      growthPercentage: double.parse((json['growthPercentage'] ?? 0).toString()),
       isNewGrowth: json['isNewGrowth'] as bool,
       lastUpdated: DateTime.parse(json['lastUpdated'] as String),
     );
@@ -54,7 +54,7 @@ class MonthlyStat {
   factory MonthlyStat.fromJson(Map<String, dynamic> json) {
     return MonthlyStat(
       month: json['month'] as String,
-      amount: (json['amount'] as num).toDouble(),
+      amount: double.parse((json['amount'] ?? 0).toString()),
     );
   }
 
@@ -92,8 +92,8 @@ class ClassStat {
   factory ClassStat.fromJson(Map<String, dynamic> json) {
     return ClassStat(
       className: json['className'] as String,
-      collected: (json['collected'] as num).toDouble(),
-      pending: (json['pending'] as num).toDouble(),
+      collected: double.parse((json['collected'] ?? 0).toString()),
+      pending: double.parse((json['pending'] ?? 0).toString()),
     );
   }
 
@@ -130,7 +130,7 @@ class RecentTransaction {
       id: json['id'] as String,
       studentName: json['studentName'] as String,
       studentClass: json['studentClass'] as String,
-      amount: (json['amount'] as num).toDouble(),
+      amount: double.parse((json['amount'] ?? 0).toString()),
       feeType: json['feeType'] as String,
       date: DateTime.parse(json['date'] as String),
       paymentMethod: json['paymentMethod'] as String,

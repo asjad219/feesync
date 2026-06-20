@@ -89,18 +89,18 @@ class Batch {
         (e) => e.toString().split('.').last == json['status'],
         orElse: () => BatchStatus.active,
       ),
-      studentCount: json['student_count'] ?? 0,
-      maxCapacity: json['max_capacity'],
-      monthlyFee: (json['monthly_fee'] as num).toDouble(),
+      studentCount: int.tryParse(json['student_count']?.toString() ?? '0') ?? 0,
+      maxCapacity: int.tryParse(json['max_capacity']?.toString() ?? '0') ?? 0,
+      monthlyFee: double.parse((json['monthly_fee'] ?? 0).toString()),
       colorHex: json['color_hex'],
       iconKey: json['icon_key'],
       createdAt: DateTime.parse(json['created_at']),
       nextClassTime: json['next_class_time'] != null 
           ? DateTime.parse(json['next_class_time']) 
           : null,
-      attendancePercentage: (json['attendance_percentage'] as num? ?? 0.0).toDouble(),
-      revenueGenerated: (json['revenue_generated'] as num? ?? 0.0).toDouble(),
-      pendingDues: (json['pending_dues'] as num? ?? 0.0).toDouble(),
+      attendancePercentage: double.parse((json['attendance_percentage'] ?? 0).toString()),
+      revenueGenerated: double.parse((json['revenue_generated'] ?? 0).toString()),
+      pendingDues: double.parse((json['pending_dues'] ?? 0).toString()),
       schedules: json['schedules'] != null 
           ? (json['schedules'] as List).map((e) => ScheduleSlot.fromJson(e)).toList()
           : [],
