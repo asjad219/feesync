@@ -197,7 +197,14 @@ class FeeSyncApp extends ConsumerWidget {
                       backgroundColor: const Color(0xFFB45309),
                       behavior: SnackBarBehavior.floating,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      duration: const Duration(seconds: 3),
+                      duration: const Duration(seconds: 6), // Extended so user has time to tap
+                      action: SnackBarAction(
+                        label: 'Retry',
+                        textColor: Colors.white,
+                        onPressed: () {
+                          triggerGlobalRetry(ref);
+                        },
+                      ),
                     ),
                   );
                   ref.read(offlineToastProvider.notifier).state = null;

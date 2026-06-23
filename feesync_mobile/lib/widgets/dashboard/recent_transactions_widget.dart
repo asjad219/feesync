@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/dashboard_stats.dart';
+import '../../core/widgets/student_avatar.dart';
 
 class RecentTransactionsWidget extends StatelessWidget {
   final List<RecentTransaction> transactions;
@@ -186,34 +187,10 @@ class _TransactionTile extends StatelessWidget {
       child: Row(
         children: [
           // Premium Colored Initials Avatar
-          Container(
-            width: 52,
-            height: 52,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: avatarColors,
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: avatarColors[0].withValues(alpha: isDark ? 0.25 : 0.12),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Text(
-              initials,
-              style: GoogleFonts.inter(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-                letterSpacing: 0.5,
-              ),
-            ),
+          StudentAvatar(
+            studentId: transaction.studentName, // Fallback since we don't have ID here
+            firstName: transaction.studentName.split(' ').first,
+            radius: 26,
           ),
           const SizedBox(width: 16),
           // Transaction Details Text

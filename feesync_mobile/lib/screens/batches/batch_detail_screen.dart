@@ -1197,13 +1197,42 @@ class _MarkAttendanceView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final studentsAsync = ref.watch(batchStudentsProvider(batchId));
     final attendanceState = ref.watch(dailyAttendanceProvider(batchId));
+    final historyAsync = ref.watch(batchAttendanceProvider(batchId));
+    
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
 
+    final todayStr = DateTime.now().toIso8601String().split('T')[0];
+    final isTakenToday = historyAsync.value?.any((r) => r.date.toIso8601String().split('T')[0] == todayStr) ?? false;
+
     return Column(
       children: [
-        _buildAttendanceHeader(context, ref, studentsAsync.value ?? []),
-        if (attendanceState.statuses.isNotEmpty)
+        _buildAttendanceHeader(context, ref, studentsAsync.value ?? [], isTakenToday),
+        if (isTakenToday)
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF10B981).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 20),
+                const SizedBox(width: 12),
+                Text(
+                  "Today's attendance is taken",
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF10B981),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        if (attendanceState.statuses.isNotEmpty && !isTakenToday)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             child: SizedBox(
@@ -1287,7 +1316,7 @@ class _MarkAttendanceView extends ConsumerWidget {
     );
   }
 
-  Widget _buildAttendanceHeader(BuildContext context, WidgetRef ref, List<StudentBalance> students) {
+  Widget _buildAttendanceHeader(BuildContext context, WidgetRef ref, List<StudentBalance> students, bool isTakenToday) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
@@ -1303,14 +1332,14 @@ class _MarkAttendanceView extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  DateFormat('EEEE, MMM d').format(DateTime.now()),
+                  'Today, ${DateFormat('MMM d').format(DateTime.now())}',
                   style: GoogleFonts.manrope(color: textPrimaryColor, fontWeight: FontWeight.bold),
                 ),
                 Text('Daily Roster', style: GoogleFonts.inter(color: textTertiaryColor, fontSize: 12)),
               ],
             ),
             ElevatedButton.icon(
-              onPressed: students.isEmpty 
+              onPressed: students.isEmpty || isTakenToday
                   ? null 
                   : () => ref.read(dailyAttendanceProvider(batchId).notifier).markAllPresent(
                         students.map((s) => s.id).toList(),
@@ -1422,6 +1451,21 @@ class _HistoryCard extends StatelessWidget {
     required this.onTap,
   });
 
+  String _formatHistoryDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final dateToCompare = DateTime(date.year, date.month, date.day);
+
+    if (dateToCompare == today) {
+      return 'Today, ${DateFormat('MMM d').format(date)}';
+    } else if (dateToCompare == yesterday) {
+      return 'Yesterday, ${DateFormat('MMM d').format(date)}';
+    } else {
+      return DateFormat('EEEE, MMM d').format(date);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final percentage = (presentCount / totalCount * 100).toInt();
@@ -1465,7 +1509,7 @@ class _HistoryCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      DateFormat('EEEE, MMM d').format(date),
+                      _formatHistoryDate(date),
                       style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: textPrimaryColor),
                     ),
                     Text(
@@ -1626,10 +1670,10 @@ class _SessionDetailsSheetState extends ConsumerState<_SessionDetailsSheet> {
                   ),
                   child: Row(
                     children: [
-                      CircleAvatar(
+                      StudentAvatar(
+                        studentId: r.studentId,
+                        firstName: studentName.split(' ').first,
                         radius: 16,
-                        backgroundColor: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
-                        child: Icon(Icons.person_rounded, size: 16, color: textTertiaryColor),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -1735,6 +1779,10 @@ class _AttendanceRosterTile extends ConsumerWidget {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
 
+    final displayRoll = student.rollNumber != null && student.rollNumber!.isNotEmpty
+        ? RegExp(r'\d+$').stringMatch(student.rollNumber!) ?? student.rollNumber
+        : null;
+
     return GlassCard(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
@@ -1752,7 +1800,7 @@ class _AttendanceRosterTile extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${student.firstName} ${student.lastName}${student.rollNumber != null && student.rollNumber!.isNotEmpty ? ' • Roll: ${student.rollNumber}' : ''}',
+                  '${student.firstName} ${student.lastName}${displayRoll != null ? ' • Roll: $displayRoll' : ''}',
                   style: TextStyle(color: textPrimaryColor, fontWeight: FontWeight.bold),
                 ),
               ],

@@ -17,10 +17,27 @@ final _lastOfflineToastTimeProvider = StateProvider<DateTime?>((ref) => null);
 
 /// Shows the offline toast at most once every 30 seconds.
 /// Call this instead of directly setting [offlineToastProvider].
-void showOfflineToastIfCooledDown(
+Future<void> showOfflineToastIfCooledDown(
   Ref ref, [
   String message = "You're offline. Showing saved data.",
-]) {
+]) async {
+  // Check actual network connectivity
+  final connectivityResult = await Connectivity().checkConnectivity();
+  bool isOffline = false;
+  
+  if (connectivityResult is List) {
+    // connectivity_plus ^6.0.0
+    isOffline = (connectivityResult as List).contains(ConnectivityResult.none) || (connectivityResult as List).isEmpty;
+  } else {
+    isOffline = connectivityResult == ConnectivityResult.none;
+  }
+  
+  if (!isOffline) {
+    // Network is slow (timeout), but not offline. Do not show popup.
+    debugPrint('[Toast] Network is slow, falling back to cache quietly. Suppressing offline toast.');
+    return;
+  }
+
   const cooldown = Duration(seconds: 30);
   final lastTime = ref.read(_lastOfflineToastTimeProvider);
   final now = DateTime.now();
@@ -32,6 +49,19 @@ void showOfflineToastIfCooledDown(
   } else {
     debugPrint('[Toast] Offline toast suppressed (cooldown active)');
   }
+}
+
+/// Global retry to attempt fetching fresh data when user reconnects
+void triggerGlobalRetry(dynamic ref) {
+  debugPrint('[Sync] Global retry triggered');
+  ref.invalidate(studentBalancesProvider);
+  ref.invalidate(batchNotifierProvider);
+  ref.invalidate(paymentNotifierProvider);
+  ref.read(dashboardStatsProvider.notifier).fetch();
+  ref.read(monthlyCollectionDataProvider.notifier).fetch();
+  ref.read(recentTransactionsProvider.notifier).fetch();
+  ref.read(classCollectionDataProvider.notifier).fetch();
+  ref.read(syncQueueNotifierProvider.notifier).syncPendingTasks();
 }
 
 // Provides the SharedPreferences instance (overridden in main.dart)

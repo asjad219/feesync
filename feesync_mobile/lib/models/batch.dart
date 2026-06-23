@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'schedule.dart';
 
@@ -101,9 +102,19 @@ class Batch {
       attendancePercentage: double.parse((json['attendance_percentage'] ?? 0).toString()),
       revenueGenerated: double.parse((json['revenue_generated'] ?? 0).toString()),
       pendingDues: double.parse((json['pending_dues'] ?? 0).toString()),
-      schedules: json['schedules'] != null 
-          ? (json['schedules'] as List).map((e) => ScheduleSlot.fromJson(e)).toList()
-          : [],
+      schedules: () {
+        final val = json['schedules'];
+        if (val == null) return <ScheduleSlot>[];
+        try {
+          if (val is String) {
+            final decoded = jsonDecode(val) as List;
+            return decoded.map((e) => ScheduleSlot.fromJson(e)).toList();
+          } else if (val is List) {
+            return val.map((e) => ScheduleSlot.fromJson(e)).toList();
+          }
+        } catch (_) {}
+        return <ScheduleSlot>[];
+      }(),
       scheduleDays: json['schedule_days'] != null && json['schedule_days'].toString().isNotEmpty
           ? (json['schedule_days'] as String).split(',').map((e) => int.parse(e.trim())).toList()
           : [],
