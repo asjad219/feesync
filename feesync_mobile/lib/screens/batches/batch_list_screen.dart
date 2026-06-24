@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/paywall_dialog.dart';
-import '../../../core/billing/feature_gate.dart';
 import '../../widgets/dashboard/stat_card.dart';
 import '../../../core/widgets/offline_widgets.dart';
 import '../../../providers/batch_provider.dart';
@@ -32,20 +31,20 @@ class BatchListScreen extends ConsumerWidget {
     final Color textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final Color surfaceColor = isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF);
 
+    ref.watch(featureGateProvider); // Eagerly watch to cache value for instant checks
+
     // Paywall check: can the user add another batch?
-    Future<void> onAddBatchTap() async {
-      final SubscriptionScreenData data = subDataAsync.valueOrNull ?? await ref.read(subscriptionScreenDataProvider.future);
-      if (!data.canAddBatch) {
-        if (context.mounted) {
-          await showPaywallDialog(
-            context,
-            ref,
-            trigger: PaywallTrigger.batchLimit,
-          );
-        }
+    void onAddBatchTap() {
+      final data = subDataAsync.valueOrNull;
+      if (data != null && !data.canAddBatch) {
+        showPaywallDialog(
+          context,
+          ref,
+          trigger: PaywallTrigger.batchLimit,
+        );
         return;
       }
-      if (context.mounted) context.push('/batches/create');
+      context.push('/batches/create');
     }
 
     return PermissionGuard(
@@ -96,23 +95,18 @@ class BatchListScreen extends ConsumerWidget {
                             batch: batch,
                             onView: () => context.push('/batches/${batch.id}'),
                             onMarkAttendance: () => context.push('/batches/${batch.id}?tab=2'),
-                             onAddStudent: () async {
-                              final FeatureGate gate = ref.read(featureGateProvider).valueOrNull 
-                                  ?? await ref.read(featureGateProvider.future);
-                              if (!gate.canAddStudent) {
-                                if (context.mounted) {
-                                  await showPaywallDialog(
-                                    context,
-                                    ref,
-                                    trigger: PaywallTrigger.studentLimit,
-                                  );
-                                }
-                                return;
-                              }
-                              if (context.mounted) {
-                                context.push('/students/add?batchId=${batch.id}');
-                              }
-                            },
+                             onAddStudent: () {
+                               final gate = ref.read(featureGateProvider).valueOrNull;
+                               if (gate != null && !gate.canAddStudent) {
+                                 showPaywallDialog(
+                                   context,
+                                   ref,
+                                   trigger: PaywallTrigger.studentLimit,
+                                 );
+                                 return;
+                               }
+                               context.push('/students/add?batchId=${batch.id}');
+                             },
                           );
                         },
                       );

@@ -39,6 +39,7 @@ class DashboardScreen extends ConsumerWidget {
     final weeklyDataAsync = ref.watch(weeklyCollectionDataProvider);
     final recentTransactionsAsync = ref.watch(recentTransactionsProvider);
     final settingsAsync = ref.watch(settingsProvider);
+    ref.watch(featureGateProvider); // Eagerly watch to cache value for instant checks
     final currencyCode = settingsAsync.value?.currency;
     final currencyFormatter = CurrencyFormatter.numberFormat(currencyCode, decimalDigits: 0);
 
@@ -155,22 +156,17 @@ class DashboardScreen extends ConsumerWidget {
           ],
         ),
         child: FloatingActionButton(
-          onPressed: () async {
-            final FeatureGate gate = ref.read(featureGateProvider).valueOrNull 
-                ?? await ref.read(featureGateProvider.future);
-            if (!gate.canAddStudent) {
-              if (context.mounted) {
-                await showPaywallDialog(
-                  context,
-                  ref,
-                  trigger: PaywallTrigger.studentLimit,
-                );
-              }
+          onPressed: () {
+            final gate = ref.read(featureGateProvider).valueOrNull;
+            if (gate != null && !gate.canAddStudent) {
+              showPaywallDialog(
+                context,
+                ref,
+                trigger: PaywallTrigger.studentLimit,
+              );
               return;
             }
-            if (context.mounted) {
-              context.push('/students/add');
-            }
+            context.push('/students/add');
           },
           backgroundColor: Colors.transparent,
           elevation: 0,

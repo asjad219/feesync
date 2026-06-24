@@ -12,6 +12,7 @@ import 'core/theme/app_theme.dart';
 import 'core/billing/billing_provider.dart';
 import 'core/services/sync_service.dart';
 import 'core/services/cache_service.dart';
+import 'core/services/secure_local_storage.dart';
 import 'providers/settings_provider.dart';
 import 'providers/sync_provider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -26,37 +27,9 @@ void main() async {
   };
 
   ErrorWidget.builder = (FlutterErrorDetails details) {
-    return Directionality(
-      textDirection: TextDirection.ltr,
-      child: Material(
-        color: const Color(0xFF0D0D1A),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
-                const SizedBox(height: 16),
-                const Text(
-                  'Something went wrong',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  details.exceptionAsString(),
-                  style: const TextStyle(color: Colors.redAccent, fontSize: 12),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+    debugPrint('UI Error: ${details.exceptionAsString()}');
+    return const Center(
+      child: Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 24),
     );
   };
 
@@ -80,6 +53,9 @@ void main() async {
         await Supabase.initialize(
           url: SupabaseConfig.supabaseUrl,
           anonKey: SupabaseConfig.supabaseAnonKey,
+          authOptions: const FlutterAuthClientOptions(
+            localStorage: SecureLocalStorage(),
+          ),
         ).timeout(const Duration(seconds: 10));
       } catch (e) {
         debugPrint('Supabase init error: $e');

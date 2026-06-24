@@ -104,7 +104,7 @@ class _SecuritySettingsScreenState
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
-          'Request Account Deletion',
+          'Delete Account',
           style: GoogleFonts.manrope(
             color: AppColors.error,
             fontWeight: FontWeight.w800,
@@ -182,12 +182,14 @@ class _SecuritySettingsScreenState
           accountId, userId, reasonController.text.trim());
       if (mounted) {
         _showSnack(
-          'Deletion request submitted. Your account will be reviewed within 48 hours.',
+          'Account scheduled for deletion in 30 days. Signing out...',
           isSuccess: true,
         );
+        await Supabase.instance.client.auth.signOut();
+        context.go('/login');
       }
     } catch (e) {
-      if (mounted) _showSnack('Failed to submit request: $e');
+      if (mounted) _showSnack('Failed to schedule deletion: $e');
     } finally {
       reasonController.dispose();
     }
@@ -501,7 +503,7 @@ class _SecuritySettingsScreenState
                                   color: AppColors.error, size: 18),
                               const SizedBox(width: 8),
                               Text(
-                                'Request Account Deletion',
+                                'Delete Account',
                                 style: GoogleFonts.inter(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
@@ -534,7 +536,7 @@ class _SecuritySettingsScreenState
                                 elevation: 0,
                               ),
                               child: Text(
-                                'Request Account Deletion',
+                                'Delete Account',
                                 style: GoogleFonts.inter(
                                     fontWeight: FontWeight.w700,
                                     fontSize: 14),

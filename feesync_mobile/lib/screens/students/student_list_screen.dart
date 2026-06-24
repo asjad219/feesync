@@ -6,7 +6,6 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/custom_widgets.dart';
 import '../../core/widgets/offline_widgets.dart';
 import '../../core/widgets/paywall_dialog.dart';
-import '../../core/billing/feature_gate.dart';
 import '../../models/student.dart';
 import '../../providers/providers.dart';
 import '../../providers/subscription_provider.dart';
@@ -133,6 +132,7 @@ class _StudentListScreenState extends ConsumerState<StudentListScreen> {
     final studentBalancesAsync = ref.watch(studentBalancesProvider);
     final selectedClass = ref.watch(studentClassFilterProvider);
     final settingsAsync = ref.watch(settingsProvider);
+    ref.watch(featureGateProvider); // Eagerly watch to cache value for instant checks
     final aiPredictionsEnabled = settingsAsync.value?.aiPredictionsEnabled ?? false;
 
     return PermissionGuard(
@@ -293,22 +293,17 @@ class _StudentListScreenState extends ConsumerState<StudentListScreen> {
             shape: BoxShape.circle,
           ),
           child: FloatingActionButton(
-            onPressed: () async {
-              final FeatureGate gate = ref.read(featureGateProvider).valueOrNull 
-                  ?? await ref.read(featureGateProvider.future);
-              if (!gate.canAddStudent) {
-                if (context.mounted) {
-                  await showPaywallDialog(
-                    context,
-                    ref,
-                    trigger: PaywallTrigger.studentLimit,
-                  );
-                }
+            onPressed: () {
+              final gate = ref.read(featureGateProvider).valueOrNull;
+              if (gate != null && !gate.canAddStudent) {
+                showPaywallDialog(
+                  context,
+                  ref,
+                  trigger: PaywallTrigger.studentLimit,
+                );
                 return;
               }
-              if (context.mounted) {
-                context.push('/students/add');
-              }
+              context.push('/students/add');
             },
             backgroundColor: Colors.transparent,
             elevation: 0,

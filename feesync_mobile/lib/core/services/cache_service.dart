@@ -9,6 +9,7 @@ import '../../models/app_settings.dart';
 import '../../models/dashboard_stats.dart';
 import '../../models/user_profile.dart';
 import '../../models/account_profile.dart';
+import '../../models/sync_task.dart';
 
 class CacheService {
   final Database _db;
@@ -223,5 +224,12 @@ class CacheService {
     final data = await _loadMap('feesync_account_profile_$accountId');
     if (data == null) return null;
     return AccountProfile.fromJson(data);
+  }
+  Future<void> saveSyncTasks(List<SyncTask> tasks) async {
+    await _saveList('feesync_offline_queue', tasks, (t) => t.toJson());
+  }
+
+  Future<List<SyncTask>?> loadSyncTasks() async {
+    return _loadList('feesync_offline_queue', SyncTask.fromJson);
   }
 }

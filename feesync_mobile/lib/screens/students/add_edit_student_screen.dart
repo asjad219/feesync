@@ -395,7 +395,7 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
         'admission_number': DateTime.now().millisecondsSinceEpoch.toString(), // Internal ID
         'class': selectedBatch.name,
         'batch_id': _selectedBatchId,
-        'parent_name': pName.isEmpty ? null : pName,
+        'parent_name': (selectedBatch.collectParentDetails && pName.isNotEmpty) ? pName : null,
         'parent_phone': formattedPhone,
         'parent_email': _parentEmailController.text.trim().isEmpty ? null : _parentEmailController.text.trim(),
         'address': _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
@@ -539,34 +539,52 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
                 const SizedBox(height: 24),
                 _buildGenderPicker(),
                 const SizedBox(height: 48),
-                if (collectParentDetails) ...[
-                  _SectionHeader(title: 'Parent/Guardian', subtitle: 'Primary contact for fee reminders and updates'),
-                  const SizedBox(height: 24),
-                  _buildField(label: 'PARENT NAME', controller: _parentNameController, hint: 'Full name', icon: Icons.family_restroom_rounded, isRequired: false),
-                  const SizedBox(height: 24),
-                ] else ...[
-                  _SectionHeader(title: 'Contact Information', subtitle: 'Primary contact for fee reminders and updates'),
-                  const SizedBox(height: 24),
-                ],
-                Row(
+                Column(
+                  key: ValueKey('parent_details_section_$collectParentDetails'),
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(child: _buildField(
-                      label: collectParentDetails ? 'PHONE' : 'STUDENT PHONE', 
-                      controller: _parentPhoneController, 
-                      hint: 'Phone no.', 
-                      icon: Icons.phone_android_rounded, 
-                      keyboardType: TextInputType.phone,
-                      isRequired: false,
-                    )),
-                    const SizedBox(width: 16),
-                    Expanded(child: _buildField(
-                      label: collectParentDetails ? 'EMAIL' : 'STUDENT EMAIL', 
-                      controller: _parentEmailController, 
-                      hint: 'Email address', 
-                      icon: Icons.email_outlined, 
-                      keyboardType: TextInputType.emailAddress,
-                      isRequired: false,
-                    )),
+                    if (collectParentDetails) ...[
+                      const _SectionHeader(
+                        title: 'Parent/Guardian',
+                        subtitle: 'Primary contact for fee reminders and updates',
+                      ),
+                      const SizedBox(height: 24),
+                      _buildField(
+                        label: 'PARENT NAME',
+                        controller: _parentNameController,
+                        hint: 'Full name',
+                        icon: Icons.family_restroom_rounded,
+                        isRequired: false,
+                      ),
+                      const SizedBox(height: 24),
+                    ] else ...[
+                      const _SectionHeader(
+                        title: 'Contact Information',
+                        subtitle: 'Primary contact for fee reminders and updates',
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                    Row(
+                      children: [
+                        Expanded(child: _buildField(
+                          label: collectParentDetails ? 'PHONE' : 'STUDENT PHONE', 
+                          controller: _parentPhoneController, 
+                          hint: 'Phone no.', 
+                          icon: Icons.phone_android_rounded, 
+                          keyboardType: TextInputType.phone,
+                          isRequired: false,
+                        )),
+                        const SizedBox(width: 16),
+                        Expanded(child: _buildField(
+                          label: collectParentDetails ? 'EMAIL' : 'STUDENT EMAIL', 
+                          controller: _parentEmailController, 
+                          hint: 'Email address', 
+                          icon: Icons.email_outlined, 
+                          keyboardType: TextInputType.emailAddress,
+                          isRequired: false,
+                        )),
+                      ],
+                    ),
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -708,7 +726,17 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
                     value: b.id.toString(),
                     child: Text(b.name, style: TextStyle(color: textPrimaryColor, fontSize: 15)),
                   )).toList(),
-                  onChanged: (val) => setState(() => _selectedBatchId = val),
+                  onChanged: (val) {
+                    if (val != null && val != _selectedBatchId) {
+                      setState(() {
+                        _selectedBatchId = val;
+                        final selected = batches.firstWhere((b) => b.id == val, orElse: () => batches.first);
+                        if (!selected.collectParentDetails) {
+                          _parentNameController.clear();
+                        }
+                      });
+                    }
+                  },
                 ),
               ),
             );
@@ -720,7 +748,17 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
     );
   }
 
-  Widget _buildField({required String label, required TextEditingController controller, required String hint, required IconData icon, int maxLines = 1, TextInputType? keyboardType, bool enabled = true, bool isRequired = true}) {
+  Widget _buildField({
+    Key? key,
+    required String label,
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    int maxLines = 1,
+    TextInputType? keyboardType,
+    bool enabled = true,
+    bool isRequired = true,
+  }) {
     final bool isDark = AppColors.isDarkMode;
     final textPrimaryColor = isDark ? const Color(0xFFE3E0F4) : const Color(0xFF0F172A);
     final textTertiaryColor = isDark ? const Color(0xFF8D90A0) : const Color(0xFF64748B);
@@ -728,6 +766,7 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
     final primaryColor = isDark ? const Color(0xFFB4C5FF) : const Color(0xFF2563EB);
 
     return Column(
+      key: key,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
@@ -841,7 +880,7 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
 class _SectionHeader extends StatelessWidget {
   final String title;
   final String subtitle;
-  const _SectionHeader({required this.title, required this.subtitle});
+  const _SectionHeader({super.key, required this.title, required this.subtitle});
 
   @override
   Widget build(BuildContext context) {

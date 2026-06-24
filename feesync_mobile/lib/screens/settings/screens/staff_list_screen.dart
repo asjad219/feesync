@@ -18,6 +18,7 @@ class StaffListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final staffAsync = ref.watch(staffListProvider);
     final currentUserAsync = ref.watch(currentUserProfileProvider);
+    ref.watch(featureGateProvider); // Eagerly watch to cache value for instant checks
 
     return Scaffold(
       backgroundColor: AppColors.darkBg,
@@ -41,22 +42,17 @@ class StaffListScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: Icon(Icons.person_add_rounded, color: AppColors.primary),
-            onPressed: () async {
-              final FeatureGate gate = ref.read(featureGateProvider).valueOrNull 
-                  ?? await ref.read(featureGateProvider.future);
-              if (!gate.canAddStaff) {
-                if (context.mounted) {
-                  await showPaywallDialog(
-                    context,
-                    ref,
-                    trigger: PaywallTrigger.staffLimit,
-                  );
-                }
+            onPressed: () {
+              final gate = ref.read(featureGateProvider).valueOrNull;
+              if (gate != null && !gate.canAddStaff) {
+                showPaywallDialog(
+                  context,
+                  ref,
+                  trigger: PaywallTrigger.staffLimit,
+                );
                 return;
               }
-              if (context.mounted) {
-                context.push('/settings/staff/invite');
-              }
+              context.push('/settings/staff/invite');
             },
           ),
           const SizedBox(width: 8),

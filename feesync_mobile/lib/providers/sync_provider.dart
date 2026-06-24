@@ -90,8 +90,8 @@ final offlineToastProvider = StateProvider<String?>((ref) => null);
 
 // Provides the SyncQueueService
 final syncQueueServiceProvider = Provider<SyncQueueService>((ref) {
-  final prefs = ref.watch(sharedPreferencesProvider);
-  return SyncQueueService(prefs);
+  final cache = ref.watch(cacheServiceProvider);
+  return SyncQueueService(cache);
 });
 
 // A notifier to manage background syncing of offline queue
@@ -117,7 +117,7 @@ class SyncQueueNotifier extends StateNotifier<bool> {
   Future<void> syncPendingTasks() async {
     if (state) return; // Already syncing
     
-    final tasks = _queueService.getPendingTasks();
+    final tasks = await _queueService.getPendingTasks();
     if (tasks.isEmpty) return;
 
     state = true;

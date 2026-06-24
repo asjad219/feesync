@@ -18,6 +18,13 @@ class _SplashScreenState extends State<SplashScreen>
   bool _showLoader = false;
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    precacheImage(const AssetImage('assets/avatar_male.jpg'), context);
+    precacheImage(const AssetImage('assets/avatar_female.jpg'), context);
+  }
+
+  @override
   void initState() {
     super.initState();
     _controller = AnimationController(
