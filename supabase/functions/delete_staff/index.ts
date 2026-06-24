@@ -63,10 +63,21 @@ serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Delete user via auth admin API (this cascades to public.users)
-    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(targetUserId)
+    // Soft delete target user in public.users (deactivate them)
+    const { error: updateError } = await supabaseAdmin
+      .from('users')
+      .update({ is_active: false })
+      .eq('id', targetUserId)
 
-    if (deleteError) throw deleteError
+    if (updateError) throw updateError
+
+    // Ban the auth user for 10 years to prevent them from logging back in
+    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(
+      targetUserId,
+      { ban_duration: '87600h' }
+    )
+
+    if (authError) throw authError
 
     return new Response(
       JSON.stringify({ success: true, message: 'User deleted successfully' }),

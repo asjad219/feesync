@@ -36,6 +36,29 @@ class _InviteEditStaffScreenState extends ConsumerState<InviteEditStaffScreen> {
     'manage_settings': false,
   };
 
+  void _onRoleChanged(String role) {
+    setState(() {
+      _selectedRole = role;
+      if (role == 'admin') {
+        _permissions.updateAll((key, value) => true);
+      } else if (role == 'teacher') {
+        _permissions['view_students'] = true;
+        _permissions['manage_students'] = true;
+        _permissions['view_payments'] = false;
+        _permissions['manage_payments'] = false;
+        _permissions['view_reports'] = false;
+        _permissions['manage_settings'] = false;
+      } else if (role == 'accountant') {
+        _permissions['view_students'] = true;
+        _permissions['manage_students'] = false;
+        _permissions['view_payments'] = true;
+        _permissions['manage_payments'] = true;
+        _permissions['view_reports'] = true;
+        _permissions['manage_settings'] = false;
+      }
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -135,7 +158,7 @@ class _InviteEditStaffScreenState extends ConsumerState<InviteEditStaffScreen> {
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.surfaceContainer,
         title: Text('Delete Staff?', style: TextStyle(color: AppColors.textPrimary)),
-        content: Text('Are you sure you want to permanently delete this staff member? They will lose all access.', style: TextStyle(color: AppColors.textSecondary)),
+        content: Text('Are you sure you want to delete this staff member? They will lose all access, but their history (such as payments they recorded) will be preserved.', style: TextStyle(color: AppColors.textSecondary)),
         actions: [
           TextButton(onPressed: () => dialogContext.pop(false), child: Text('Cancel', style: TextStyle(color: AppColors.textSecondary))),
           TextButton(onPressed: () => dialogContext.pop(true), child: Text('Delete', style: TextStyle(color: AppColors.error))),
@@ -152,7 +175,7 @@ class _InviteEditStaffScreenState extends ConsumerState<InviteEditStaffScreen> {
         ref.invalidate(featureGateProvider);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Staff deleted'), backgroundColor: AppColors.success),
+            SnackBar(content: Text('Staff deleted successfully'), backgroundColor: AppColors.success),
           );
           context.pop();
         }
@@ -230,10 +253,11 @@ class _InviteEditStaffScreenState extends ConsumerState<InviteEditStaffScreen> {
                 dropdownColor: AppColors.surfaceContainer,
                 items: const [
                   DropdownMenuItem(value: 'admin', child: Text('Admin (Full Access)')),
-                  DropdownMenuItem(value: 'accountant', child: Text('Accountant (Custom Access)')),
+                  DropdownMenuItem(value: 'teacher', child: Text('Teacher (Student & Attendance Access)')),
+                  DropdownMenuItem(value: 'accountant', child: Text('Accountant (Payment & Finance Access)')),
                 ],
                 onChanged: (val) {
-                  if (val != null) setState(() => _selectedRole = val);
+                  if (val != null) _onRoleChanged(val);
                 },
                 decoration: InputDecoration(
                   filled: true,
@@ -242,7 +266,7 @@ class _InviteEditStaffScreenState extends ConsumerState<InviteEditStaffScreen> {
                 ),
                 style: TextStyle(color: AppColors.textPrimary),
               ),
-              if (_selectedRole == 'accountant') ...[
+              if (_selectedRole != 'admin') ...[
                 const SizedBox(height: 20),
                 Text('Permissions', style: GoogleFonts.manrope(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
                 const SizedBox(height: 8),
