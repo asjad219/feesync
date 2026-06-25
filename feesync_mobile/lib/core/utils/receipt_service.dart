@@ -264,7 +264,32 @@ class ReceiptService {
     required String invoiceNo,
     String? institutionName,
     bool isAdvance = false,
+    String? template,
   }) {
+    if (template != null && template.trim().isNotEmpty) {
+      String msg = template;
+      final String parentName = (student.parentName == null || student.parentName!.trim().isEmpty)
+          ? "Parent"
+          : student.parentName!.trim();
+          
+      final String studentName = student.firstName.trim().isEmpty
+          ? "Student"
+          : student.fullName.trim();
+          
+      final String amountStr = '₹${NumberFormat('#,###').format(amount)}';
+      final String instName = (institutionName == null || institutionName.isEmpty) ? 'FeeSync' : institutionName;
+      
+      msg = msg.replaceAll('{parent_name}', parentName);
+      msg = msg.replaceAll('{student_name}', studentName);
+      msg = msg.replaceAll('{amount}', amountStr);
+      msg = msg.replaceAll('{receipt_no}', invoiceNo);
+      msg = msg.replaceAll('{school_name}', instName);
+      
+      msg = msg.replaceAll(RegExp(r'\{[^}]*\}'), '');
+      
+      return msg;
+    }
+
     final dateStr = DateFormat('dd MMM yyyy').format(date);
     final header = institutionName != null ? '🏦 *${institutionName.toUpperCase()}*\n' : '';
     return """

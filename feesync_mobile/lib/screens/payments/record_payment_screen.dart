@@ -319,6 +319,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
         invoiceNo: invoiceNo,
         institutionName: institutionName,
         isAdvance: isAdvancePayment,
+        template: ref.read(settingsProvider).valueOrNull?.tplPaymentReceipt,
       );
 
       final pdfFile = await ReceiptService.generatePdfReceipt(

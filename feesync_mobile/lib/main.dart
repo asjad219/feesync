@@ -55,6 +55,7 @@ void main() async {
           anonKey: SupabaseConfig.supabaseAnonKey,
           authOptions: const FlutterAuthClientOptions(
             localStorage: SecureLocalStorage(),
+            authCallbackUrlHostname: 'reset-password',
           ),
         ).timeout(const Duration(seconds: 10));
       } catch (e) {

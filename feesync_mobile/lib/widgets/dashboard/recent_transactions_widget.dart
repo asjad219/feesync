@@ -190,6 +190,7 @@ class _TransactionTile extends StatelessWidget {
           StudentAvatar(
             studentId: transaction.studentName, // Fallback since we don't have ID here
             firstName: transaction.studentName.split(' ').first,
+            gender: transaction.studentGender,
             radius: 26,
           ),
           const SizedBox(width: 16),

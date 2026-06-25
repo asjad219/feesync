@@ -32,7 +32,7 @@ class PaymentRepository {
     try {
       var query = _client
           .from('payments')
-          .select('*, students(first_name, last_name, class, admission_number)');
+          .select('*, students(first_name, last_name, class, admission_number, gender)');
 
       if (studentId != null) {
         query = query.eq('student_id', studentId);
@@ -58,7 +58,7 @@ class PaymentRepository {
     try {
       final response = await _client
           .from('payments')
-          .select('*, students(first_name, last_name, class, admission_number)')
+          .select('*, students(first_name, last_name, class, admission_number, gender)')
           .eq('id', id)
           .single()
           .timeout(_timeout);
@@ -74,7 +74,7 @@ class PaymentRepository {
     try {
       final response = await _client
           .from('payments')
-          .select('*, students(first_name, last_name, class, admission_number)')
+          .select('*, students(first_name, last_name, class, admission_number, gender)')
           .eq('status', 'completed')
           .order('created_at', ascending: false)
           .limit(limit)

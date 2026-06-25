@@ -574,6 +574,7 @@ class DashboardAnalyticsRepository {
                 feeType: 'Tuition Fee',
                 date: payment.paymentDate,
                 paymentMethod: payment.paymentMethod.name,
+                studentGender: payment.student?.gender,
               ))
           .toList();
     } catch (e) {

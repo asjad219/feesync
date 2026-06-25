@@ -1,3 +1,5 @@
+import 'student.dart';
+
 enum PaymentMethod { cash, bankTransfer, mobileMoney, card, other }
 enum PaymentStatus { pending, completed, refunded, cancelled }
 
@@ -89,12 +91,14 @@ class StudentInfo {
   final String lastName;
   final String studentClass;
   final String admissionNumber;
+  final Gender? gender;
 
   StudentInfo({
     required this.firstName,
     required this.lastName,
     required this.studentClass,
     required this.admissionNumber,
+    this.gender,
   });
 
   String get fullName => '$firstName $lastName';
@@ -105,6 +109,12 @@ class StudentInfo {
       lastName: json['last_name'],
       studentClass: json['class'],
       admissionNumber: json['admission_number'],
+      gender: json['gender'] != null
+          ? Gender.values.firstWhere(
+              (e) => e.name == json['gender'].toString().toLowerCase(),
+              orElse: () => Gender.other,
+            )
+          : null,
     );
   }
 }

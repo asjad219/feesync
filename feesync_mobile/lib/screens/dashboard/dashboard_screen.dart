@@ -321,21 +321,28 @@ class _DashboardTopBar extends StatelessWidget implements PreferredSizeWidget {
                           icon: Icon(Icons.notifications_none_rounded, color: textPrimaryColor, size: 20),
                         ),
                       ),
-                      Positioned(
-                        right: 4,
-                        top: 4,
-                        child: Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFB4AB),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: surfaceContainerColor,
-                              width: 1.5,
+                      Consumer(
+                        builder: (context, ref, _) {
+                          final unreadCount = ref.watch(unreadNotificationsCountProvider);
+                          if (unreadCount == 0) return const SizedBox.shrink();
+                          
+                          return Positioned(
+                            right: 4,
+                            top: 4,
+                            child: Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFB4AB),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: surfaceContainerColor,
+                                  width: 1.5,
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
+                          );
+                        },
                       ),
                     ],
                   ),

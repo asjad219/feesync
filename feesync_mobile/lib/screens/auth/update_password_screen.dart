@@ -43,11 +43,11 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Password updated successfully. Please log in.'),
+            content: const Text('Password updated successfully.'),
             backgroundColor: AppColors.paid,
           ),
         );
-        context.go('/login');
+        context.go('/dashboard');
       }
     } on AuthException catch (e) {
       if (mounted) {

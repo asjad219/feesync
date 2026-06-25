@@ -1,3 +1,5 @@
+import 'student.dart';
+
 class DashboardStats {
   final int totalStudents;
   final double totalFeesCollected;
@@ -114,6 +116,7 @@ class RecentTransaction {
   final String feeType;
   final DateTime date;
   final String paymentMethod;
+  final Gender? studentGender;
 
   RecentTransaction({
     required this.id,
@@ -123,6 +126,7 @@ class RecentTransaction {
     required this.feeType,
     required this.date,
     required this.paymentMethod,
+    this.studentGender,
   });
 
   factory RecentTransaction.fromJson(Map<String, dynamic> json) {
@@ -134,6 +138,12 @@ class RecentTransaction {
       feeType: json['feeType'] as String,
       date: DateTime.parse(json['date'] as String),
       paymentMethod: json['paymentMethod'] as String,
+      studentGender: json['studentGender'] != null
+          ? Gender.values.firstWhere(
+              (e) => e.name == json['studentGender'].toString().toLowerCase(),
+              orElse: () => Gender.other,
+            )
+          : null,
     );
   }
 
@@ -146,6 +156,7 @@ class RecentTransaction {
       'feeType': feeType,
       'date': date.toIso8601String(),
       'paymentMethod': paymentMethod,
+      'studentGender': studentGender?.name,
     };
   }
 }

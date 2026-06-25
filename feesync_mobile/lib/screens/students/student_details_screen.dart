@@ -722,6 +722,7 @@ class _PaymentTile extends ConsumerWidget {
       date: payment.paymentDate,
       invoiceNo: invoiceNo,
       institutionName: institutionName,
+      template: ref.read(settingsProvider).valueOrNull?.tplPaymentReceipt,
     );
 
     final pdfFile = await ReceiptService.generatePdfReceipt(

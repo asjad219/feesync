@@ -369,8 +369,7 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
 
       String? finalRollNumber = _rollNumberController.text.trim();
       if (selectedBatch.autoRollNumber && widget.studentId == null && finalRollNumber.isEmpty) {
-        final prefix = selectedBatch.name.toUpperCase().replaceAll(' ', '');
-        finalRollNumber = '$prefix-${selectedBatch.studentCount + 1}';
+        finalRollNumber = (selectedBatch.studentCount + 1).toString().padLeft(2, '0');
       }
 
       String capitalize(String s) => s.isEmpty ? '' : s.split(' ').map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}').join(' ');
@@ -517,6 +516,7 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
                 Row(
                   children: [
                     Expanded(child: _buildField(
+                      key: ValueKey('roll_no_$_selectedBatchId'),
                       label: 'ROLL NO', 
                       controller: _rollNumberController, 
                       hint: autoRollNumber ? 'Auto-generated' : 'Roll number', 
@@ -540,7 +540,7 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
                 _buildGenderPicker(),
                 const SizedBox(height: 48),
                 Column(
-                  key: ValueKey('parent_details_section_$collectParentDetails'),
+                  key: ValueKey('parent_details_section_$_selectedBatchId'),
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (collectParentDetails) ...[
@@ -550,6 +550,7 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
                       ),
                       const SizedBox(height: 24),
                       _buildField(
+                        key: ValueKey('parent_name_$_selectedBatchId'),
                         label: 'PARENT NAME',
                         controller: _parentNameController,
                         hint: 'Full name',
@@ -567,6 +568,7 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
                     Row(
                       children: [
                         Expanded(child: _buildField(
+                          key: ValueKey('parent_phone_$_selectedBatchId'),
                           label: collectParentDetails ? 'PHONE' : 'STUDENT PHONE', 
                           controller: _parentPhoneController, 
                           hint: 'Phone no.', 
@@ -576,6 +578,7 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
                         )),
                         const SizedBox(width: 16),
                         Expanded(child: _buildField(
+                          key: ValueKey('parent_email_$_selectedBatchId'),
                           label: collectParentDetails ? 'EMAIL' : 'STUDENT EMAIL', 
                           controller: _parentEmailController, 
                           hint: 'Email address', 
@@ -733,6 +736,9 @@ class _AddEditStudentScreenState extends ConsumerState<AddEditStudentScreen> {
                         final selected = batches.firstWhere((b) => b.id == val, orElse: () => batches.first);
                         if (!selected.collectParentDetails) {
                           _parentNameController.clear();
+                        }
+                        if (selected.autoRollNumber) {
+                          _rollNumberController.clear();
                         }
                       });
                     }
