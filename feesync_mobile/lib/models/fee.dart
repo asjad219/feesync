@@ -230,4 +230,19 @@ class Due {
         : null,
     );
   }
+
+  String get formattedPeriodName {
+    // Strips out "Batch <uuid> " from the periodName
+    // UUIDs are 36 characters long. e.g., "Batch 9c7835e3-8ee6-4cfa-99fd-a3e8922a0389 Jun 2026" -> "Jun 2026"
+    final regex = RegExp(r'^Batch [a-fA-F0-9\-]{36}\s+');
+    final cleaned = periodName.replaceAll(regex, '');
+    
+    // Add "Fee" suffix if it's just a month/year or quarter to make it look better
+    if (cleaned.contains(RegExp(r'^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}$')) || 
+        cleaned.contains(RegExp(r'^Q[1-4]\s+\d{4}$'))) {
+      return '$cleaned Fee';
+    }
+    return cleaned;
+  }
 }
+

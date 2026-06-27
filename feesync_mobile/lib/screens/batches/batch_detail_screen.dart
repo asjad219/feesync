@@ -16,6 +16,7 @@ import '../../../services/app_lock_service.dart';
 import '../../../core/services/network_service.dart';
 import 'package:intl/intl.dart';
 import '../../../core/widgets/permission_guard.dart';
+import 'widgets/reminders_tab.dart';
 
 class BatchDetailScreen extends ConsumerStatefulWidget {
   final String batchId;
@@ -33,7 +34,7 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
   void initState() {
     super.initState();
     _tabController = TabController(
-      length: 5, 
+      length: 6, 
       vsync: this,
       initialIndex: widget.initialTabIndex,
     );
@@ -213,6 +214,7 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
           _StudentsTab(batchId: batch.id),
           _AttendanceTab(batchId: batch.id),
           _FeesTab(batchId: batch.id),
+          RemindersTab(batchId: batch.id),
           _AnalyticsTab(batchId: batch.id, accentColor: batch.color),
         ],
       ),
@@ -383,6 +385,7 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
             Tab(text: 'Students'),
             Tab(text: 'Attendance'),
             Tab(text: 'Fees'),
+            Tab(text: 'Reminders'),
             Tab(text: 'Analytics'),
           ],
         ),
@@ -1072,7 +1075,9 @@ class _StudentListTile extends ConsumerWidget {
                   Text(
                     'Dues: ₹${student.balance}', 
                     style: TextStyle(
-                      color: student.balance > 0 ? const Color(0xFFEF4444) : const Color(0xFF10B981), 
+                      color: student.status == 'OVERDUE' 
+                          ? const Color(0xFFEF4444) 
+                          : (student.balance > 0 ? const Color(0xFFF59E0B) : const Color(0xFF10B981)), 
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -1902,9 +1907,9 @@ class _FeesTab extends ConsumerWidget {
           if (s.balance > 0) defaulterCount++;
         }
 
-        final collectionPct = totalFees > 0 ? totalPaid / totalFees : 0.0;
-        final defaulterPct = students.isNotEmpty ? defaulterCount / students.length : 0.0;
-        final pendingPct = totalFees > 0 ? totalBalance / totalFees : 0.0;
+        final collectionPct = (totalFees > 0 ? totalPaid / totalFees : 0.0).clamp(0.0, 1.0);
+        final defaulterPct = (students.isNotEmpty ? defaulterCount / students.length : 0.0).clamp(0.0, 1.0);
+        final pendingPct = (totalFees > 0 ? totalBalance / totalFees : 0.0).clamp(0.0, 1.0);
 
         final defaulters = students.where((s) => s.balance > 0).toList();
 

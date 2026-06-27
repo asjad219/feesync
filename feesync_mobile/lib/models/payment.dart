@@ -19,6 +19,11 @@ class Payment {
   final DateTime updatedAt;
   final StudentInfo? student;
   final bool isOffline;
+  
+  final double? baseAmount;
+  final double? lateFineAmount;
+  final double? discountAmount;
+  final double? taxAmount;
 
   Payment({
     required this.id,
@@ -36,6 +41,10 @@ class Payment {
     required this.updatedAt,
     this.student,
     this.isOffline = false,
+    this.baseAmount,
+    this.lateFineAmount,
+    this.discountAmount,
+    this.taxAmount,
   });
 
   factory Payment.fromJson(Map<String, dynamic> json) {
@@ -63,6 +72,10 @@ class Payment {
           ? StudentInfo.fromJson(json['students'])
           : null,
       isOffline: json['is_offline'] ?? false,
+      baseAmount: json['base_amount'] != null ? double.parse(json['base_amount'].toString()) : null,
+      lateFineAmount: json['late_fine_amount'] != null ? double.parse(json['late_fine_amount'].toString()) : null,
+      discountAmount: json['discount_amount'] != null ? double.parse(json['discount_amount'].toString()) : null,
+      taxAmount: json['tax_amount'] != null ? double.parse(json['tax_amount'].toString()) : null,
     );
   }
 
@@ -82,6 +95,10 @@ class Payment {
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
       'is_offline': isOffline,
+      'base_amount': baseAmount,
+      'late_fine_amount': lateFineAmount,
+      'discount_amount': discountAmount,
+      'tax_amount': taxAmount,
     };
   }
 }

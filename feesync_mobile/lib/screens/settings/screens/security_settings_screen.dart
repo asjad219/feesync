@@ -365,18 +365,7 @@ class _SecuritySettingsScreenState
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Column(
                 children: [
-                  _switchTile(
-                    icon: Icons.notifications_active_rounded,
-                    iconColor: const Color(0xFFF59E0B),
-                    title: 'New Device Login Alerts',
-                    subtitle:
-                        'Get notified when your account signs in on a new device',
-                    value: local.sessionAlertsEnabled,
-                    onChanged: (v) => ref
-                        .read(localSettingsProvider.notifier)
-                        .updateSessionAlertsEnabled(v),
-                  ),
-                  _divider(),
+
                   _actionTile(
                     icon: Icons.lock_reset_rounded,
                     iconColor: const Color(0xFF10B981),
@@ -564,7 +553,7 @@ class _SecuritySettingsScreenState
     required String title,
     required String subtitle,
     required bool value,
-    required ValueChanged<bool> onChanged,
+    ValueChanged<bool>? onChanged,
   }) {
     return SwitchListTile.adaptive(
       value: value,

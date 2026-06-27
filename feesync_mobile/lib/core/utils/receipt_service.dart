@@ -18,6 +18,10 @@ class ReceiptService {
     required String invoiceNo,
     String? institutionName,
     bool isAdvance = false,
+    double? baseAmount,
+    double? lateFineAmount,
+    double? discountAmount,
+    double? taxAmount,
   }) async {
     final pdf = pw.Document();
     final dateStr = DateFormat('dd MMM yyyy').format(date);
@@ -157,19 +161,58 @@ class ReceiptService {
                               ),
                             ],
                           ),
-                          // Table Row
+                          // Base / Advance
                           pw.TableRow(
                             children: [
                               pw.Padding(
-                                padding: const pw.EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-                                child: pw.Text(isAdvance ? 'Advance Fee Payment' : 'Fee Payment', style: pw.TextStyle(color: const PdfColor.fromInt(0xFF1E293B), fontSize: 12)),
+                                padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                                child: pw.Text(isAdvance ? 'Advance Fee Payment' : 'Base Fee Payment', style: pw.TextStyle(color: const PdfColor.fromInt(0xFF1E293B), fontSize: 12)),
                               ),
                               pw.Padding(
-                                padding: const pw.EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-                                child: pw.Text('INR ${amount.toStringAsFixed(2)}', textAlign: pw.TextAlign.right, style: pw.TextStyle(color: const PdfColor.fromInt(0xFF1E293B), fontSize: 12)),
+                                padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                                child: pw.Text('INR ${(baseAmount ?? amount).toStringAsFixed(2)}', textAlign: pw.TextAlign.right, style: pw.TextStyle(color: const PdfColor.fromInt(0xFF1E293B), fontSize: 12)),
                               ),
                             ],
                           ),
+                          if (lateFineAmount != null && lateFineAmount > 0)
+                            pw.TableRow(
+                              children: [
+                                pw.Padding(
+                                  padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                                  child: pw.Text('Late Fine Penalty', style: pw.TextStyle(color: const PdfColor.fromInt(0xFF1E293B), fontSize: 12)),
+                                ),
+                                pw.Padding(
+                                  padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                                  child: pw.Text('+ INR ${lateFineAmount.toStringAsFixed(2)}', textAlign: pw.TextAlign.right, style: pw.TextStyle(color: const PdfColor.fromInt(0xFFEF4444), fontSize: 12)),
+                                ),
+                              ],
+                            ),
+                          if (discountAmount != null && discountAmount > 0)
+                            pw.TableRow(
+                              children: [
+                                pw.Padding(
+                                  padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                                  child: pw.Text('Early Payment Discount', style: pw.TextStyle(color: const PdfColor.fromInt(0xFF1E293B), fontSize: 12)),
+                                ),
+                                pw.Padding(
+                                  padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                                  child: pw.Text('- INR ${discountAmount.toStringAsFixed(2)}', textAlign: pw.TextAlign.right, style: pw.TextStyle(color: const PdfColor.fromInt(0xFF22C55E), fontSize: 12)),
+                                ),
+                              ],
+                            ),
+                          if (taxAmount != null && taxAmount > 0)
+                            pw.TableRow(
+                              children: [
+                                pw.Padding(
+                                  padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                                  child: pw.Text('Tax / GST', style: pw.TextStyle(color: const PdfColor.fromInt(0xFF1E293B), fontSize: 12)),
+                                ),
+                                pw.Padding(
+                                  padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                                  child: pw.Text('+ INR ${taxAmount.toStringAsFixed(2)}', textAlign: pw.TextAlign.right, style: pw.TextStyle(color: const PdfColor.fromInt(0xFF1E293B), fontSize: 12)),
+                                ),
+                              ],
+                            ),
                         ],
                       ),
                       

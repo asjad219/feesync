@@ -26,6 +26,10 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
   
   late TextEditingController _taxPercentageController;
 
+  String _lateFineType = 'fixed';
+  String _earlyPaymentDiscountType = 'percentage';
+  String _taxMode = 'exclusive';
+
   int _defaultDueDay = 5;
   bool _autoDueGeneration = true;
   bool _lateFinesEnabled = true;
@@ -66,6 +70,10 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
       text: settings.taxPercentage.toStringAsFixed(1),
     );
 
+    _lateFineType = settings.lateFineType;
+    _earlyPaymentDiscountType = settings.earlyPaymentDiscountType;
+    _taxMode = settings.taxMode;
+
     _defaultDueDay = settings.defaultDueDay;
     _autoDueGeneration = settings.autoDueGeneration;
     _lateFinesEnabled = settings.lateFinesEnabled;
@@ -100,13 +108,16 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
         'default_due_day': _defaultDueDay,
         'grace_period_days': gracePeriod,
         'late_fine_amount': lateFine,
+        'late_fine_type': _lateFineType,
         'auto_due_generation': _autoDueGeneration,
         'late_fines_enabled': _lateFinesEnabled,
         'partial_payments_allowed': _partialPaymentsAllowed,
         'early_payment_discount_enabled': _earlyPaymentDiscountEnabled,
         'early_payment_discount_percent': earlyPaymentPercent,
+        'early_payment_discount_type': _earlyPaymentDiscountType,
         'early_payment_days': earlyPaymentDays,
         'tax_percentage': taxPercentage,
+        'tax_mode': _taxMode,
       };
 
       await ref.read(settingsProvider.notifier).updateMultipleSettings(updatedData);
@@ -281,11 +292,32 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
                                 },
                               ),
                               const SizedBox(height: 16),
+                              DropdownButtonFormField<String>(
+                                value: _lateFineType,
+                                decoration: InputDecoration(
+                                  labelText: 'Penalty Type',
+                                  labelStyle: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 13),
+                                  prefixIcon: Icon(Icons.category_rounded, color: AppColors.textTertiary, size: 20),
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                                  filled: true,
+                                  fillColor: AppColors.surfaceContainer.withValues(alpha: 0.3),
+                                ),
+                                dropdownColor: AppColors.darkSurface,
+                                style: GoogleFonts.inter(fontSize: 14, color: AppColors.textPrimary),
+                                items: const [
+                                  DropdownMenuItem(value: 'fixed', child: Text('Fixed Amount (₹)')),
+                                  DropdownMenuItem(value: 'percentage', child: Text('Percentage (%)')),
+                                ],
+                                onChanged: (val) {
+                                  if (val != null) setState(() => _lateFineType = val);
+                                },
+                              ),
+                              const SizedBox(height: 16),
                               _buildNumericTextField(
                                 controller: _lateFineController,
-                                label: 'Late Fine Penalty Amount',
-                                icon: Icons.currency_rupee_rounded,
-                                hint: 'e.g. 100',
+                                label: _lateFineType == 'percentage' ? 'Late Fine Penalty (%)' : 'Late Fine Penalty Amount',
+                                icon: _lateFineType == 'percentage' ? Icons.percent_rounded : Icons.currency_rupee_rounded,
+                                hint: _lateFineType == 'percentage' ? 'e.g. 2' : 'e.g. 100',
                                 isInteger: false,
                                 enabled: _lateFinesEnabled,
                                 validator: (val) {
@@ -294,6 +326,7 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
                                   final parsed = double.tryParse(val.trim());
                                   if (parsed == null) return 'Must be a numeric value';
                                   if (parsed < 0) return 'Cannot be negative';
+                                  if (_lateFineType == 'percentage' && parsed > 100) return 'Cannot exceed 100%';
                                   return null;
                                 },
                               ),
@@ -341,18 +374,40 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
                               const SizedBox(height: 16),
                               Divider(color: AppColors.outline.withValues(alpha: 0.1), height: 1),
                               const SizedBox(height: 16),
+                              DropdownButtonFormField<String>(
+                                value: _earlyPaymentDiscountType,
+                                decoration: InputDecoration(
+                                  labelText: 'Discount Type',
+                                  labelStyle: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 13),
+                                  prefixIcon: Icon(Icons.category_rounded, color: AppColors.textTertiary, size: 20),
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                                  filled: true,
+                                  fillColor: AppColors.surfaceContainer.withValues(alpha: 0.3),
+                                ),
+                                dropdownColor: AppColors.darkSurface,
+                                style: GoogleFonts.inter(fontSize: 14, color: AppColors.textPrimary),
+                                items: const [
+                                  DropdownMenuItem(value: 'fixed', child: Text('Fixed Amount (₹)')),
+                                  DropdownMenuItem(value: 'percentage', child: Text('Percentage (%)')),
+                                ],
+                                onChanged: (val) {
+                                  if (val != null) setState(() => _earlyPaymentDiscountType = val);
+                                },
+                              ),
+                              const SizedBox(height: 16),
                               _buildNumericTextField(
                                 controller: _earlyPaymentDiscountPercentController,
-                                label: 'Discount Percentage (%)',
-                                icon: Icons.percent_rounded,
-                                hint: 'e.g. 5',
+                                label: _earlyPaymentDiscountType == 'percentage' ? 'Discount Percentage (%)' : 'Discount Amount',
+                                icon: _earlyPaymentDiscountType == 'percentage' ? Icons.percent_rounded : Icons.currency_rupee_rounded,
+                                hint: _earlyPaymentDiscountType == 'percentage' ? 'e.g. 5' : 'e.g. 500',
                                 isInteger: false,
                                 enabled: _earlyPaymentDiscountEnabled,
                                 validator: (val) {
                                   if (!_earlyPaymentDiscountEnabled) return null;
                                   if (val == null || val.trim().isEmpty) return 'Required';
                                   final parsed = double.tryParse(val.trim());
-                                  if (parsed == null || parsed < 0 || parsed > 100) return 'Invalid percentage';
+                                  if (parsed == null || parsed < 0) return 'Invalid value';
+                                  if (_earlyPaymentDiscountType == 'percentage' && parsed > 100) return 'Cannot exceed 100%';
                                   return null;
                                 },
                               ),
@@ -391,6 +446,55 @@ class _BillingSettingsScreenState extends ConsumerState<BillingSettingsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        DropdownButtonFormField<String>(
+                          value: _taxMode,
+                          decoration: InputDecoration(
+                            labelText: 'Tax Mode',
+                            labelStyle: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 13),
+                            prefixIcon: Icon(Icons.calculate_rounded, color: AppColors.textTertiary, size: 20),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                            filled: true,
+                            fillColor: AppColors.surfaceContainer.withValues(alpha: 0.3),
+                          ),
+                          dropdownColor: AppColors.darkSurface,
+                          style: GoogleFonts.inter(fontSize: 14, color: AppColors.textPrimary),
+                          items: const [
+                            DropdownMenuItem(value: 'exclusive', child: Text('Exclusive (Added to fee)')),
+                            DropdownMenuItem(value: 'inclusive', child: Text('Inclusive (Included in fee)')),
+                          ],
+                          onChanged: (val) {
+                            if (val != null) setState(() => _taxMode = val);
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(Icons.info_outline_rounded, size: 16, color: AppColors.primary),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _taxMode == 'exclusive' 
+                                    ? 'Exclusive: Tax is added ON TOP of the base fee.\nExample: ₹1,000 fee + 18% tax = Parent pays ₹1,180.'
+                                    : 'Inclusive: Tax is ALREADY INCLUDED in the base fee.\nExample: Parent pays ₹1,000 total (₹847.46 base fee + ₹152.54 tax).',
+                                  style: GoogleFonts.inter(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 12,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
                         _buildNumericTextField(
                           controller: _taxPercentageController,
                           label: 'Default Tax/GST Percentage (%)',

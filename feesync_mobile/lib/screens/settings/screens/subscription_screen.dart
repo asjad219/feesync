@@ -148,8 +148,6 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                 const SizedBox(height: 16),
                 _buildPlanComparison(sub),
                 const SizedBox(height: 28),
-                _buildReferralCard(),
-                const SizedBox(height: 28),
                 _buildFaqSection(),
                 const SizedBox(height: 28),
                 _buildPolicyFooter(),
@@ -1108,103 +1106,6 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
     );
   }
 
-  // ─── Referral card ────────────────────────────────────────────────────────
-
-  Widget _buildReferralCard() {
-    const referralCode = 'FEESYNC100'; // Replace with dynamic code from user profile
-    return GlassCard(
-      padding: const EdgeInsets.all(20),
-      borderColor: const Color(0xFFF59E0B).withValues(alpha: 0.35),
-      gradientColors: [
-        const Color(0xFFF59E0B).withValues(alpha: 0.08),
-        Colors.transparent,
-      ],
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Text('🎉', style: TextStyle(fontSize: 22)),
-              const SizedBox(width: 10),
-              Text(
-                'Refer & Earn',
-                style: GoogleFonts.manrope(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Invite other coaching centers to FeeSync and both of you get ₹100 off your next month.',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              color: AppColors.textTertiary,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 10, horizontal: 14),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                        color: AppColors.outline.withValues(alpha: 0.2)),
-                  ),
-                  child: Text(
-                    referralCode,
-                    style: GoogleFonts.inter(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFFF59E0B),
-                      letterSpacing: 2,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              GestureDetector(
-                onTap: () {
-                  Clipboard.setData(const ClipboardData(text: referralCode));
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Referral code copied!',
-                            style: GoogleFonts.inter(
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.onSuccess)),
-                        backgroundColor: AppColors.success,
-                        behavior: SnackBarBehavior.floating,
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                        color: const Color(0xFFF59E0B).withValues(alpha: 0.3)),
-                  ),
-                  child: const Icon(Icons.copy_rounded,
-                      color: Color(0xFFF59E0B), size: 18),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
   // ─── FAQ section ──────────────────────────────────────────────────────────
 
@@ -1476,10 +1377,6 @@ final _faqItems = <_FaqItem>[
   _FaqItem(
     'Do WhatsApp messages cost extra?',
     'No. WhatsApp notifications are included in your plan limits. The Starter plan includes unlimited receipts and reminders. Free plan includes 100 receipts and 30 reminders per month.',
-  ),
-  _FaqItem(
-    'How does the referral program work?',
-    'Share your unique referral code with another coaching center. When they sign up and start a paid plan, both of you get ₹100 off your next monthly bill. There\'s no limit on how many people you can refer.',
   ),
 ];
 

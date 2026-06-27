@@ -266,27 +266,7 @@ class _InviteEditStaffScreenState extends ConsumerState<InviteEditStaffScreen> {
                 ),
                 style: TextStyle(color: AppColors.textPrimary),
               ),
-              if (_selectedRole != 'admin') ...[
-                const SizedBox(height: 20),
-                Text('Permissions', style: GoogleFonts.manrope(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
-                const SizedBox(height: 8),
-                GlassCard(
-                  padding: EdgeInsets.zero,
-                  child: Column(
-                    children: _permissions.keys.map((key) {
-                      final title = key.split('_').map((s) => s[0].toUpperCase() + s.substring(1)).join(' ');
-                      return SwitchListTile(
-                        title: Text(title, style: GoogleFonts.inter(color: AppColors.textPrimary, fontSize: 14)),
-                        value: _permissions[key] ?? false,
-                        activeThumbColor: AppColors.primary,
-                        onChanged: (val) {
-                          setState(() => _permissions[key] = val);
-                        },
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ],
+
               if (isEditing) ...[
                 const SizedBox(height: 24),
                 SwitchListTile(

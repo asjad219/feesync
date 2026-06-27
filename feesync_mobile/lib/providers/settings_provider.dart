@@ -120,6 +120,7 @@ class SettingsNotifier extends StateNotifier<AsyncValue<AppSettings>> {
       debugPrint('[Settings][OFFLINE] updateSetting failed: $e');
       state = AsyncValue.error(e, st);
       await loadSettings();
+      rethrow;
     }
   }
 
@@ -135,6 +136,7 @@ class SettingsNotifier extends StateNotifier<AsyncValue<AppSettings>> {
       debugPrint('[Settings][OFFLINE] updateMultipleSettings failed: $e');
       state = AsyncValue.error(e, st);
       await loadSettings();
+      rethrow;
     }
   }
 }

@@ -186,6 +186,49 @@ class PaymentRepository {
     }
   }
 
+  Future<Map<String, dynamic>> previewPayment(String dueId, String paymentDate) async {
+    try {
+      final response = await _client
+          .rpc('preview_payment', params: {
+            'p_due_id': dueId,
+            'p_payment_date': paymentDate,
+          })
+          .timeout(_timeout);
+      return Map<String, dynamic>.from(response);
+    } catch (e) {
+      debugPrint('[PaymentRepo] previewPayment failed: $e');
+      _handleException(e);
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> processPayment({
+    required String dueId,
+    required double amountReceived,
+    required String paymentDate,
+    required String recordedBy,
+    required String paymentMethod,
+    String? notes,
+  }) async {
+    try {
+      final response = await _client
+          .rpc('process_payment', params: {
+            'p_due_id': dueId,
+            'p_amount_received': amountReceived,
+            'p_payment_date': paymentDate,
+            'p_recorded_by': recordedBy,
+            'p_payment_method': paymentMethod,
+            'p_notes': notes,
+          })
+          .timeout(_timeout);
+      return Map<String, dynamic>.from(response);
+    } catch (e) {
+      debugPrint('[PaymentRepo] processPayment failed: $e');
+      _handleException(e);
+      rethrow;
+    }
+  }
+
   Future<Payment> updatePayment(String id, Map<String, dynamic> data) async {
     try {
       final response = await _client

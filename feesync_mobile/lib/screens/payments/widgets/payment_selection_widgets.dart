@@ -104,15 +104,15 @@ class StudentSelectionButton extends StatelessWidget {
 
 class PendingDuesSelector extends StatelessWidget {
   final List<Due> dues;
-  final List<String> selectedDueIds;
-  final void Function(Due due, bool isSelected) onDueToggled;
+  final String? selectedDueId;
+  final void Function(Due due) onDueSelected;
   final String? currencyCode;
 
   const PendingDuesSelector({
     super.key,
     required this.dues,
-    required this.selectedDueIds,
-    required this.onDueToggled,
+    this.selectedDueId,
+    required this.onDueSelected,
     this.currencyCode,
   });
 
@@ -160,11 +160,17 @@ class PendingDuesSelector extends StatelessWidget {
 
     return Column(
       children: dues.map((due) {
-        final isSelected = selectedDueIds.contains(due.id);
+        final isSelected = due.id == selectedDueId;
+        
+        final isOverdue = due.dueDate.isBefore(DateTime.now()) && 
+                         (due.dueDate.year != DateTime.now().year || 
+                          due.dueDate.month != DateTime.now().month || 
+                          due.dueDate.day != DateTime.now().day);
+                          
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: GestureDetector(
-            onTap: () => onDueToggled(due, isSelected),
+            onTap: () => onDueSelected(due),
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -193,8 +199,36 @@ class PendingDuesSelector extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(due.periodName, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-                        Text('Due: ${DateFormat('MMM d, yyyy').format(due.dueDate)}', style: GoogleFonts.inter(fontSize: 12, color: AppColors.textTertiary)),
+                        Text(due.formattedPeriodName, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: isOverdue 
+                                ? AppColors.error.withValues(alpha: 0.1) 
+                                : AppColors.success.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                isOverdue ? Icons.event_busy_rounded : Icons.event_available_rounded, 
+                                size: 12, 
+                                color: isOverdue ? AppColors.error : AppColors.success
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${isOverdue ? 'Overdue' : 'Due'}: ${DateFormat('MMM d, yyyy').format(due.dueDate)}', 
+                                style: GoogleFonts.inter(
+                                  fontSize: 11, 
+                                  fontWeight: FontWeight.w600, 
+                                  color: isOverdue ? AppColors.error : AppColors.success
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),

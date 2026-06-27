@@ -40,7 +40,9 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
   DateTime _paymentDate = DateTime.now();
   String _paymentMode = 'online';
   
-  final List<String> _selectedDueIds = [];
+  String? _selectedDueId;
+  Map<String, dynamic>? _paymentPreview;
+  bool _isPreviewLoading = false;
 
   @override
   void initState() {
@@ -86,6 +88,97 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
     if (picked != null) setState(() => _paymentDate = picked);
   }
 
+  Future<void> _fetchPreview(String dueId) async {
+    setState(() => _isPreviewLoading = true);
+    try {
+      final preview = await ref.read(paymentRepositoryProvider).previewPayment(
+        dueId, 
+        _paymentDate.toIso8601String()
+      );
+      if (mounted && _selectedDueId == dueId) {
+        setState(() {
+          _paymentPreview = preview;
+          final payable = preview['payable'];
+          if (payable is num) {
+            _amountController.text = payable.toStringAsFixed(0);
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error calculating fees: $e')));
+    } finally {
+      if (mounted) setState(() => _isPreviewLoading = false);
+    }
+  }
+
+  Widget _buildPreviewCard(String symbol) {
+    final base = _paymentPreview?['base_fee'] ?? 0;
+    final discount = _paymentPreview?['discount'] ?? 0;
+    final lateFine = _paymentPreview?['late_fine'] ?? 0;
+    final tax = _paymentPreview?['tax'] ?? 0;
+    final payable = _paymentPreview?['payable'] ?? 0;
+    final discountReason = _paymentPreview?['discount_reason'];
+    final fineReason = _paymentPreview?['fine_reason'];
+
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainer,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Fee Breakdown', style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: AppColors.primary)),
+          const SizedBox(height: 12),
+          _buildPreviewRow('Base Fee', base, symbol),
+          if (lateFine > 0)
+            _buildPreviewRow('Late Fine Penalty', lateFine, symbol, isPenalty: true, subtitle: fineReason),
+          if (discount > 0)
+            _buildPreviewRow('Early Payment Discount', -discount, symbol, isDiscount: true, subtitle: discountReason),
+          if (tax > 0)
+            _buildPreviewRow('Tax / GST', tax, symbol),
+          const Divider(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Total Payable', style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 16, color: AppColors.textPrimary)),
+              Text('$symbol${payable.toStringAsFixed(2)}', style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 18, color: AppColors.primary)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPreviewRow(String label, num amount, String symbol, {bool isDiscount = false, bool isPenalty = false, String? subtitle}) {
+    Color valColor = AppColors.textPrimary;
+    if (isDiscount) valColor = AppColors.success;
+    if (isPenalty) valColor = AppColors.error;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: GoogleFonts.inter(fontSize: 14, color: AppColors.textSecondary)),
+                if (subtitle != null)
+                  Text(subtitle, style: GoogleFonts.inter(fontSize: 11, color: valColor.withValues(alpha: 0.8))),
+              ],
+            ),
+          ),
+          Text('$symbol${amount.toStringAsFixed(2)}', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: valColor)),
+        ],
+      ),
+    );
+  }
+
   Future<void> _savePayment(List<Due> availableDues) async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedStudent == null) {
@@ -100,9 +193,9 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
     }
 
     if (availableDues.isNotEmpty) {
-      if (_selectedDueIds.isEmpty) {
+      if (_selectedDueId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select at least one pending due period.')),
+          const SnackBar(content: Text('Please select a pending due period to pay.')),
         );
         return;
       }
@@ -113,24 +206,6 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
       final accountId = ref.read(currentUserProfileProvider).value?.accountId;
       if (accountId == null) throw Exception('Account ID not found');
 
-      double remaining = amount;
-      final allocations = <Map<String, dynamic>>[];
-      
-      if (_selectedDueIds.isNotEmpty) {
-        for (final dueId in _selectedDueIds) {
-          final due = availableDues.firstWhere((d) => d.id == dueId);
-          final paymentForDue = remaining > due.dueAmount ? due.dueAmount : remaining;
-          if (paymentForDue > 0) {
-            allocations.add({
-              'fee_structure_id': due.feeStructureId,
-              'due_id': due.id,
-              'amount': paymentForDue,
-            });
-            remaining -= paymentForDue;
-          }
-        }
-      }
-
       String dbPaymentMethod = 'other';
       if (_paymentMode == 'online') {
         dbPaymentMethod = 'mobile_money';
@@ -140,23 +215,37 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
         dbPaymentMethod = 'bank_transfer';
       }
 
-      final idempotencyKey = const Uuid().v4();
-      final bool isAdvancePayment = availableDues.isEmpty || amount > allocations.fold(0.0, (sum, a) => sum + (a['amount'] as double));
+      final userId = ref.read(currentUserProfileProvider).value?.id;
+      final isAdvancePayment = availableDues.isEmpty;
 
-      final paymentData = {
-        'account_id': accountId,
-        'student_id': _selectedStudent!.id,
-        'amount': amount,
-        'payment_method': dbPaymentMethod,
-        'payment_date': _paymentDate.toIso8601String(),
-        'notes': _notesController.text.trim().isEmpty 
-            ? (_selectedDueIds.isEmpty ? 'Advance Payment' : null) 
-            : _notesController.text.trim(),
-        'status': 'completed',
-        'idempotency_key': idempotencyKey,
-      };
+      if (!isAdvancePayment && _selectedDueId != null) {
+        // Use RPC process_payment
+        await ref.read(paymentRepositoryProvider).processPayment(
+          dueId: _selectedDueId!,
+          amountReceived: amount,
+          paymentDate: _paymentDate.toIso8601String(),
+          recordedBy: userId ?? accountId,
+          paymentMethod: dbPaymentMethod,
+          notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+        );
+      } else {
+        // Advance Payment (Fallback to normal createPayment)
+        final idempotencyKey = const Uuid().v4();
+        final paymentData = {
+          'account_id': accountId,
+          'student_id': _selectedStudent!.id,
+          'amount': amount,
+          'payment_method': dbPaymentMethod,
+          'payment_date': _paymentDate.toIso8601String(),
+          'notes': _notesController.text.trim().isEmpty 
+              ? 'Advance Payment' 
+              : _notesController.text.trim(),
+          'status': 'completed',
+          'idempotency_key': idempotencyKey,
+        };
+        await ref.read(paymentNotifierProvider.notifier).createPayment(paymentData, []);
+      }
 
-      await ref.read(paymentNotifierProvider.notifier).createPayment(paymentData, allocations);
       ref.invalidate(studentBalancesProvider);
       ref.invalidate(studentPaymentsProvider(_selectedStudent!.id));
       if (_selectedStudent != null) ref.invalidate(studentDuesProvider(_selectedStudent!.id));
@@ -309,7 +398,10 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
     setState(() => _isLoading = true);
     try {
       final accountProfile = ref.read(accountProfileProvider).value;
-      final institutionName = accountProfile?.schoolName ?? accountProfile?.name ?? 'Institution';
+      final appSettings = ref.read(settingsProvider).valueOrNull;
+      final institutionName = (appSettings?.centerName != null && appSettings!.centerName.isNotEmpty) 
+          ? appSettings.centerName 
+          : (accountProfile?.schoolName ?? accountProfile?.name ?? 'Institution');
 
       final textReceipt = ReceiptService.generateTextReceipt(
         student: student,
@@ -330,6 +422,10 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
         invoiceNo: invoiceNo,
         institutionName: institutionName,
         isAdvance: isAdvancePayment,
+        baseAmount: !isAdvancePayment && _paymentPreview != null ? (_paymentPreview?['base_fee'] as num?)?.toDouble() : null,
+        lateFineAmount: !isAdvancePayment && _paymentPreview != null ? (_paymentPreview?['late_fine'] as num?)?.toDouble() : null,
+        discountAmount: !isAdvancePayment && _paymentPreview != null ? (_paymentPreview?['discount'] as num?)?.toDouble() : null,
+        taxAmount: !isAdvancePayment && _paymentPreview != null ? (_paymentPreview?['tax'] as num?)?.toDouble() : null,
       );
 
       String cleanPhone = (student.parentPhone ?? '').replaceAll(RegExp(r'[^0-9]'), '');
@@ -384,7 +480,8 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
               createdAt: DateTime.now(),
               updatedAt: DateTime.now(),
             );
-            _selectedDueIds.clear();
+            _selectedDueId = null;
+            _paymentPreview = null;
             _amountController.clear();
           });
         },
@@ -433,7 +530,8 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
                           final existsInBatch = balances.any((b) => b.id == _selectedStudent!.id && (value == null || b.batchId == value));
                           if (!existsInBatch) {
                             _selectedStudent = null;
-                            _selectedDueIds.clear();
+                            _selectedDueId = null;
+                            _paymentPreview = null;
                             _amountController.clear();
                           }
                         }
@@ -461,23 +559,36 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
                   const PaymentFormLabel(text: 'SELECT PENDING DUES'),
                   const SizedBox(height: 12),
                   duesAsync.when(
-                    data: (dues) => PendingDuesSelector(
-                      dues: dues,
-                      selectedDueIds: _selectedDueIds,
-                      currencyCode: currencyCode,
-                      onDueToggled: (due, isSelected) {
-                        setState(() {
-                          if (isSelected) {
-                            _selectedDueIds.remove(due.id);
-                            final current = double.tryParse(_amountController.text) ?? 0;
-                            _amountController.text = (current - due.dueAmount).toStringAsFixed(0);
-                          } else {
-                            _selectedDueIds.add(due.id);
-                            final current = double.tryParse(_amountController.text) ?? 0;
-                            _amountController.text = (current + due.dueAmount).toStringAsFixed(0);
-                          }
-                        });
-                      },
+                    data: (dues) => Column(
+                      children: [
+                        PendingDuesSelector(
+                          dues: dues,
+                          selectedDueId: _selectedDueId,
+                          currencyCode: currencyCode,
+                          onDueSelected: (due) {
+                            if (_selectedDueId == due.id) {
+                              setState(() {
+                                _selectedDueId = null;
+                                _paymentPreview = null;
+                                _amountController.clear();
+                              });
+                            } else {
+                              setState(() {
+                                _selectedDueId = due.id;
+                                _amountController.clear(); // Will be populated by preview
+                              });
+                              _fetchPreview(due.id);
+                            }
+                          },
+                        ),
+                        if (_isPreviewLoading)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            child: CircularProgressIndicator(),
+                          ),
+                        if (_paymentPreview != null)
+                          _buildPreviewCard(currencySymbol),
+                      ],
                     ),
                     loading: () => const Center(child: CircularProgressIndicator()),
                     error: (e, _) => const Text('Error loading dues'),

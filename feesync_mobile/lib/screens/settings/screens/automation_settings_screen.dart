@@ -150,6 +150,7 @@ class _AutomationSettingsScreenState
     _autoReceiptEnabled = s.autoReceiptEnabled;
     _sendOnDueDate = s.aiRemindersEnabled;
     _sendOverdueAlert = s.aiRemindersEnabled;
+    _reminderDaysBefore = s.reminderDaysBefore;
 
     _tplControllers['fee_reminder'] =
         TextEditingController(text: s.tplFeeReminder);
@@ -192,6 +193,7 @@ class _AutomationSettingsScreenState
         'sms_fallback_enabled': _smsFallbackEnabled,
         'auto_receipt_enabled': _autoReceiptEnabled,
         'ai_reminders_enabled': _sendOnDueDate || _sendOverdueAlert,
+        'reminder_days_before': _reminderDaysBefore,
       };
 
       // Add all template texts
@@ -281,64 +283,9 @@ class _AutomationSettingsScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Notification Channels ────────────────────────────────────
-                _sectionHeader('Notification Channels'),
-                const SizedBox(height: 12),
-                GlassCard(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  child: Column(children: [
-                    _switchTile(
-                      icon: Icons.chat_bubble_rounded,
-                      iconColor: const Color(0xFF25D366),
-                      title: 'WhatsApp Notifications',
-                      subtitle:
-                          'Send fee alerts, invoices & receipts via WhatsApp',
-                      value: _whatsappEnabled,
-                      onChanged: (v) => setState(() => _whatsappEnabled = v),
-                    ),
-                    _divider(),
-                    _switchTile(
-                      icon: Icons.sms_rounded,
-                      iconColor: AppColors.primary,
-                      title: 'SMS Fallback Delivery',
-                      subtitle:
-                          'Auto-route via SMS when WhatsApp delivery fails',
-                      value: _smsFallbackEnabled,
-                      enabled: _whatsappEnabled,
-                      onChanged: _whatsappEnabled
-                          ? (v) => setState(() => _smsFallbackEnabled = v)
-                          : null,
-                    ),
-                  ]),
-                ),
-                if (!_whatsappEnabled) ...[
-                  const SizedBox(height: 8),
-                  _infoBanner(
-                    'SMS Fallback is disabled because WhatsApp is turned off.',
-                    icon: Icons.info_outline_rounded,
-                  ),
-                ],
-                const SizedBox(height: 24),
 
-                // ── Receipts ─────────────────────────────────────────────────
-                _sectionHeader('Receipts & Documents'),
-                const SizedBox(height: 12),
-                GlassCard(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  child: _switchTile(
-                    icon: Icons.receipt_long_rounded,
-                    iconColor: const Color(0xFF8B5CF6),
-                    title: 'Auto Receipt Sharing',
-                    subtitle:
-                        'Instantly send PDF receipt to parent on every payment',
-                    value: _autoReceiptEnabled,
-                    onChanged: (v) =>
-                        setState(() => _autoReceiptEnabled = v),
-                  ),
-                ),
-                const SizedBox(height: 24),
+
+
 
                 // ── Reminder Triggers ─────────────────────────────────────────
                 _sectionHeader('Reminder Triggers'),
@@ -354,8 +301,8 @@ class _AutomationSettingsScreenState
                         title: 'Due Date Reminder',
                         subtitle: 'Notify parents when a fee is approaching',
                         value: _sendOnDueDate,
-                        onChanged: (v) =>
-                            setState(() => _sendOnDueDate = v),
+                        enabled: false,
+                        onChanged: null,
                       ),
                       AnimatedCrossFade(
                         firstChild: const SizedBox.shrink(),
@@ -393,8 +340,8 @@ class _AutomationSettingsScreenState
                         subtitle:
                             'Alert parents when fee passes due date unpaid',
                         value: _sendOverdueAlert,
-                        onChanged: (v) =>
-                            setState(() => _sendOverdueAlert = v),
+                        enabled: false,
+                        onChanged: null,
                       ),
                     ],
                   ),
@@ -897,14 +844,18 @@ class _AutomationSettingsScreenState
 
   Widget _sectionHeader(String title) => Padding(
         padding: const EdgeInsets.only(left: 4, bottom: 0),
-        child: Text(
-          title.toUpperCase(),
-          style: GoogleFonts.manrope(
-            fontSize: 12,
-            fontWeight: FontWeight.w800,
-            color: AppColors.primary,
-            letterSpacing: 1.2,
-          ),
+        child: Row(
+          children: [
+            Text(
+              title.toUpperCase(),
+              style: GoogleFonts.manrope(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: AppColors.primary,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ],
         ),
       );
 

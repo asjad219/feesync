@@ -274,9 +274,9 @@ class _MetricsSection extends StatelessWidget {
             _MetricCard(
               label: balance!.advanceBalance > 0 ? 'ADVANCE BALANCE' : 'DUE AMOUNT',
               value: currencyFormatter.format(balance!.advanceBalance > 0 ? balance!.advanceBalance : balance!.dueAmount),
-              color: balance!.advanceBalance > 0 ? const Color(0xFF10B981) : (balance!.dueAmount > 0 ? AppColors.error : AppColors.success),
+              color: balance!.advanceBalance > 0 ? const Color(0xFF10B981) : (balance!.status == 'OVERDUE' ? AppColors.error : (balance!.dueAmount > 0 ? AppColors.pending : AppColors.success)),
               icon: balance!.advanceBalance > 0 ? Icons.account_balance_wallet_rounded : (balance!.dueAmount > 0 ? Icons.warning_amber_rounded : Icons.verified_rounded),
-              iconBgColor: balance!.advanceBalance > 0 ? const Color(0xFF10B981) : (balance!.dueAmount > 0 ? AppColors.error : AppColors.success),
+              iconBgColor: balance!.advanceBalance > 0 ? const Color(0xFF10B981) : (balance!.status == 'OVERDUE' ? AppColors.error : (balance!.dueAmount > 0 ? AppColors.pending : AppColors.success)),
             ),
           ],
         ),
@@ -713,7 +713,10 @@ class _PaymentTile extends ConsumerWidget {
     final invoiceNo = payment.receiptNumber ?? 'INV-${payment.id.substring(0, 8)}';
     
     final accountProfile = ref.read(accountProfileProvider).value;
-    final institutionName = accountProfile?.schoolName ?? accountProfile?.name ?? 'Institution';
+    final appSettings = ref.read(settingsProvider).valueOrNull;
+    final institutionName = (appSettings?.centerName != null && appSettings!.centerName.isNotEmpty) 
+        ? appSettings.centerName 
+        : (accountProfile?.schoolName ?? accountProfile?.name ?? 'Institution');
 
     final textReceipt = ReceiptService.generateTextReceipt(
       student: student,
@@ -732,6 +735,10 @@ class _PaymentTile extends ConsumerWidget {
       date: payment.paymentDate,
       invoiceNo: invoiceNo,
       institutionName: institutionName,
+      baseAmount: payment.baseAmount,
+      lateFineAmount: payment.lateFineAmount,
+      discountAmount: payment.discountAmount,
+      taxAmount: payment.taxAmount,
     );
 
     String phone = student.parentPhone ?? '';

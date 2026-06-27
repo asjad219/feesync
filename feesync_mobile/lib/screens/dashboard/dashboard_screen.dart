@@ -15,6 +15,7 @@ import '../../providers/dashboard_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/subscription_provider.dart';
+import '../../providers/notification_provider.dart';
 
 import '../../widgets/dashboard/monthly_analytics_chart.dart';
 import '../../widgets/dashboard/recent_transactions_widget.dart';

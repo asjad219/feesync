@@ -26,6 +26,7 @@ class AppSettings {
   final bool whatsappEnabled;
   final bool smsFallbackEnabled;
   final bool autoReceiptEnabled;
+  final int reminderDaysBefore;
   final String themeMode;
   final String dashboardLayout;
   final bool glassEffectsEnabled;
@@ -33,10 +34,13 @@ class AppSettings {
   // New Billing Settings
   final bool earlyPaymentDiscountEnabled;
   final double earlyPaymentDiscountPercent;
+  final String earlyPaymentDiscountType;
   final int earlyPaymentDays;
   final bool convenienceFeeEnabled;
   final double convenienceFeePercent;
   final double taxPercentage;
+  final String taxMode;
+  final String lateFineType;
 
   // Message Templates
   final String tplFeeReminder;
@@ -73,15 +77,19 @@ class AppSettings {
     required this.whatsappEnabled,
     required this.smsFallbackEnabled,
     required this.autoReceiptEnabled,
+    required this.reminderDaysBefore,
     required this.themeMode,
     required this.dashboardLayout,
     required this.glassEffectsEnabled,
     this.earlyPaymentDiscountEnabled = false,
     this.earlyPaymentDiscountPercent = 0.0,
+    this.earlyPaymentDiscountType = 'percentage',
     this.earlyPaymentDays = 0,
     this.convenienceFeeEnabled = false,
     this.convenienceFeePercent = 0.0,
     this.taxPercentage = 18.0,
+    this.taxMode = 'exclusive',
+    this.lateFineType = 'fixed',
     required this.tplFeeReminder,
     required this.tplPaymentReceipt,
     required this.tplOverdueNotice,
@@ -118,15 +126,19 @@ class AppSettings {
       whatsappEnabled: json['whatsapp_enabled'] ?? true,
       smsFallbackEnabled: json['sms_fallback_enabled'] ?? true,
       autoReceiptEnabled: json['auto_receipt_enabled'] ?? true,
+      reminderDaysBefore: json['reminder_days_before'] ?? 3,
       themeMode: json['theme_mode'] ?? 'dark_luxury',
       dashboardLayout: json['dashboard_layout'] ?? 'bento',
       glassEffectsEnabled: json['glass_effects_enabled'] ?? true,
       earlyPaymentDiscountEnabled: json['early_payment_discount_enabled'] ?? false,
       earlyPaymentDiscountPercent: double.parse((json['early_payment_discount_percent'] ?? 0).toString()),
+      earlyPaymentDiscountType: json['early_payment_discount_type'] ?? 'percentage',
       earlyPaymentDays: json['early_payment_days'] ?? 0,
       convenienceFeeEnabled: json['convenience_fee_enabled'] ?? false,
       convenienceFeePercent: double.parse((json['convenience_fee_percent'] ?? 0).toString()),
       taxPercentage: double.parse((json['tax_percentage'] ?? 18).toString()),
+      taxMode: json['tax_mode'] ?? 'exclusive',
+      lateFineType: json['late_fine_type'] ?? 'fixed',
       tplFeeReminder: json['tpl_fee_reminder'] ??
           'Hi {parent_name}, this is a reminder that a fee of ₹{amount} is due for {student_name} on {due_date}. Please pay on time to avoid late charges. — {school_name}',
       tplPaymentReceipt: json['tpl_payment_receipt'] ??
@@ -162,6 +174,7 @@ class AppSettings {
       gracePeriodDays: 3,
       partialPaymentsAllowed: true,
       aiRemindersEnabled: false,
+      reminderDaysBefore: 3,
       aiPredictionsEnabled: false,
       ocrEnabled: false,
       whatsappEnabled: false,
@@ -205,15 +218,19 @@ class AppSettings {
       'whatsapp_enabled': whatsappEnabled,
       'sms_fallback_enabled': smsFallbackEnabled,
       'auto_receipt_enabled': autoReceiptEnabled,
+      'reminder_days_before': reminderDaysBefore,
       'theme_mode': themeMode,
       'dashboard_layout': dashboardLayout,
       'glass_effects_enabled': glassEffectsEnabled,
       'early_payment_discount_enabled': earlyPaymentDiscountEnabled,
       'early_payment_discount_percent': earlyPaymentDiscountPercent,
+      'early_payment_discount_type': earlyPaymentDiscountType,
       'early_payment_days': earlyPaymentDays,
       'convenience_fee_enabled': convenienceFeeEnabled,
       'convenience_fee_percent': convenienceFeePercent,
       'tax_percentage': taxPercentage,
+      'tax_mode': taxMode,
+      'late_fine_type': lateFineType,
       'tpl_fee_reminder': tplFeeReminder,
       'tpl_payment_receipt': tplPaymentReceipt,
       'tpl_overdue_notice': tplOverdueNotice,
@@ -248,15 +265,19 @@ class AppSettings {
     bool? whatsappEnabled,
     bool? smsFallbackEnabled,
     bool? autoReceiptEnabled,
+    int? reminderDaysBefore,
     String? themeMode,
     String? dashboardLayout,
     bool? glassEffectsEnabled,
     bool? earlyPaymentDiscountEnabled,
     double? earlyPaymentDiscountPercent,
+    String? earlyPaymentDiscountType,
     int? earlyPaymentDays,
     bool? convenienceFeeEnabled,
     double? convenienceFeePercent,
     double? taxPercentage,
+    String? taxMode,
+    String? lateFineType,
     String? tplFeeReminder,
     String? tplPaymentReceipt,
     String? tplOverdueNotice,
@@ -291,15 +312,19 @@ class AppSettings {
       whatsappEnabled: whatsappEnabled ?? this.whatsappEnabled,
       smsFallbackEnabled: smsFallbackEnabled ?? this.smsFallbackEnabled,
       autoReceiptEnabled: autoReceiptEnabled ?? this.autoReceiptEnabled,
+      reminderDaysBefore: reminderDaysBefore ?? this.reminderDaysBefore,
       themeMode: themeMode ?? this.themeMode,
       dashboardLayout: dashboardLayout ?? this.dashboardLayout,
       glassEffectsEnabled: glassEffectsEnabled ?? this.glassEffectsEnabled,
       earlyPaymentDiscountEnabled: earlyPaymentDiscountEnabled ?? this.earlyPaymentDiscountEnabled,
       earlyPaymentDiscountPercent: earlyPaymentDiscountPercent ?? this.earlyPaymentDiscountPercent,
+      earlyPaymentDiscountType: earlyPaymentDiscountType ?? this.earlyPaymentDiscountType,
       earlyPaymentDays: earlyPaymentDays ?? this.earlyPaymentDays,
       convenienceFeeEnabled: convenienceFeeEnabled ?? this.convenienceFeeEnabled,
       convenienceFeePercent: convenienceFeePercent ?? this.convenienceFeePercent,
       taxPercentage: taxPercentage ?? this.taxPercentage,
+      taxMode: taxMode ?? this.taxMode,
+      lateFineType: lateFineType ?? this.lateFineType,
       tplFeeReminder: tplFeeReminder ?? this.tplFeeReminder,
       tplPaymentReceipt: tplPaymentReceipt ?? this.tplPaymentReceipt,
       tplOverdueNotice: tplOverdueNotice ?? this.tplOverdueNotice,
