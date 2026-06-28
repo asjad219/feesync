@@ -16,7 +16,7 @@ import '../../../services/app_lock_service.dart';
 import '../../../core/services/network_service.dart';
 import 'package:intl/intl.dart';
 import '../../../core/widgets/permission_guard.dart';
-import 'widgets/reminders_tab.dart';
+
 
 class BatchDetailScreen extends ConsumerStatefulWidget {
   final String batchId;
@@ -34,7 +34,7 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
   void initState() {
     super.initState();
     _tabController = TabController(
-      length: 6, 
+      length: 5, 
       vsync: this,
       initialIndex: widget.initialTabIndex,
     );
@@ -173,6 +173,8 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
   }
 
   Widget _buildContent(Batch batch, BatchAnalytics? analytics, List<StudentBalance>? students) {
+    final defaulters = students?.where((s) => s.balance > 0).toList() ?? [];
+
     return NestedScrollView(
       headerSliverBuilder: (context, innerBoxIsScrolled) => [
         _buildHeroHeader(batch, analytics, students),
@@ -208,13 +210,14 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
                 invalidateDashboardAnalytics(ref);
               }
             },
-            onRemindersTap: () => context.push('/notifications'),
             onEditTap: () => context.push('/batches/create?batchId=${batch.id}'),
+            onRemindersTap: defaulters.isNotEmpty 
+                ? () => _showBulkRemindersSheet(context, batch.id, defaulters) 
+                : null,
           ),
           _StudentsTab(batchId: batch.id),
           _AttendanceTab(batchId: batch.id),
           _FeesTab(batchId: batch.id),
-          RemindersTab(batchId: batch.id),
           _AnalyticsTab(batchId: batch.id, accentColor: batch.color),
         ],
       ),
@@ -385,7 +388,6 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
             Tab(text: 'Students'),
             Tab(text: 'Attendance'),
             Tab(text: 'Fees'),
-            Tab(text: 'Reminders'),
             Tab(text: 'Analytics'),
           ],
         ),
@@ -717,15 +719,15 @@ class _OverviewTab extends StatelessWidget {
   final Batch batch;
   final VoidCallback onAttendanceTap;
   final VoidCallback onAddStudentTap;
-  final VoidCallback onRemindersTap;
   final VoidCallback onEditTap;
+  final VoidCallback? onRemindersTap;
 
   const _OverviewTab({
     required this.batch,
     required this.onAttendanceTap,
     required this.onAddStudentTap,
-    required this.onRemindersTap,
     required this.onEditTap,
+    this.onRemindersTap,
   });
 
   List<Map<String, dynamic>> _generateUpcomingSessions(Batch batch) {
@@ -896,12 +898,13 @@ class _OverviewTab extends StatelessWidget {
           color: Colors.purpleAccent,
           onTap: onAddStudentTap,
         ),
-        _QuickAction(
-          icon: Icons.notifications_active,
-          label: 'Reminders',
-          color: Colors.orangeAccent,
-          onTap: onRemindersTap,
-        ),
+        if (onRemindersTap != null)
+          _QuickAction(
+            icon: Icons.notifications_active,
+            label: 'Reminders',
+            color: Colors.orangeAccent,
+            onTap: onRemindersTap,
+          ),
         _QuickAction(
           icon: Icons.edit,
           label: 'Edit',
@@ -1996,30 +1999,7 @@ class _FeesTab extends ConsumerWidget {
   }
 
   void _sendBulkReminders(BuildContext context, List<StudentBalance> defaulters) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF),
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (context) => _ReminderPreviewSheet(
-        title: 'Send All Reminders',
-        subtitle: 'You are about to send reminders to ${defaulters.length} students.',
-        students: defaulters,
-        batchId: batchId,
-        onConfirm: (_) async {
-          Navigator.pop(context);
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (ctx) => _BulkSendProgressDialog(
-              defaulters: defaulters,
-              batchId: batchId,
-            ),
-          );
-        },
-      ),
-    );
+    _showBulkRemindersSheet(context, batchId, defaulters);
   }
 
   static void _launchWhatsAppWithMessage(StudentBalance s, String message) async {
@@ -2031,6 +2011,33 @@ class _FeesTab extends ConsumerWidget {
     
     await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
   }
+}
+
+void _showBulkRemindersSheet(BuildContext context, String batchId, List<StudentBalance> defaulters) {
+  final bool isDark = Theme.of(context).brightness == Brightness.dark;
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: isDark ? const Color(0xFF1E1E2C) : const Color(0xFFFFFFFF),
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+    builder: (context) => _ReminderPreviewSheet(
+      title: 'Send All Reminders',
+      subtitle: 'You are about to send reminders to ${defaulters.length} students.',
+      students: defaulters,
+      batchId: batchId,
+      onConfirm: (_) async {
+        Navigator.pop(context);
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => _BulkSendProgressDialog(
+            defaulters: defaulters,
+            batchId: batchId,
+          ),
+        );
+      },
+    ),
+  );
 }
 
 class _CircleProgress extends StatelessWidget {
@@ -2265,6 +2272,7 @@ class _ReminderPreviewSheetState extends ConsumerState<_ReminderPreviewSheet> {
           batchName: batchName,
           instituteName: instituteName,
           dueDate: _dueDateStr,
+          collectParentDetails: batch?.collectParentDetails ?? true,
         );
         _messageController.text = generatedMessage;
         _isControllerInitialized = true;
@@ -2542,6 +2550,7 @@ class _BulkSendProgressDialogState extends ConsumerState<_BulkSendProgressDialog
       batchName: batchName,
       instituteName: instituteName,
       dueDate: _dueDates[student.id] ?? 'N/A',
+      collectParentDetails: batch?.collectParentDetails ?? true,
     );
 
     final url = 'https://wa.me/${cleanPhone.startsWith('+') ? cleanPhone : '+91$cleanPhone'}?text=${Uri.encodeComponent(message)}';
@@ -2655,14 +2664,20 @@ String generateReminderMessage({
   required String batchName,
   required String instituteName,
   required String dueDate,
+  bool collectParentDetails = true,
 }) {
-  final String parentName = (student.parentName == null || student.parentName!.trim().isEmpty)
-      ? "Parent"
-      : student.parentName!.trim();
-
   final String studentName = student.firstName.trim().isEmpty
       ? "Student"
       : student.fullName.trim();
+
+  String contactName;
+  if (collectParentDetails) {
+    contactName = (student.parentName == null || student.parentName!.trim().isEmpty)
+        ? "Parent"
+        : student.parentName!.trim();
+  } else {
+    contactName = studentName;
+  }
 
   final double dueVal = student.balance > 0 ? student.balance : student.dueAmount;
   final String dueAmountStr = dueVal > 0 
@@ -2673,7 +2688,7 @@ String generateReminderMessage({
 
   String msg = template;
   
-  msg = msg.replaceAll('{parent_name}', parentName);
+  msg = msg.replaceAll('{parent_name}', contactName);
   msg = msg.replaceAll('{student_name}', studentName);
   
   msg = msg.replaceAll('{due_amount}', dueAmountStr);

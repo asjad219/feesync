@@ -120,10 +120,7 @@ class _AutomationSettingsScreenState
   // Receipts
   bool _autoReceiptEnabled = true;
 
-  // Reminder triggers
-  bool _sendOnDueDate = true;
-  bool _sendOverdueAlert = true;
-  int _reminderDaysBefore = 3;
+
 
   // Template controllers — keyed by _TemplateInfo.key
   final Map<String, TextEditingController> _tplControllers = {};
@@ -148,9 +145,7 @@ class _AutomationSettingsScreenState
     _whatsappEnabled = s.whatsappEnabled;
     _smsFallbackEnabled = s.smsFallbackEnabled;
     _autoReceiptEnabled = s.autoReceiptEnabled;
-    _sendOnDueDate = s.aiRemindersEnabled;
-    _sendOverdueAlert = s.aiRemindersEnabled;
-    _reminderDaysBefore = s.reminderDaysBefore;
+
 
     _tplControllers['fee_reminder'] =
         TextEditingController(text: s.tplFeeReminder);
@@ -192,8 +187,7 @@ class _AutomationSettingsScreenState
         'whatsapp_enabled': _whatsappEnabled,
         'sms_fallback_enabled': _smsFallbackEnabled,
         'auto_receipt_enabled': _autoReceiptEnabled,
-        'ai_reminders_enabled': _sendOnDueDate || _sendOverdueAlert,
-        'reminder_days_before': _reminderDaysBefore,
+
       };
 
       // Add all template texts
@@ -287,74 +281,7 @@ class _AutomationSettingsScreenState
 
 
 
-                // ── Reminder Triggers ─────────────────────────────────────────
-                _sectionHeader('Reminder Triggers'),
-                const SizedBox(height: 12),
-                GlassCard(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _switchTile(
-                        icon: Icons.notifications_active_rounded,
-                        iconColor: const Color(0xFFF59E0B),
-                        title: 'Due Date Reminder',
-                        subtitle: 'Notify parents when a fee is approaching',
-                        value: _sendOnDueDate,
-                        enabled: false,
-                        onChanged: null,
-                      ),
-                      AnimatedCrossFade(
-                        firstChild: const SizedBox.shrink(),
-                        secondChild: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 12),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 4),
-                              child: Text(
-                                'Send reminder this many days before due date:',
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            _reminderDaysPicker(),
-                            const SizedBox(height: 12),
-                          ],
-                        ),
-                        crossFadeState: _sendOnDueDate
-                            ? CrossFadeState.showSecond
-                            : CrossFadeState.showFirst,
-                        duration: const Duration(milliseconds: 220),
-                      ),
-                      _divider(),
-                      _switchTile(
-                        icon: Icons.warning_amber_rounded,
-                        iconColor: const Color(0xFFEF4444),
-                        title: 'Overdue Escalation Alert',
-                        subtitle:
-                            'Alert parents when fee passes due date unpaid',
-                        value: _sendOverdueAlert,
-                        enabled: false,
-                        onChanged: null,
-                      ),
-                    ],
-                  ),
-                ),
-                if (!_sendOnDueDate && !_sendOverdueAlert) ...[
-                  const SizedBox(height: 8),
-                  _infoBanner(
-                    'All reminders are off — parents will receive no automated alerts.',
-                    icon: Icons.warning_amber_rounded,
-                    isWarning: true,
-                  ),
-                ],
-                const SizedBox(height: 28),
+
 
                 // ── Message Templates ─────────────────────────────────────────
                 _sectionHeader('Message Templates'),
@@ -717,47 +644,6 @@ class _AutomationSettingsScreenState
   }
 
   // ── Shared helpers ─────────────────────────────────────────────────────────
-  Widget _reminderDaysPicker() {
-    const options = [1, 2, 3, 5, 7, 10];
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: options.map((d) {
-        final sel = _reminderDaysBefore == d;
-        return GestureDetector(
-          onTap: () => setState(() => _reminderDaysBefore = d),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: sel
-                  ? AppColors.primaryContainer
-                  : AppColors.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: sel
-                    ? AppColors.primary
-                    : AppColors.outline.withValues(alpha: 0.2),
-                width: 1.5,
-              ),
-            ),
-            child: Text(
-              '$d ${d == 1 ? 'day' : 'days'}',
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: sel
-                    ? AppColors.onPrimaryContainer
-                    : AppColors.textSecondary,
-              ),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
   Widget _switchTile({
     required IconData icon,
     required Color iconColor,

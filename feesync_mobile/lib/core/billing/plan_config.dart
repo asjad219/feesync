@@ -71,8 +71,8 @@ class PlanConfig {
     name: 'Starter',
     tagline: 'Professional Solo Operator',
     monthlyPrice: 299,
-    annualPrice: 2990, // 2 months free vs 299×12=3588
-    annualMonthlyEquivalent: 249,
+    annualPrice: 2868, // 239 * 12
+    annualMonthlyEquivalent: 239,
     maxStudents: 200,
     maxBatches: 10,
     whatsappReceiptsPerMonth: 2000,

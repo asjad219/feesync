@@ -673,7 +673,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
     final tier = plan.tier;
     
     final isCurrent = tier == currentSub.effectivePlan;
-    final price = _isAnnual ? plan.annualPrice : plan.monthlyPrice;
+    final price = _isAnnual ? plan.annualMonthlyEquivalent : plan.monthlyPrice;
         
     final themeColor = _planColor(tier);
     
@@ -777,7 +777,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
               if (price > 0) ...[
                 const SizedBox(width: 6),
                 Text(
-                  _isAnnual ? '/year' : '/month',
+                  '/month',
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     color: AppColors.textTertiary,
@@ -790,7 +790,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
           if (price > 0 && _isAnnual) ...[
             const SizedBox(height: 4),
             Text(
-              'Billed annually (Includes 2 months free!)',
+              'Billed annually',
               style: GoogleFonts.inter(
                 fontSize: 11,
                 color: AppColors.success,
@@ -955,10 +955,10 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
         ...plans.map(
           (plan) {
             final isCurrent = plan.tier == currentSub.effectivePlan;
-            final price = _isAnnual ? plan.annualPrice : plan.monthlyPrice;
+            final price = _isAnnual ? plan.annualMonthlyEquivalent : plan.monthlyPrice;
             final priceLabel = price == 0
                 ? 'Free'
-                : '₹$price/${_isAnnual ? 'yr' : 'mo'}';
+                : '₹$price/mo';
 
             return Container(
               width: 100,
@@ -1496,7 +1496,7 @@ class _PlanOptionCard extends ConsumerWidget {
 
     final String displayPrice = product != null
         ? product.price
-        : '₹${isAnnual ? plan.annualPrice : plan.monthlyPrice}';
+        : '₹${isAnnual ? plan.annualMonthlyEquivalent : plan.monthlyPrice}';
 
     return GestureDetector(
       onTap: isCurrentPlanAndCycle ? null : onSelect,
@@ -1575,9 +1575,9 @@ class _PlanOptionCard extends ConsumerWidget {
                     color: (isGrowth || isInstitute) ? Colors.white : AppColors.primary,
                   ),
                 ),
-                if (!isCurrentPlanAndCycle)
+                if (!isCurrentPlanAndCycle) ...[
                   Text(
-                    '/${isAnnual ? 'year' : 'month'}',
+                    '/month',
                     style: GoogleFonts.inter(
                       fontSize: 10,
                       color: (isGrowth || isInstitute)
@@ -1585,6 +1585,17 @@ class _PlanOptionCard extends ConsumerWidget {
                           : AppColors.textTertiary,
                     ),
                   ),
+                  if (isAnnual)
+                    Text(
+                      'Billed annually',
+                      style: GoogleFonts.inter(
+                        fontSize: 9,
+                        color: (isGrowth || isInstitute)
+                            ? Colors.white.withValues(alpha: 0.8)
+                            : AppColors.textSecondary,
+                      ),
+                    ),
+                ],
               ],
             ),
           ],
