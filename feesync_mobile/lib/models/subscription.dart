@@ -179,14 +179,15 @@ class Subscription {
   }
 
   /// Monthly price in INR for the current plan.
+  /// Annual values are per-month equivalents (annual total ÷ 12).
   int get monthlyPriceInr {
     switch (planType) {
       case 'starter':
-        return billingCycle == 'annual' ? 249 : 299;
+        return billingCycle == 'annual' ? 239 : 299;  // annual: 2868÷12=239
       case 'growth':
-        return billingCycle == 'annual' ? 832 : 999;
+        return billingCycle == 'annual' ? 832 : 999;  // annual: 9984÷12=832
       case 'institute':
-        return billingCycle == 'annual' ? 1000 : 1499;
+        return billingCycle == 'annual' ? 1666 : 1999; // annual: 19992÷12=1666
       default:
         return 0;
     }

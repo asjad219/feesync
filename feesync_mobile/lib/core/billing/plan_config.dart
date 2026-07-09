@@ -71,8 +71,8 @@ class PlanConfig {
     name: 'Starter',
     tagline: 'Professional Solo Operator',
     monthlyPrice: 299,
-    annualPrice: 2868, // 239 * 12
-    annualMonthlyEquivalent: 239,
+    annualPrice: 2868,             // Play Console: ₹2,868/yr (₹239/mo)
+    annualMonthlyEquivalent: 239,  // 2868 ÷ 12 = 239
     maxStudents: 200,
     maxBatches: 10,
     whatsappReceiptsPerMonth: 2000,
@@ -99,8 +99,8 @@ class PlanConfig {
     name: 'Growth',
     tagline: 'Scale with Pro',
     monthlyPrice: 999,
-    annualPrice: 9990, // saves vs 999×12=11988
-    annualMonthlyEquivalent: 832,
+    annualPrice: 9984,             // Play Console: ₹9,984/yr (₹832/mo)
+    annualMonthlyEquivalent: 832,  // 9984 ÷ 12 = 832
     maxStudents: 500,
     maxBatches: 50,
     whatsappReceiptsPerMonth: 5000,
@@ -127,8 +127,8 @@ class PlanConfig {
     name: 'Institute',
     tagline: 'Multi-Batch Enterprise',
     monthlyPrice: 1999,
-    annualPrice: 19990, // saves vs 1999×12=23988
-    annualMonthlyEquivalent: 1666,
+    annualPrice: 19992,             // Play Console: ₹19,992/yr (₹1,666/mo)
+    annualMonthlyEquivalent: 1666,  // 19992 ÷ 12 = 1666
     maxStudents: 5000,
     maxBatches: 500,
     whatsappReceiptsPerMonth: 50000,
