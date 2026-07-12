@@ -13,6 +13,7 @@ import '../../models/subscription.dart';
 import '../../core/widgets/glass/glass_card.dart';
 import '../../core/widgets/error_dialog.dart';
 import '../../core/widgets/offline_widgets.dart';
+import '../../core/billing/quota_checker.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -477,8 +478,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ? AppColors.pending
             : AppColors.success;
 
-    final maxLabel = sub.currentMaxStudents <= 0
-        ? 'Unlimited'
+    // Never show raw -1 to users. Format as '0 / ∞' for unlimited.
+    final maxLabel = QuotaChecker.isUnlimited(sub.currentMaxStudents)
+        ? '$activeStudents / ∞'
         : '$activeStudents / ${sub.currentMaxStudents}';
 
     return GestureDetector(
@@ -535,7 +537,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ),
             const SizedBox(height: 10),
-            if (sub.currentMaxStudents > 0) ...[  
+            // Show progress bar only for finite limits (not unlimited/-1, not unavailable/0).
+            if (!QuotaChecker.isUnlimited(sub.currentMaxStudents) &&
+                !QuotaChecker.isUnavailable(sub.currentMaxStudents)) ...[
               ClipRRect(
                 borderRadius: const BorderRadius.all(Radius.circular(6)),
                 child: LinearProgressIndicator(

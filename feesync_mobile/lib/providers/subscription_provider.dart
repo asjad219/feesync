@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/subscription.dart';
 import '../repositories/subscription_repository.dart';
 import '../core/billing/feature_gate.dart';
+import '../core/billing/quota_checker.dart';
 import '../repositories/usage_repository.dart';
 import 'supabase_provider.dart';
 import '../core/billing/plan_config.dart';
@@ -119,64 +120,54 @@ class SubscriptionScreenData {
 
   // ─── Student limit ──────────────────────────────────────────────────────────
 
-  /// Usage ratio 0.0–1.0.
-  double get studentUsageRatio {
-    final max = subscription.currentMaxStudents;
-    if (max == 0) return 1.0;
-    return (activeStudentCount / max).clamp(0.0, 1.0);
-  }
+  /// Usage ratio 0.0–1.0. Returns 0.0 for unlimited (-1) so the progress bar
+  /// appears empty, and 1.0 for unavailable (0) so the bar appears full.
+  double get studentUsageRatio => QuotaChecker.usageRatio(
+        activeStudentCount, subscription.currentMaxStudents);
 
   bool get isNearStudentLimit => studentUsageRatio >= 0.80;
-  bool get isAtStudentLimit   => studentUsageRatio >= 1.0;
+  bool get isAtStudentLimit   => !canAddStudent;
 
   /// True if adding one more student is allowed.
-  bool get canAddStudent {
-    return activeStudentCount < subscription.currentMaxStudents;
-  }
+  /// Correctly handles -1 (unlimited) and 0 (unavailable) sentinels.
+  bool get canAddStudent => QuotaChecker.canCreate(
+        activeStudentCount, subscription.currentMaxStudents);
 
   // ─── Batch limit ────────────────────────────────────────────────────────────
 
-  double get batchUsageRatio {
-    final max = subscription.currentMaxBatches;
-    if (max == 0) return 1.0;
-    return (activeBatchCount / max).clamp(0.0, 1.0);
-  }
+  double get batchUsageRatio => QuotaChecker.usageRatio(
+        activeBatchCount, subscription.currentMaxBatches);
 
-  bool get isAtBatchLimit => batchUsageRatio >= 1.0;
+  bool get isAtBatchLimit => !canAddBatch;
 
   /// True if adding one more batch is allowed.
-  bool get canAddBatch {
-    return activeBatchCount < subscription.currentMaxBatches;
-  }
+  /// Correctly handles -1 (unlimited) and 0 (unavailable) sentinels.
+  bool get canAddBatch => QuotaChecker.canCreate(
+        activeBatchCount, subscription.currentMaxBatches);
 
   // ─── Staff limit ────────────────────────────────────────────────────────────
 
-  double get staffUsageRatio {
-    final max = subscription.currentMaxStaff;
-    if (max == 0) return 1.0;
-    return (activeStaffCount / max).clamp(0.0, 1.0);
-  }
+  double get staffUsageRatio => QuotaChecker.usageRatio(
+        activeStaffCount, subscription.currentMaxStaff);
 
   bool get isNearStaffLimit => staffUsageRatio >= 0.80;
-  bool get isAtStaffLimit   => staffUsageRatio >= 1.0;
+  bool get isAtStaffLimit   => !canAddStaff;
 
   /// True if adding one more staff is allowed.
-  bool get canAddStaff {
-    return activeStaffCount < subscription.currentMaxStaff;
-  }
+  /// Correctly handles -1 (unlimited) and 0 (unavailable) sentinels.
+  bool get canAddStaff => QuotaChecker.canCreate(
+        activeStaffCount, subscription.currentMaxStaff);
 
   // ─── WhatsApp Limits ────────────────────────────────────────────────────────
 
   int get waReceiptsUsed => usage['whatsapp_receipts_used'] ?? 0;
-  
-  double get waReceiptsUsageRatio {
-    final max = subscription.currentWaReceiptsLimit;
-    if (max == 0) return 1.0;
-    return (waReceiptsUsed / max).clamp(0.0, 1.0);
-  }
+
+  double get waReceiptsUsageRatio => QuotaChecker.usageRatio(
+        waReceiptsUsed, subscription.currentWaReceiptsLimit);
 
   bool get isNearWaReceiptsLimit => waReceiptsUsageRatio >= 0.80;
-  bool get isAtWaReceiptsLimit   => waReceiptsUsageRatio >= 1.0;
+  bool get isAtWaReceiptsLimit   => QuotaChecker.hasReachedLimit(
+        waReceiptsUsed, subscription.currentWaReceiptsLimit);
 
   // ─── Legacy aliases (keep backward compat with old code) ───────────────────
   bool get isNearLimit  => isNearStudentLimit;

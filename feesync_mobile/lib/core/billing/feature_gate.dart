@@ -1,4 +1,5 @@
 import '../../models/subscription.dart';
+import 'quota_checker.dart';
 
 /// FeatureGate — single source of truth for all feature-access decisions.
 ///
@@ -7,6 +8,11 @@ import '../../models/subscription.dart';
 ///
 /// Design rule: gate checks are purely functional — no side effects.
 /// Showing the paywall dialog is the caller's responsibility.
+///
+/// Quota sentinel convention:
+///   -1  →  unlimited (QuotaChecker.isUnlimited)
+///    0  →  feature unavailable
+///   > 0 →  finite cap
 class FeatureGate {
   final Subscription subscription;
   final int activeStudentCount;
@@ -27,88 +33,84 @@ class FeatureGate {
   // ── Student limits ─────────────────────────────────────────────────────────
 
   /// True if the user can add more students.
-  bool get canAddStudent {
-    if (subscription.hasUnlimitedStudents) return true;
-    return activeStudentCount < subscription.currentMaxStudents;
-  }
+  bool get canAddStudent => QuotaChecker.canCreate(
+        activeStudentCount,
+        subscription.currentMaxStudents,
+      );
 
-  /// How many more students the user can add.
-  int get remainingStudentSlots {
-    if (subscription.hasUnlimitedStudents) return -1;
-    final remaining = subscription.currentMaxStudents - activeStudentCount;
-    return remaining < 0 ? 0 : remaining;
-  }
+  /// How many more students the user can add. -1 = unlimited.
+  int get remainingStudentSlots => QuotaChecker.remainingSlots(
+        activeStudentCount,
+        subscription.currentMaxStudents,
+      );
 
   /// Student usage as a fraction (0.0–1.0).
-  double get studentUsageFraction {
-    if (subscription.currentMaxStudents == 0) return 1.0;
-    return (activeStudentCount / subscription.currentMaxStudents).clamp(0.0, 1.0);
-  }
+  double get studentUsageFraction => QuotaChecker.usageRatio(
+        activeStudentCount,
+        subscription.currentMaxStudents,
+      );
 
   // ── Batch limits ───────────────────────────────────────────────────────────
 
   /// True if the user can create more batches.
-  bool get canAddBatch {
-    if (subscription.hasUnlimitedBatches) return true;
-    return activeBatchCount < subscription.currentMaxBatches;
-  }
+  bool get canAddBatch => QuotaChecker.canCreate(
+        activeBatchCount,
+        subscription.currentMaxBatches,
+      );
 
-  /// How many more batches the user can create.
-  int get remainingBatchSlots {
-    if (subscription.hasUnlimitedBatches) return -1;
-    final remaining = subscription.currentMaxBatches - activeBatchCount;
-    return remaining < 0 ? 0 : remaining;
-  }
+  /// How many more batches the user can create. -1 = unlimited.
+  int get remainingBatchSlots => QuotaChecker.remainingSlots(
+        activeBatchCount,
+        subscription.currentMaxBatches,
+      );
 
   // ── Staff limits ───────────────────────────────────────────────────────────
 
   /// True if the user can add more staff.
-  bool get canAddStaff {
-    if (subscription.hasUnlimitedStaff) return true;
-    return activeStaffCount < subscription.currentMaxStaff;
-  }
+  bool get canAddStaff => QuotaChecker.canCreate(
+        activeStaffCount,
+        subscription.currentMaxStaff,
+      );
 
-  /// How many more staff the user can add.
-  int get remainingStaffSlots {
-    if (subscription.hasUnlimitedStaff) return -1;
-    final remaining = subscription.currentMaxStaff - activeStaffCount;
-    return remaining < 0 ? 0 : remaining;
-  }
+  /// How many more staff the user can add. -1 = unlimited.
+  int get remainingStaffSlots => QuotaChecker.remainingSlots(
+        activeStaffCount,
+        subscription.currentMaxStaff,
+      );
 
   /// Staff usage as a fraction (0.0–1.0).
-  double get staffUsageFraction {
-    if (subscription.currentMaxStaff == 0) return 1.0;
-    return (activeStaffCount / subscription.currentMaxStaff).clamp(0.0, 1.0);
-  }
+  double get staffUsageFraction => QuotaChecker.usageRatio(
+        activeStaffCount,
+        subscription.currentMaxStaff,
+      );
 
   // ── WhatsApp limits ────────────────────────────────────────────────────────
 
   /// True if the user can send another WhatsApp receipt.
-  bool get canSendWhatsappReceipt {
-    if (subscription.hasUnlimitedWaReceipts) return true;
-    return waReceiptsUsedThisMonth < subscription.currentWaReceiptsLimit;
-  }
+  bool get canSendWhatsappReceipt => QuotaChecker.canCreate(
+        waReceiptsUsedThisMonth,
+        subscription.currentWaReceiptsLimit,
+      );
 
   /// True if the user can send another WhatsApp reminder.
-  bool get canSendWhatsappReminder {
-    if (subscription.hasUnlimitedWaReminders) return true;
-    return waRemindersUsedThisMonth < subscription.currentWaRemindersLimit;
-  }
+  bool get canSendWhatsappReminder => QuotaChecker.canCreate(
+        waRemindersUsedThisMonth,
+        subscription.currentWaRemindersLimit,
+      );
 
-  int get remainingWaReceipts {
-    if (subscription.hasUnlimitedWaReceipts) return -1;
-    return (subscription.currentWaReceiptsLimit - waReceiptsUsedThisMonth)
-        .clamp(0, subscription.currentWaReceiptsLimit);
-  }
+  /// Remaining WhatsApp receipts. -1 = unlimited.
+  int get remainingWaReceipts => QuotaChecker.remainingSlots(
+        waReceiptsUsedThisMonth,
+        subscription.currentWaReceiptsLimit,
+      );
 
-  int get remainingWaReminders {
-    if (subscription.hasUnlimitedWaReminders) return -1;
-    return (subscription.currentWaRemindersLimit - waRemindersUsedThisMonth)
-        .clamp(0, subscription.currentWaRemindersLimit);
-  }
+  /// Remaining WhatsApp reminders. -1 = unlimited.
+  int get remainingWaReminders => QuotaChecker.remainingSlots(
+        waRemindersUsedThisMonth,
+        subscription.currentWaRemindersLimit,
+      );
 
   // ── Feature flags ──────────────────────────────────────────────────────────
-
 
   bool get canExportCsv           => subscription.canExportCsv;
 
@@ -158,16 +160,16 @@ class FeatureGate {
 
   /// Human-readable limit status for student usage.
   String get studentLimitStatus {
-    return '$activeStudentCount / ${subscription.currentMaxStudents} students used';
+    return '$activeStudentCount / ${QuotaChecker.formatLimit(subscription.currentMaxStudents)} students used';
   }
 
   /// Human-readable limit status for batch usage.
   String get batchLimitStatus {
-    return '$activeBatchCount / ${subscription.currentMaxBatches} batches used';
+    return '$activeBatchCount / ${QuotaChecker.formatLimit(subscription.currentMaxBatches)} batches used';
   }
 
   /// Human-readable limit status for staff usage.
   String get staffLimitStatus {
-    return '$activeStaffCount / ${subscription.currentMaxStaff} staff used';
+    return '$activeStaffCount / ${QuotaChecker.formatLimit(subscription.currentMaxStaff)} staff used';
   }
 }

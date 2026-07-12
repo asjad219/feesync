@@ -1,7 +1,7 @@
 name: feesync_mobile
 description: "FeeSync - School Fee Management Mobile App"
 publish_to: 'none'
-version: 1.0.3+5
+version: 1.0.4+6
 
 environment:
   sdk: ^3.11.5

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -11,6 +10,7 @@ import '../../../providers/subscription_provider.dart';
 import '../../../core/billing/plan_config.dart';
 import '../../../core/billing/billing_provider.dart';
 import '../../../core/billing/billing_service.dart';
+import '../../../core/billing/quota_checker.dart';
 
 class SubscriptionScreen extends ConsumerStatefulWidget {
   const SubscriptionScreen({super.key});
@@ -484,7 +484,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
               ),
             ),
             Text(
-              suffix ?? '$used / $max',
+              // Never show raw -1 to users: use QuotaChecker to format limits.
+              suffix ?? QuotaChecker.formatUsageDisplay(used, max),
               style: GoogleFonts.inter(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
