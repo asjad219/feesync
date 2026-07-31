@@ -8,8 +8,9 @@ import '../../../core/widgets/glass/glass_card.dart';
 import '../../../models/subscription.dart';
 import '../../../providers/subscription_provider.dart';
 import '../../../core/billing/plan_config.dart';
-import '../../../core/billing/billing_provider.dart';
-import '../../../core/billing/billing_service.dart';
+import '../../../core/billing/revenue_cat_provider.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/billing/quota_checker.dart';
 
 class SubscriptionScreen extends ConsumerStatefulWidget {
@@ -44,7 +45,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
   @override
   Widget build(BuildContext context) {
     final dataAsync = ref.watch(subscriptionScreenDataProvider);
-    final purchaseState = ref.watch(purchaseControllerProvider);
+    final purchaseState = ref.watch(rcPurchaseControllerProvider);
 
     return Stack(
       children: [
@@ -1168,6 +1169,9 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
   // ─── Policy footer ────────────────────────────────────────────────────────
 
   Widget _buildPolicyFooter() {
+    final customerInfo = ref.watch(customerInfoProvider).valueOrNull;
+    final managementURL = customerInfo?.managementURL;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -1181,18 +1185,42 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 16),
-        ElevatedButton.icon(
-          onPressed: () {
-            ref.read(purchaseControllerProvider.notifier).restore();
-          },
-          icon: const Icon(Icons.restore_rounded, size: 16),
-          label: const Text('Restore Purchases'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.surfaceContainerHigh,
-            foregroundColor: AppColors.textPrimary,
-            elevation: 0,
-            textStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton.icon(
+              onPressed: () {
+                ref.read(rcPurchaseControllerProvider.notifier).restore();
+              },
+              icon: const Icon(Icons.restore_rounded, size: 16),
+              label: const Text('Restore Purchases'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.surfaceContainerHigh,
+                foregroundColor: AppColors.textPrimary,
+                elevation: 0,
+                textStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+              ),
+            ),
+            if (managementURL != null) ...[
+              const SizedBox(width: 12),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  final url = Uri.parse(managementURL);
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url);
+                  }
+                },
+                icon: const Icon(Icons.settings_suggest_rounded, size: 16),
+                label: const Text('Manage'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.surfaceContainerHigh,
+                  foregroundColor: AppColors.textPrimary,
+                  elevation: 0,
+                  textStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ],
         ),
         const SizedBox(height: 16),
         Wrap(
@@ -1448,10 +1476,9 @@ class _UpgradeSheet extends ConsumerWidget {
                 plan: plan,
                 isAnnual: isAnnual,
                 currentSub: currentSub,
-                onSelect: () {
+                onSelect: (Package pkg) {
                   Navigator.pop(context);
-                  final productId = BillingProductIds.forPlan(plan.tier, annual: isAnnual);
-                  ref.read(purchaseControllerProvider.notifier).purchase(productId);
+                  ref.read(rcPurchaseControllerProvider.notifier).purchase(pkg);
                 },
               )),
           const SizedBox(height: 12),
@@ -1474,7 +1501,7 @@ class _PlanOptionCard extends ConsumerWidget {
   final PlanConfig plan;
   final bool isAnnual;
   final Subscription currentSub;
-  final VoidCallback onSelect;
+  final void Function(Package) onSelect;
 
   const _PlanOptionCard({
     required this.plan,
@@ -1485,8 +1512,15 @@ class _PlanOptionCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final productId = BillingProductIds.forPlan(plan.tier, annual: isAnnual);
-    final product = ref.watch(billingProductProvider(productId));
+    final offeringsAsync = ref.watch(rcOfferingsProvider);
+    final offerings = offeringsAsync.valueOrNull;
+    
+    Package? package;
+    if (offerings != null && offerings.current != null) {
+      final pkgId = '${plan.tier}_${isAnnual ? "annual" : "monthly"}';
+      final packageList = offerings.current!.availablePackages.where((p) => p.identifier == pkgId).toList();
+      package = packageList.isNotEmpty ? packageList.first : null;
+    }
 
     final isGrowth = plan.tier == 'growth';
     final isInstitute = plan.tier == 'institute';
@@ -1495,12 +1529,12 @@ class _PlanOptionCard extends ConsumerWidget {
     final isCurrentPlanAndCycle = currentSub.effectivePlan == plan.tier &&
         currentSub.billingCycle == (isAnnual ? 'annual' : 'monthly');
 
-    final String displayPrice = product != null
-        ? product.price
+    final String displayPrice = package != null
+        ? package.storeProduct.priceString
         : '₹${isAnnual ? plan.annualMonthlyEquivalent : plan.monthlyPrice}';
 
     return GestureDetector(
-      onTap: isCurrentPlanAndCycle ? null : onSelect,
+      onTap: (isCurrentPlanAndCycle || package == null) ? null : () => onSelect(package!),
       child: Opacity(
         opacity: isCurrentPlanAndCycle ? 0.5 : 1.0,
         child: Container(

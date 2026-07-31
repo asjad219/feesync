@@ -173,8 +173,6 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
   }
 
   Widget _buildContent(Batch batch, BatchAnalytics? analytics, List<StudentBalance>? students) {
-    final defaulters = students?.where((s) => s.balance > 0).toList() ?? [];
-
     return NestedScrollView(
       headerSliverBuilder: (context, innerBoxIsScrolled) => [
         _buildHeroHeader(batch, analytics, students),
@@ -211,9 +209,7 @@ class _BatchDetailScreenState extends ConsumerState<BatchDetailScreen> with Sing
               }
             },
             onEditTap: () => context.push('/batches/create?batchId=${batch.id}'),
-            onRemindersTap: defaulters.isNotEmpty 
-                ? () => _showBulkRemindersSheet(context, batch.id, defaulters) 
-                : null,
+            onRemindersTap: () => _tabController.animateTo(3),
           ),
           _StudentsTab(batchId: batch.id),
           _AttendanceTab(batchId: batch.id),
@@ -898,13 +894,12 @@ class _OverviewTab extends StatelessWidget {
           color: Colors.purpleAccent,
           onTap: onAddStudentTap,
         ),
-        if (onRemindersTap != null)
-          _QuickAction(
-            icon: Icons.notifications_active,
-            label: 'Reminders',
-            color: Colors.orangeAccent,
-            onTap: onRemindersTap,
-          ),
+        _QuickAction(
+          icon: Icons.notifications_active_rounded,
+          label: 'Reminders',
+          color: Colors.orangeAccent,
+          onTap: onRemindersTap,
+        ),
         _QuickAction(
           icon: Icons.edit,
           label: 'Edit',

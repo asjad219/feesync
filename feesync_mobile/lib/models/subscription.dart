@@ -28,15 +28,12 @@ class Subscription {
   final int smsLimit;             // -1 = unlimited
   final int maxStaff;             // -1 = unlimited
 
-  // --- Payment tokens ---
-  final String? razorpaySubId;
-  final String? razorpayPaymentId;
-  final String? googlePlayPurchaseToken;
-  final String? googlePlayProductId;
-
   // --- Trial ---
   final DateTime? trialEndsAt;
   final bool isTrial;
+
+  // --- RevenueCat ---
+  final String? revenueCatEntitlementId;
 
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -60,12 +57,9 @@ class Subscription {
     this.whatsappRemindersLimit = 30,
     this.smsLimit = 0,
     this.maxStaff = 1,
-    this.razorpaySubId,
-    this.razorpayPaymentId,
-    this.googlePlayPurchaseToken,
-    this.googlePlayProductId,
     this.trialEndsAt,
     this.isTrial = false,
+    this.revenueCatEntitlementId,
     this.createdAt,
     this.updatedAt,
   });
@@ -93,15 +87,11 @@ class Subscription {
           (json['whatsapp_reminders_limit'] as int?) ?? 30,
       smsLimit: (json['sms_limit'] as int?) ?? 0,
       maxStaff: (json['max_staff'] as int?) ?? 1,
-      razorpaySubId: json['razorpay_sub_id'] as String?,
-      razorpayPaymentId: json['razorpay_payment_id'] as String?,
-      googlePlayPurchaseToken:
-          json['google_play_purchase_token'] as String?,
-      googlePlayProductId: json['google_play_product_id'] as String?,
       trialEndsAt: json['trial_ends_at'] != null
           ? DateTime.tryParse(json['trial_ends_at'] as String)
           : null,
       isTrial: (json['is_trial'] as bool?) ?? false,
+      revenueCatEntitlementId: json['revenuecat_entitlement_id'] as String?,
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'] as String)
           : null,
@@ -125,12 +115,10 @@ class Subscription {
         'whatsapp_reminders_limit': whatsappRemindersLimit,
         'sms_limit': smsLimit,
         'max_staff': maxStaff,
-        'razorpay_sub_id': razorpaySubId,
-        'razorpay_payment_id': razorpayPaymentId,
-        'google_play_purchase_token': googlePlayPurchaseToken,
-        'google_play_product_id': googlePlayProductId,
         'trial_ends_at': trialEndsAt?.toIso8601String(),
         'is_trial': isTrial,
+        if (revenueCatEntitlementId != null)
+          'revenuecat_entitlement_id': revenueCatEntitlementId,
       };
 
   // ── Computed properties ────────────────────────────────────────────────────
@@ -315,12 +303,9 @@ class Subscription {
     int? whatsappRemindersLimit,
     int? smsLimit,
     int? maxStaff,
-    String? razorpaySubId,
-    String? razorpayPaymentId,
-    String? googlePlayPurchaseToken,
-    String? googlePlayProductId,
     DateTime? trialEndsAt,
     bool? isTrial,
+    String? revenueCatEntitlementId,
   }) {
     return Subscription(
       id: id,
@@ -338,14 +323,9 @@ class Subscription {
           whatsappRemindersLimit ?? this.whatsappRemindersLimit,
       smsLimit: smsLimit ?? this.smsLimit,
       maxStaff: maxStaff ?? this.maxStaff,
-      razorpaySubId: razorpaySubId ?? this.razorpaySubId,
-      razorpayPaymentId: razorpayPaymentId ?? this.razorpayPaymentId,
-      googlePlayPurchaseToken:
-          googlePlayPurchaseToken ?? this.googlePlayPurchaseToken,
-      googlePlayProductId:
-          googlePlayProductId ?? this.googlePlayProductId,
       trialEndsAt: trialEndsAt ?? this.trialEndsAt,
       isTrial: isTrial ?? this.isTrial,
+      revenueCatEntitlementId: revenueCatEntitlementId ?? this.revenueCatEntitlementId,
       createdAt: createdAt,
       updatedAt: updatedAt,
     );

@@ -35,7 +35,7 @@ android {
     defaultConfig {
         applicationId = "com.feesync.feesync_mobile"
         minSdk = flutter.minSdkVersion
-        targetSdk = 35
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true

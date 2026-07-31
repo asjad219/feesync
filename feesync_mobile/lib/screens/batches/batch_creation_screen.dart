@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/paywall_dialog.dart';
 import '../../../providers/batch_provider.dart';
 import '../../../providers/dashboard_provider.dart';
@@ -277,11 +276,15 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
           'custom_auto_due_generation': _useGlobalBilling ? null : _customAutoDueGeneration,
           'created_at': DateTime.now().toIso8601String(),
         };
-        await ref.read(batchNotifierProvider.notifier).createBatch(newBatch);
+        final createdBatch = await ref.read(batchNotifierProvider.notifier).createBatch(newBatch);
         ref.invalidate(activeBatchCountProvider);
         ref.invalidate(subscriptionScreenDataProvider);
         ref.invalidate(featureGateProvider);
         ref.invalidate(studentBalancesProvider);
+        ref.invalidate(batchNotifierProvider);
+        if (createdBatch != null) {
+          ref.invalidate(batchByIdProvider(createdBatch.id));
+        }
         invalidateDashboardAnalytics(ref);
       } else {
         final updatedData = {
@@ -307,6 +310,8 @@ class _BatchCreationScreenState extends ConsumerState<BatchCreationScreen> {
         ref.invalidate(subscriptionScreenDataProvider);
         ref.invalidate(featureGateProvider);
         ref.invalidate(studentBalancesProvider);
+        ref.invalidate(batchNotifierProvider);
+        ref.invalidate(batchByIdProvider(widget.batchId!));
         invalidateDashboardAnalytics(ref);
       }
       if (mounted) {

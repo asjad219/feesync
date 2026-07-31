@@ -1,8 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 import '../models/subscription.dart';
 import '../repositories/subscription_repository.dart';
 import '../core/billing/feature_gate.dart';
 import '../core/billing/quota_checker.dart';
+import '../core/billing/revenue_cat_provider.dart';
+import '../core/billing/subscription_mapper.dart';
 import '../repositories/usage_repository.dart';
 import 'supabase_provider.dart';
 import '../core/billing/plan_config.dart';
@@ -24,8 +28,35 @@ final usageRepositoryProvider = Provider<UsageRepository>((ref) {
 /// Provides the current user's subscription record.
 /// Gracefully returns a Free plan if no DB record exists yet.
 final subscriptionProvider = FutureProvider<Subscription>((ref) async {
-  final repo = ref.watch(subscriptionRepositoryProvider);
-  return repo.getSubscription();
+  final userId = Supabase.instance.client.auth.currentUser?.id;
+  if (userId == null) return Subscription.defaultFree('');
+
+  // Watch RC stream so provider re-evaluates on every CustomerInfo update:
+  ref.watch(customerInfoStreamProvider);
+  
+  CustomerInfo? customerInfo;
+  try {
+    customerInfo = await ref.watch(customerInfoProvider.future);
+  } catch (_) {
+    // RC network error: fall back to Supabase mirror to avoid downgrading a paid user
+    return ref.watch(subscriptionRepositoryProvider).getSubscription();
+  }
+  
+  final mapped = SubscriptionMapper.fromCustomerInfo(customerInfo, userId);
+  if (mapped == null) {
+    // RC not initialized yet — fall back to Supabase mirror
+    return ref.watch(subscriptionRepositoryProvider).getSubscription();
+  }
+
+  // Option C: Use Supabase mirror as fallback for existing subscribers
+  if (mapped.planType == 'free') {
+    final dbSub = await ref.watch(subscriptionRepositoryProvider).getSubscription();
+    if (dbSub.planType != 'free' && dbSub.expiryDate != null && dbSub.expiryDate!.isAfter(DateTime.now())) {
+      return dbSub;
+    }
+  }
+
+  return mapped;
 });
 
 /// Provides the active student count for the current owner.

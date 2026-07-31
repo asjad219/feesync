@@ -9,7 +9,8 @@ import 'firebase_options.dart';
 import 'router.dart';
 import 'core/config/supabase_config.dart';
 import 'core/theme/app_theme.dart';
-import 'core/billing/billing_provider.dart';
+import 'core/billing/revenue_cat_provider.dart';
+import 'providers/supabase_provider.dart';
 import 'core/services/sync_service.dart';
 import 'core/services/cache_service.dart';
 import 'core/services/secure_local_storage.dart';
@@ -108,8 +109,18 @@ class FeeSyncApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Initialize billing service once at startup.
-    ref.watch(billingInitProvider);
+    // Initialize RevenueCat once at startup.
+    ref.watch(revenueCatInitProvider);
+
+    // Listen to Supabase auth changes to call RC logIn/logOut
+    ref.listen(authStateProvider, (previous, next) {
+      final service = ref.read(revenueCatServiceProvider);
+      if (next.value != null && (previous == null || previous.value == null)) {
+        service.logIn(next.value!.id);
+      } else if (next.value == null && previous?.value != null) {
+        service.logOut();
+      }
+    });
 
     // Initialize sync service — auto-syncs when network restores.
     ref.watch(syncServiceProvider);

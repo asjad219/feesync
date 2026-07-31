@@ -71,9 +71,10 @@ class BatchNotifier extends StateNotifier<AsyncValue<List<Batch>>> {
     }
   }
 
-  Future<void> createBatch(Map<String, dynamic> data) async {
-    await _repository.createBatch(data);
+  Future<Batch?> createBatch(Map<String, dynamic> data) async {
+    final created = await _repository.createBatch(data);
     await loadBatches();
+    return created;
   }
 
   Future<void> updateBatch(String id, Map<String, dynamic> data) async {

@@ -125,48 +125,6 @@ class SubscriptionRepository {
   }
 
   // ── Write ──────────────────────────────────────────────────────────────────
-
-  /// Upserts a subscription record.
-  /// Called by the billing service after purchase verification or by tests.
-  Future<Subscription> upsertSubscription(Map<String, dynamic> data) async {
-    final uid = _ownerId;
-    if (uid == null) throw Exception('Not authenticated');
-
-    final payload = {...data, 'user_id': uid};
-    final response = await _client
-        .from('subscriptions')
-        .upsert(payload, onConflict: 'user_id')
-        .select()
-        .single();
-
-    return Subscription.fromJson(response);
-  }
-
-  /// Calls the `upsert_subscription` Postgres RPC directly.
-  /// Used by [BillingService] after Google Play purchase verification.
-  Future<Subscription> upsertViaRpc({
-    required String planTier,
-    required String billingCycle,
-    required DateTime validUntil,
-    String? googlePlayToken,
-    String? googlePlayProductId,
-    String? razorpaySubId,
-    String? razorpayPaymentId,
-  }) async {
-    final uid = _ownerId;
-    if (uid == null) throw Exception('Not authenticated');
-
-    final result = await _client.rpc('upsert_subscription', params: {
-      'p_owner_id'           : uid,
-      'p_plan_tier'          : planTier,
-      'p_billing_cycle'      : billingCycle,
-      'p_valid_until'        : validUntil.toIso8601String(),
-      'p_google_play_token'  : googlePlayToken,
-      'p_google_play_product': googlePlayProductId,
-      'p_razorpay_sub_id'    : razorpaySubId,
-      'p_razorpay_payment_id': razorpayPaymentId,
-    });
-
-    return Subscription.fromJson(Map<String, dynamic>.from(result as Map));
-  }
+  // Write methods (upsertSubscription, upsertViaRpc) have been removed.
+  // Subscription updates are now handled by RevenueCat webhooks securely.
 }
