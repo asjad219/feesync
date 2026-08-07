@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,6 +23,13 @@ import 'core/widgets/app_lock_guard.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Edge-to-edge: transparent status bar, Flutter owns the full screen
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.light,
+  ));
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
@@ -156,9 +164,17 @@ class FeeSyncApp extends ConsumerWidget {
       routerConfig: router,
       builder: (context, child) {
         // Guard against null child during GoRouter redirect transitions.
-        // In release APKs, a null child here causes a black ErrorWidget crash.
         final safeChild = child ?? const SizedBox.shrink();
-        return AppLockGuard(
+        // Clamp text scale to prevent layout breaks on devices with
+        // large accessibility font settings (the Play Store UI misalignment fix).
+        final mediaQuery = MediaQuery.of(context);
+        final clampedTextScaler = mediaQuery.textScaler.clamp(
+          minScaleFactor: 0.8,
+          maxScaleFactor: 1.15,
+        );
+        return MediaQuery(
+          data: mediaQuery.copyWith(textScaler: clampedTextScaler),
+          child: AppLockGuard(
           child: Consumer(
             builder: (context, ref, _) {
               ref.listen<String?>(offlineToastProvider, (previous, next) {
@@ -199,6 +215,7 @@ class FeeSyncApp extends ConsumerWidget {
               });
               return safeChild;
             },
+          ),
           ),
         );
       },

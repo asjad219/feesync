@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "476631174963",
+    "project_id": "feesync-5fcfc",
+    "storage_bucket": "feesync-5fcfc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:476631174963:android:3c79259fcce74a540ab846",
+        "android_client_info": {
+          "package_name": "com.feesync.feesync_mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "476631174963-m82m7o216vr1g0biroqkpd86juj4u721.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.feesync.feesync_mobile",
+            "certificate_hash": "4e9e8cc8ca158c5783498911fed86c92e58fc7be"
+          }
+        },
+        {
+          "client_id": "476631174963-q96rjngcferfsrufb2l6lf8g2db7a63u.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJpVVJwc-AmNk1tnFWhvRdojRoqHMqdSE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "476631174963-ev4fogdmt5achdc30vekaatge959jmbk.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "476631174963-2cmhbgns462boid2e93a3gfp45namc6o.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.feesync.feesyncMobile"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
